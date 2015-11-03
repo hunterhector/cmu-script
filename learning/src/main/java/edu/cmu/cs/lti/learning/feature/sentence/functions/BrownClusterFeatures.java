@@ -3,6 +3,7 @@ package edu.cmu.cs.lti.learning.feature.sentence.functions;
 import edu.cmu.cs.lti.script.type.StanfordCorenlpToken;
 import edu.cmu.cs.lti.utils.Configuration;
 import gnu.trove.map.TObjectDoubleMap;
+import java8.util.function.Function;
 import org.apache.commons.io.FileUtils;
 import org.apache.uima.jcas.JCas;
 
@@ -31,7 +32,7 @@ public class BrownClusterFeatures extends SequenceFeatureWithFocus {
     public BrownClusterFeatures(Configuration generalConfig, Configuration featureConfig) {
         super(generalConfig, featureConfig);
         brownClusteringPath = generalConfig.get("edu.cmu.cs.lti.brown_cluster.path");
-        brownClusters = new HashMap<>();
+        brownClusters = new HashMap<String, String>();
         try {
             for (String line : FileUtils.readLines(new File(brownClusteringPath))) {
                 String[] parts = line.split("\t");
@@ -56,7 +57,12 @@ public class BrownClusterFeatures extends SequenceFeatureWithFocus {
     @Override
     public void extract(List<StanfordCorenlpToken> sequence, int focus, TObjectDoubleMap<String> features,
                         TObjectDoubleMap<String> featuresNeedForState) {
-        String lemma = operateWithOutsideLowerCase(sequence, StanfordCorenlpToken::getLemma, focus);
+        String lemma = operateWithOutsideLowerCase(sequence, new Function<StanfordCorenlpToken, String>() {
+            @Override
+            public String apply(StanfordCorenlpToken stanfordCorenlpToken) {
+                return stanfordCorenlpToken.getLemma();
+            }
+        }, focus);
 
         if (brownClusters.containsKey(lemma)) {
             String fullClusterId = brownClusters.get(lemma);

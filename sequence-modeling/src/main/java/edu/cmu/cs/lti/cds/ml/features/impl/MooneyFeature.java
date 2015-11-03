@@ -17,7 +17,7 @@ import java.util.Map;
 public class MooneyFeature extends PairwiseFeature {
     @Override
     public Map<String, Double> getFeature(ContextElement elementLeft, ContextElement elementRight, int skip) {
-        Map<String, Double> features = new HashMap<>();
+        Map<String, Double> features = new HashMap<String, Double>();
 
         if (!testMode && skip >= 3) {
             return features;

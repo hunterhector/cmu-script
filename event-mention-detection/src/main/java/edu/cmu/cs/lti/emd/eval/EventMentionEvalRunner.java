@@ -112,23 +112,18 @@ public class EventMentionEvalRunner {
                 microF1 = Double.parseDouble(parts[3]);
             }
 
-            switch (parts[0]) {
-                case "plain":
-                    microSpanF1 = microF1;
-                    break;
-                case "mention_type":
-                    microTypeF1 = microF1;
-                    break;
-                case "realis_status":
-                    microRealisF1 = microF1;
-                    break;
-                case "mention_type+realis_status":
-                    microTypeRealisF1 = microF1;
-                    break;
-                default:
-                    break;
-            }
+            if (parts[0].equals("plain")) {
+                microSpanF1 = microF1;
 
+            } else if (parts[0].equals("mention_type")) {
+                microTypeF1 = microF1;
+
+            } else if (parts[0].equals("realis_status")) {
+                microRealisF1 = microF1;
+
+            } else if (parts[0].equals("mention_type+realis_status")) {
+                microTypeRealisF1 = microF1;
+            }
         }
     }
 

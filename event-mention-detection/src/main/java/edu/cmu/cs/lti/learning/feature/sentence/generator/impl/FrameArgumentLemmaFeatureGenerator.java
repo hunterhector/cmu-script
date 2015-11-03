@@ -32,7 +32,7 @@ public class FrameArgumentLemmaFeatureGenerator extends EventMentionFeatureGener
 
     @Override
     public Map<String, Double> genFeatures(CandidateEventMention mention) {
-        Map<String, Double> features = new HashMap<>();
+        Map<String, Double> features = new HashMap<String, Double>();
 
         FSList argumentFs = mention.getArguments();
         if (argumentFs != null) {

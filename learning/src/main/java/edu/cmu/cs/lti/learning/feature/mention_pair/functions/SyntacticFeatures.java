@@ -20,7 +20,7 @@ import java.util.Map;
  * @author Zhengzhong Liu
  */
 public class SyntacticFeatures extends AbstractMentionPairFeatures {
-    Map<StanfordCorenlpToken, StanfordTreeAnnotation> head2LargestSpanTree = new HashMap<>();
+    Map<StanfordCorenlpToken, StanfordTreeAnnotation> head2LargestSpanTree = new HashMap<StanfordCorenlpToken, StanfordTreeAnnotation>();
 
     public SyntacticFeatures(Configuration generalConfig, Configuration featureConfig) {
         super(generalConfig, featureConfig);

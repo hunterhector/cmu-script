@@ -42,7 +42,7 @@ public class WhRcModResoluter extends AbstractEntityMentionCreator {
     public void subprocess(JCas aJCas) {
         logger.info(progressInfo(aJCas));
 
-        head2EntityMention = new HashMap<>();
+        head2EntityMention = new HashMap<Span, EntityMention>();
         Collection<EntityMention> entityMentions = JCasUtil.select(aJCas, EntityMention.class);
         for (EntityMention mention : entityMentions) {
             head2EntityMention.put(UimaAnnotationUtils.toSpan(mention.getHead()), mention);
@@ -55,7 +55,7 @@ public class WhRcModResoluter extends AbstractEntityMentionCreator {
             Entity entity = rcmodEm.getReferingEntity();
             if (entity != null) {
                 //adding to existing entity
-                List<EntityMention> mentions = new ArrayList<>(FSCollectionFactory.create(entity.getEntityMentions(), EntityMention.class));
+                List<EntityMention> mentions = new ArrayList<EntityMention>(FSCollectionFactory.create(entity.getEntityMentions(), EntityMention.class));
                 for (EntityMention whEm : whEms) {
                     mentions.add(whEm);
                     whEm.setReferingEntity(entity);
@@ -64,7 +64,7 @@ public class WhRcModResoluter extends AbstractEntityMentionCreator {
             } else {
                 //create new entity
                 entity = new Entity(aJCas);
-                List<EntityMention> mentions = new ArrayList<>();
+                List<EntityMention> mentions = new ArrayList<EntityMention>();
                 mentions.add(rcmodEm);
                 for (EntityMention whEm : whEms) {
                     mentions.add(whEm);

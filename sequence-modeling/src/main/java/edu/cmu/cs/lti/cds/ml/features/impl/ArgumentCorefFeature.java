@@ -22,7 +22,7 @@ public class ArgumentCorefFeature extends PairwiseFeature {
 
     @Override
     public Map<String, Double> getFeature(ContextElement elementLeft, ContextElement elementRight, int skip) {
-        Map<String, Double> features = new HashMap<>();
+        Map<String, Double> features = new HashMap<String, Double>();
 
         LocalArgumentRepre[] leftArgs = elementLeft.getMention().getArgs();
         LocalArgumentRepre[] rightArgs = elementRight.getMention().getArgs();

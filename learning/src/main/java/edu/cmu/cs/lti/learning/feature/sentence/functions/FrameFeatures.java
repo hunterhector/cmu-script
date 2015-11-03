@@ -10,6 +10,9 @@ import edu.cmu.cs.lti.uima.util.UimaConvenience;
 import edu.cmu.cs.lti.uima.util.UimaNlpUtils;
 import edu.cmu.cs.lti.utils.Configuration;
 import gnu.trove.map.TObjectDoubleMap;
+import java8.util.function.BiConsumer;
+import java8.util.stream.Collectors;
+import java8.util.stream.StreamSupport;
 import org.apache.uima.fit.util.FSCollectionFactory;
 import org.apache.uima.fit.util.JCasUtil;
 import org.apache.uima.jcas.JCas;
@@ -20,8 +23,8 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.function.BiConsumer;
-import java.util.stream.Collectors;
+//import java.util.function.BiConsumer;
+//import java.util.stream.Collectors;
 
 /**
  * Created with IntelliJ IDEA.
@@ -39,22 +42,36 @@ public class FrameFeatures extends SequenceFeatureWithFocus {
 
     public FrameFeatures(Configuration generalConfig, Configuration featureConfig) {
         super(generalConfig, featureConfig);
-        argumentTemplates = new ArrayList<>();
-        frameTemplates = new ArrayList<>();
+        argumentTemplates = new ArrayList<BiConsumer<TObjectDoubleMap<String>, Pair<String, String>>>();
+        frameTemplates = new ArrayList<BiConsumer<TObjectDoubleMap<String>, String>>();
+
+        final FrameFeatures featureExtractor = this;
 
         for (String templateName : featureConfig.getList(this.getClass().getSimpleName() + ".templates")) {
-            switch (templateName) {
-                case "FrameArgumentLemma":
-                    argumentTemplates.add(this::frameArgumentLemma);
-                    break;
-                case "FrameArgumentRole":
-                    argumentTemplates.add(this::frameArgumentRole);
-                    break;
-                case "FrameName":
-                    frameTemplates.add(this::frameName);
-                    break;
-                default:
-                    logger.warn(String.format("Template [%s] not recognized.", templateName));
+            if (templateName.equals("FrameArgumentLemma")) {
+                argumentTemplates.add(new BiConsumer<TObjectDoubleMap<String>, Pair<String, String>>() {
+                    @Override
+                    public void accept(TObjectDoubleMap<String> features, Pair<String, String> triggerAndType) {
+                        featureExtractor.frameArgumentLemma(features, triggerAndType);
+                    }
+                });
+            } else if (templateName.equals("FrameArgumentRole")) {
+                argumentTemplates.add(new BiConsumer<TObjectDoubleMap<String>, Pair<String, String>>() {
+                    @Override
+                    public void accept(TObjectDoubleMap<String> features, Pair<String, String> triggerAndType) {
+                        featureExtractor.frameArgumentRole(features, triggerAndType);
+                    }
+                });
+
+            } else if (templateName.equals("FrameName")) {
+                frameTemplates.add(new BiConsumer<TObjectDoubleMap<String>, String>() {
+                    @Override
+                    public void accept(TObjectDoubleMap<String> features, String frameName) {
+                        featureExtractor.frameName(features, frameName);
+                    }
+                });
+            } else {
+                logger.warn(String.format("Template [%s] not recognized.", templateName));
             }
         }
     }
@@ -108,12 +125,12 @@ public class FrameFeatures extends SequenceFeatureWithFocus {
     // Prepare frames.
     private void readFrames(JCas jCas, int begin, int end) {
         triggerToArgs = ArrayListMultimap.create();
-        triggerToFrameName = new HashMap<>();
+        triggerToFrameName = new HashMap<StanfordCorenlpToken, String>();
         for (SemaforAnnotationSet annoSet : JCasUtil.selectCovered(jCas, SemaforAnnotationSet.class, begin, end)) {
             String frameName = annoSet.getFrameName();
 
             SemaforLabel trigger = null;
-            List<SemaforLabel> frameElements = new ArrayList<>();
+            List<SemaforLabel> frameElements = new ArrayList<SemaforLabel>();
 
             for (SemaforLayer layer : FSCollectionFactory.create(annoSet.getLayers(), SemaforLayer.class)) {
                 String layerName = layer.getName();
@@ -122,8 +139,8 @@ public class FrameFeatures extends SequenceFeatureWithFocus {
                 } else if (layerName.equals("FE")) {// Frame element
                     FSArray elements = layer.getLabels();
                     if (elements != null) {
-                        frameElements.addAll(FSCollectionFactory.create(elements, SemaforLabel.class).stream()
-                                .collect(Collectors.toList()));
+                        frameElements.addAll(StreamSupport.stream(FSCollectionFactory.create(elements, SemaforLabel
+                                .class)).collect(Collectors.<SemaforLabel>toList()));
                     }
                 }
             }

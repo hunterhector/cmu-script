@@ -83,8 +83,15 @@ public class RealisTypeAnnotator extends AbstractLoggingAnnotator {
         Configuration realisSpec = parser.parseFeatureFunctionSpecs(featureSpec);
         try {
             extractor = new SentenceFeatureExtractor(model.getAlphabet(), config, realisSpec);
-        } catch (ClassNotFoundException | NoSuchMethodException | InvocationTargetException | IllegalAccessException
-                | InstantiationException e) {
+        } catch (ClassNotFoundException e) {
+            e.printStackTrace();
+        } catch (NoSuchMethodException e) {
+            e.printStackTrace();
+        } catch (InvocationTargetException e) {
+            e.printStackTrace();
+        } catch (IllegalAccessException e) {
+            e.printStackTrace();
+        } catch (InstantiationException e) {
             e.printStackTrace();
         }
 
@@ -104,7 +111,7 @@ public class RealisTypeAnnotator extends AbstractLoggingAnnotator {
             extractor.resetWorkspace(aJCas, sentence);
 
             for (EventMention mention : JCasUtil.selectCovered(EventMention.class, sentence)) {
-                TObjectDoubleMap<String> rawFeatures = new TObjectDoubleHashMap<>();
+                TObjectDoubleMap<String> rawFeatures = new TObjectDoubleHashMap<String>();
 
                 FeatureVector mentionFeatures = new RealValueHashFeatureVector(alphabet);
                 int head = extractor.getTokenIndex(UimaNlpUtils.findHeadFromRange(aJCas, mention.getBegin(),

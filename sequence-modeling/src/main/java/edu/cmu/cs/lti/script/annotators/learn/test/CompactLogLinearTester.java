@@ -73,7 +73,7 @@ public class CompactLogLinearTester extends MultiArgumentClozeTest {
         ContextElement answer = chain.get(testIndex);
         logEvalInfo("Answer is " + answer.getMention());
 
-        PriorityQueue<Pair<MooneyEventRepre, Double>> rankedEvents = new PriorityQueue<>(allPredicates.length,
+        PriorityQueue<Pair<MooneyEventRepre, Double>> rankedEvents = new PriorityQueue<Pair<MooneyEventRepre, Double>>(allPredicates.length,
                 new Comparators.DescendingScoredPairComparator<MooneyEventRepre, Double>());
 
         Set<Integer> mooneyEntities = getRewritedEntitiesFromChain(chain);
@@ -117,7 +117,7 @@ public class CompactLogLinearTester extends MultiArgumentClozeTest {
     }
 
     public static Set<Integer> getRewritedEntitiesFromChain(List<ContextElement> chain) {
-        Set<Integer> entities = new HashSet<>();
+        Set<Integer> entities = new HashSet<Integer>();
         for (ContextElement rep : chain) {
             for (LocalArgumentRepre arg : rep.getMention().getArgs()) {
                 if (arg != null && !arg.isOther()) {

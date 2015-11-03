@@ -9,6 +9,7 @@ import edu.cmu.cs.lti.uima.io.reader.CustomCollectionReaderFactory;
 import edu.cmu.cs.lti.uima.util.UimaConvenience;
 import gnu.trove.map.TObjectIntMap;
 import gnu.trove.map.hash.TObjectIntHashMap;
+import gnu.trove.procedure.TObjectIntProcedure;
 import org.apache.commons.io.FileUtils;
 import org.apache.uima.UIMAException;
 import org.apache.uima.analysis_engine.AnalysisEngineDescription;
@@ -39,16 +40,16 @@ public class EventMentionTypeClassPrinter extends AbstractLoggingAnnotator {
     @ConfigurationParameter(name = CLASS_OUTPUT_PATH)
     private File classOutputFile;
 
-    TObjectIntMap<List<String>> goldClassesWithJoint = new TObjectIntHashMap<>();
+    TObjectIntMap<List<String>> goldClassesWithJoint = new TObjectIntHashMap<List<String>>();
 
-    TObjectIntMap<String> candidateClassesSingle = new TObjectIntHashMap<>();
+    TObjectIntMap<String> candidateClassesSingle = new TObjectIntHashMap<String>();
 
     public static String TYPE_NAME_JOINER = " ; ";
 
     static Set<String> targetClasses;
 
     static {
-        targetClasses = new HashSet<>();
+        targetClasses = new HashSet<String>();
 //        targetClasses.add("Life_Injure");
 //        targetClasses.add("Business_Start-Org");
 //        targetClasses.add("Personnel_Start-Position");
@@ -60,7 +61,7 @@ public class EventMentionTypeClassPrinter extends AbstractLoggingAnnotator {
     public void process(JCas aJCas) throws AnalysisEngineProcessException {
         JCas goldView = UimaConvenience.getView(aJCas, UimaConst.goldViewName);
 
-        Set<String> joint_type = new HashSet<>();
+        Set<String> joint_type = new HashSet<String>();
         int previous_start = -1;
         int previous_end = -1;
         for (EventMention mention : JCasUtil.select(goldView, EventMention.class)) {
@@ -70,7 +71,7 @@ public class EventMentionTypeClassPrinter extends AbstractLoggingAnnotator {
                 joint_type.add(t);
             } else {
                 if (!joint_type.isEmpty()) {
-                    List<String> sorted_joint_type = new ArrayList<>(joint_type);
+                    List<String> sorted_joint_type = new ArrayList<String>(joint_type);
                     Collections.sort(sorted_joint_type);
                     goldClassesWithJoint.adjustOrPutValue(sorted_joint_type, 1, 1);
                     if (joint_type.size() > 1) {
@@ -78,7 +79,7 @@ public class EventMentionTypeClassPrinter extends AbstractLoggingAnnotator {
                                 joinMultipleTypes(joint_type));
                     }
                 }
-                joint_type = new HashSet<>();
+                joint_type = new HashSet<String>();
                 joint_type.add(t);
             }
 
@@ -87,7 +88,7 @@ public class EventMentionTypeClassPrinter extends AbstractLoggingAnnotator {
         }
 
         if (!joint_type.isEmpty()) {
-            List<String> sorted_joint_type = new ArrayList<>(joint_type);
+            List<String> sorted_joint_type = new ArrayList<String>(joint_type);
             Collections.sort(sorted_joint_type);
             goldClassesWithJoint.adjustOrPutValue(sorted_joint_type, 1, 1);
         }
@@ -105,29 +106,35 @@ public class EventMentionTypeClassPrinter extends AbstractLoggingAnnotator {
 
     @Override
     public void collectionProcessComplete() throws AnalysisEngineProcessException {
-        List<String> classesLines = new ArrayList<>();
+        final List<String> classesLines = new ArrayList<String>();
 
         final int[] total_type_count = {0};
         final int[] joint_type_count = {0};
 
-        goldClassesWithJoint.forEachEntry((t, c) -> {
-            String joinedTypeName = joinMultipleTypes(t);
-            if (t.size() > 1) {
-                joint_type_count[0] += c;
-                System.out.println(String.format("Joint type %s occurs %d times.", joinedTypeName, c));
-            }
-            total_type_count[0] += c;
+        goldClassesWithJoint.forEachEntry(new TObjectIntProcedure<List<String>>() {
+            @Override
+            public boolean execute(List<String> t, int c) {
+                String joinedTypeName = joinMultipleTypes(t);
+                if (t.size() > 1) {
+                    joint_type_count[0] += c;
+                    System.out.println(String.format("Joint type %s occurs %d times.", joinedTypeName, c));
+                }
+                total_type_count[0] += c;
 
-            classesLines.add(joinedTypeName + "\t" + c);
-            return true;
+                classesLines.add(joinedTypeName + "\t" + c);
+                return true;
+            }
         });
 
-        goldClassesWithJoint.forEachEntry((t, c) -> {
-            String joinedTypeName = joinMultipleTypes(t);
-            if (t.size() == 1) {
-                System.out.println(String.format("Single type %s occurs %d times.", joinedTypeName, c));
+        goldClassesWithJoint.forEachEntry(new TObjectIntProcedure<List<String>>() {
+            @Override
+            public boolean execute(List<String> t, int c) {
+                String joinedTypeName = joinMultipleTypes(t);
+                if (t.size() == 1) {
+                    System.out.println(String.format("Single type %s occurs %d times.", joinedTypeName, c));
+                }
+                return true;
             }
-            return true;
         });
 
 

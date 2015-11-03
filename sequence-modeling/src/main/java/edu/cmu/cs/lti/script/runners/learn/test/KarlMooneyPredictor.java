@@ -65,7 +65,7 @@ public class KarlMooneyPredictor {
     private void loadEvalDir(String clozeDataDirPath) throws IOException {
         File clozeDataDir = new File(clozeDataDirPath);
 
-        allClozeFiles = new ArrayList<>();
+        allClozeFiles = new ArrayList<File>();
         if (clozeDataDir.isDirectory()) {
             for (File clozeFile : clozeDataDir.listFiles()) {
                 if (!clozeFile.isDirectory() && clozeFile.getName().endsWith(clozeFileSuffix)) {
@@ -94,7 +94,7 @@ public class KarlMooneyPredictor {
 
         List<String> lines = FileUtils.readLines(clozeFile);
 
-        List<MooneyEventRepre> repres = new ArrayList<>();
+        List<MooneyEventRepre> repres = new ArrayList<MooneyEventRepre>();
 
         int blankIndex = -1;
         for (int i = 0; i < lines.size(); i++) {
@@ -174,7 +174,7 @@ public class KarlMooneyPredictor {
     }
 
     public PriorityQueue<Pair<MooneyEventRepre, Double>> predict(List<MooneyEventRepre> clozeTask, Set<Integer> entities, int missingIndex, Collection<String> allPredicates, double smoothingParameter) {
-        PriorityQueue<Pair<MooneyEventRepre, Double>> rankedEvents = new PriorityQueue<>(allPredicates.size(), new Comparators.DescendingScoredPairComparator<MooneyEventRepre, Double>());
+        PriorityQueue<Pair<MooneyEventRepre, Double>> rankedEvents = new PriorityQueue<Pair<MooneyEventRepre, Double>>(allPredicates.size(), new Comparators.DescendingScoredPairComparator<MooneyEventRepre, Double>());
         MooneyEventRepre answer = clozeTask.get(missingIndex);
 
         logger.info("Answer is " + answer);
@@ -269,7 +269,7 @@ public class KarlMooneyPredictor {
             //write and check all results until you see the correct one
             int rank;
             boolean oov = true;
-            List<String> lines = new ArrayList<>();
+            List<String> lines = new ArrayList<String>();
             for (rank = 1; rank <= fullResults.size(); rank++) {
                 Pair<MooneyEventRepre, Double> r = fullResults.poll();
                 lines.add(r.getLeft() + "\t" + r.getRight());
@@ -306,7 +306,7 @@ public class KarlMooneyPredictor {
 
 
     private Set<Integer> getEntitiesFromChain(List<MooneyEventRepre> chain) {
-        Set<Integer> entities = new HashSet<>();
+        Set<Integer> entities = new HashSet<Integer>();
         for (MooneyEventRepre rep : chain) {
             for (int arg : rep.getAllArguments()) {
                 if (arg != KmTargetConstants.nullArgMarker && arg != KmTargetConstants.otherMarker) {

@@ -32,7 +32,7 @@ public class HeadWordFeatureGenerator extends EventMentionFeatureGenerator {
 
     @Override
     public Map<String, Double> genFeatures(CandidateEventMention mention) {
-        Map<String, Double> features = new HashMap<>();
+        Map<String, Double> features = new HashMap<String, Double>();
         StanfordCorenlpToken headWord = mention.getHeadWord();
         addHeadWordSurfaceFeatures(headWord, features);
         addHeadWordChildrenDepedencyFeatures(headWord, features);

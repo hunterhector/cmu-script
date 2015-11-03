@@ -36,7 +36,7 @@ public class DistanceFeatures extends AbstractMentionPairFeatures {
 
     @Override
     public void initDocumentWorkspace(JCas context) {
-        mention2Sentence = new HashMap<>();
+        mention2Sentence = new HashMap<EventMention, StanfordCorenlpSentence>();
         int sentenceId = 0;
         for (StanfordCorenlpSentence sent : JCasUtil.select(context, StanfordCorenlpSentence.class)) {
             for (EventMention mention : JCasUtil.selectCovered(EventMention.class, sent)) {

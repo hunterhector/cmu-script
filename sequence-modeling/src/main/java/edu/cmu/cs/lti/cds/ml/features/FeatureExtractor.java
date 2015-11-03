@@ -35,11 +35,13 @@ public class FeatureExtractor {
         this.headMap = headMap;
     }
 
-    public TObjectDoubleMap<String> getFeatures(List<ContextElement> chain, ContextElement targetMention, int index, int skipGramN, boolean breakOnConflict) {
-        TObjectDoubleMap<String> allFeatures = new TObjectDoubleHashMap<>();
+    public TObjectDoubleMap<String> getFeatures(List<ContextElement> chain, ContextElement targetMention, int index,
+                                                int skipGramN, boolean breakOnConflict) {
+        TObjectDoubleMap<String> allFeatures = new TObjectDoubleHashMap<String>();
         //ngram features
         for (Pair<ContextElement, ContextElement> ngram : getSkippedNgrams(chain, targetMention, index, skipGramN)) {
-            Fun.Tuple2<Fun.Tuple4<String, Integer, Integer, Integer>, Fun.Tuple4<String, Integer, Integer, Integer>> subsitutedForm = KarlMooneyScriptCounter.
+            Fun.Tuple2<Fun.Tuple4<String, Integer, Integer, Integer>, Fun.Tuple4<String, Integer, Integer, Integer>>
+                    subsitutedForm = KarlMooneyScriptCounter.
                     firstBasedSubstitution(ngram.getLeft().getMention(), ngram.getRight().getMention());
             TIntLinkedList compactPair = compactEvmPairSubstituiton(subsitutedForm, headMap);
 
@@ -56,7 +58,7 @@ public class FeatureExtractor {
         List<Pair<T, T>> formerPairs = getFormerSkipGram(sequence, target, index, skipgramN);
         List<Pair<T, T>> latterPairs = getLatterSkipGram(sequence, target, index, skipgramN);
 
-        List<Pair<T, T>> allPairs = new ArrayList<>();
+        List<Pair<T, T>> allPairs = new ArrayList<Pair<T, T>>();
         allPairs.addAll(formerPairs);
         allPairs.addAll(latterPairs);
 
@@ -72,7 +74,7 @@ public class FeatureExtractor {
     }
 
     public <T extends Object> List<Pair<T, T>> getFormerSkipGram(List<T> sequence, T target, int index, int skipgramN) {
-        List<Pair<T, T>> skipGrams = new ArrayList<>();
+        List<Pair<T, T>> skipGrams = new ArrayList<Pair<T, T>>();
 
         int count = 0;
         for (int i = index + 1; i < sequence.size(); i++) {
@@ -85,9 +87,8 @@ public class FeatureExtractor {
         return skipGrams;
     }
 
-    private <T extends Object> List<Pair<T, T>> getLatterSkipGram(List<T> mentions,
-                                                                  T targetMention, int index, int k) {
-        List<Pair<T, T>> skipGrams = new ArrayList<>();
+    private <T extends Object> List<Pair<T, T>> getLatterSkipGram(List<T> mentions, T targetMention, int index, int k) {
+        List<Pair<T, T>> skipGrams = new ArrayList<Pair<T, T>>();
 
         int count = 0;
         for (int i = index - 1; i > 0; i--) {
@@ -101,7 +102,8 @@ public class FeatureExtractor {
     }
 
 
-    public static TIntLinkedList compactEvmPairSubstituiton(Fun.Tuple2<Fun.Tuple4<String, Integer, Integer, Integer>, Fun.Tuple4<String, Integer, Integer, Integer>> evmPair,
+    public static TIntLinkedList compactEvmPairSubstituiton(Fun.Tuple2<Fun.Tuple4<String, Integer, Integer, Integer>,
+            Fun.Tuple4<String, Integer, Integer, Integer>> evmPair,
                                                             TObjectIntMap<String> headMap) {
         TIntLinkedList compactRep = new TIntLinkedList();
 

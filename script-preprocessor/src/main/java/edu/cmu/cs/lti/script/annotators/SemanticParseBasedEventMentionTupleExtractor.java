@@ -34,7 +34,7 @@ public class SemanticParseBasedEventMentionTupleExtractor extends AbstractEntity
     public static final Set<String> nonPrepRoles = new HashSet<String>(Arrays.asList("ARG0", "ARG1",
             "ARGM-LOC", "ARGM-TMP", "ARGM-PNC"));
 
-    public static final Set<String> nonEntityModifiers = new HashSet<>(Arrays.asList(
+    public static final Set<String> nonEntityModifiers = new HashSet<String>(Arrays.asList(
             "ARGM-MNR",
             "ARGM-ADV",
             "ARGM-DIS",
@@ -52,7 +52,7 @@ public class SemanticParseBasedEventMentionTupleExtractor extends AbstractEntity
     public void subprocess(JCas aJCas) {
         logger.info(progressInfo(aJCas));
 
-        eventWithSemanticRolesAndPrep = new HashMap<>();
+        eventWithSemanticRolesAndPrep = new HashMap<Word, ArrayListMultimap<String, Pair<Word, Word>>>();
 
         for (FanseSemanticRelation fsr : JCasUtil.select(aJCas, FanseSemanticRelation.class)) {
             saveArgument(fsr);
@@ -63,7 +63,7 @@ public class SemanticParseBasedEventMentionTupleExtractor extends AbstractEntity
             EventMention evm = new EventMention(aJCas, eventWord.getBegin(), eventWord.getEnd());
             evm.setHeadWord(eventWord);
             UimaAnnotationUtils.finishAnnotation(evm, COMPONENT_ID, null, aJCas);
-            List<EventMentionArgumentLink> argumentLinks = new ArrayList<>();
+            List<EventMentionArgumentLink> argumentLinks = new ArrayList<EventMentionArgumentLink>();
 
             ArrayListMultimap<String, Pair<Word, Word>> role2Aruguments = eventEntry.getValue();
             for (String argumentRole : role2Aruguments.keySet()) {

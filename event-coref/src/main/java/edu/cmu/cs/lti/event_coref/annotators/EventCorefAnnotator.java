@@ -97,8 +97,15 @@ public class EventCorefAnnotator extends AbstractLoggingAnnotator {
             ).parseFeatureFunctionSpecs(featureSpec);
             extractor = new PairFeatureExtractor(featureAlphabet, classAlphabet, useBinaryFeatures, config,
                     featureConfig);
-        } catch (ClassNotFoundException | NoSuchMethodException | InvocationTargetException | InstantiationException
-                | IllegalAccessException e) {
+        } catch (ClassNotFoundException e) {
+            e.printStackTrace();
+        } catch (NoSuchMethodException e) {
+            e.printStackTrace();
+        } catch (InvocationTargetException e) {
+            e.printStackTrace();
+        } catch (InstantiationException e) {
+            e.printStackTrace();
+        } catch (IllegalAccessException e) {
             e.printStackTrace();
         }
     }
@@ -106,7 +113,7 @@ public class EventCorefAnnotator extends AbstractLoggingAnnotator {
     @Override
     public void process(JCas aJCas) throws AnalysisEngineProcessException {
 //        UimaConvenience.printProcessLog(aJCas, logger);
-        List<EventMention> allMentions = new ArrayList<>(JCasUtil.select(aJCas, EventMention.class));
+        List<EventMention> allMentions = new ArrayList<EventMention>(JCasUtil.select(aJCas, EventMention.class));
 //        logger.info("Clustering " + allMentions.size() + " mentions.");
         extractor.initWorkspace(aJCas);
         MentionGraph mentionGraph = new MentionGraph(allMentions, useAverage);
@@ -116,8 +123,8 @@ public class EventCorefAnnotator extends AbstractLoggingAnnotator {
         int[][] corefChains = predictedTree.getCorefChains();
 
         for (int[] corefChain : corefChains) {
-            List<EventMention> predictedChain = new ArrayList<>();
-            Map<Span, EventMention> span2Mentions = new HashMap<>();
+            List<EventMention> predictedChain = new ArrayList<EventMention>();
+            Map<Span, EventMention> span2Mentions = new HashMap<Span, EventMention>();
 
             for (int nodeId : corefChain) {
                 MentionNode node = mentionGraph.getNode(nodeId);

@@ -43,7 +43,7 @@ public class TbfStyleEventWriter extends AbstractSimpleTextWriterAnalysisEngine 
         TokenAlignmentHelper align = new TokenAlignmentHelper();
         align.loadWord2Stanford(aJCas, goldCompontnentId);
 
-        Map<EventMention, String> mention2Id = new HashMap<>();
+        Map<EventMention, String> mention2Id = new HashMap<EventMention, String>();
 
         int eventMentionIndex = 1;
         for (EventMention mention : JCasUtil.select(aJCas, EventMention.class)) {
@@ -51,7 +51,7 @@ public class TbfStyleEventWriter extends AbstractSimpleTextWriterAnalysisEngine 
             if (wordInfo == null) {
                 continue;
             }
-            List<String> parts = new ArrayList<>();
+            List<String> parts = new ArrayList<String>();
             parts.add(systemId);
             parts.add(articleName);
             String eid = "E" + eventMentionIndex++;
@@ -90,7 +90,7 @@ public class TbfStyleEventWriter extends AbstractSimpleTextWriterAnalysisEngine 
 
         List<StanfordCorenlpToken> tokens = JCasUtil.selectCovered(StanfordCorenlpToken.class, candidate);
 
-        List<Word> tokenBasedMapping = new ArrayList<>();
+        List<Word> tokenBasedMapping = new ArrayList<Word>();
 
         for (StanfordCorenlpToken token : tokens) {
             Word word = align.getWord(token);
@@ -105,7 +105,7 @@ public class TbfStyleEventWriter extends AbstractSimpleTextWriterAnalysisEngine 
 
     private Set<Word> mapToGoldWords(ComponentAnnotation candidate, TokenAlignmentHelper align) {
         List<Word> allWords = JCasUtil.selectCovered(Word.class, candidate);
-        Set<Word> allUnderlying = new HashSet<>();
+        Set<Word> allUnderlying = new HashSet<Word>();
 
 //        logger.info(candidate.getBegin() + " " + candidate.getEnd());
 
@@ -133,12 +133,12 @@ public class TbfStyleEventWriter extends AbstractSimpleTextWriterAnalysisEngine 
     }
 
     private Pair<String, String> getWords(ComponentAnnotation mention, TokenAlignmentHelper align) {
-        List<String> wordIds = new ArrayList<>();
-        List<String> surface = new ArrayList<>();
+        List<String> wordIds = new ArrayList<String>();
+        List<String> surface = new ArrayList<String>();
 
 //        List<Word> words = JCasUtil.selectCovered(Word.class, candidate);
 
-        List<Word> words = new ArrayList<>(mapToGoldWords(mention, align));
+        List<Word> words = new ArrayList<Word>(mapToGoldWords(mention, align));
 
         if (words.size() == 0) {
             logger.warn("Candidate event mention is " + mention.getCoveredText() + " " + mention.getBegin() + " " +
@@ -148,7 +148,12 @@ public class TbfStyleEventWriter extends AbstractSimpleTextWriterAnalysisEngine 
             return null;
         }
 
-        Collections.sort(words, (w1, w2) -> w1.getBegin() - w2.getBegin());
+        Collections.sort(words, new Comparator<Word>() {
+            @Override
+            public int compare(Word w1, Word w2) {
+                return w1.getBegin() - w2.getBegin();
+            }
+        });
 
         for (Word word : words) {
             wordIds.add(word.getId());

@@ -3,12 +3,12 @@ package edu.cmu.cs.lti.learning.feature.sentence.functions;
 import edu.cmu.cs.lti.script.type.StanfordCorenlpToken;
 import edu.cmu.cs.lti.utils.Configuration;
 import gnu.trove.map.TObjectDoubleMap;
+import java8.util.function.Function;
 import org.apache.uima.jcas.JCas;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.List;
-import java.util.function.Function;
 
 /**
  * Created with IntelliJ IDEA.

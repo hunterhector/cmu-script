@@ -5,7 +5,7 @@
     <groupId>edu.cmu.cs.lti.script</groupId>
     <artifactId>cmu-script</artifactId>
     <packaging>pom</packaging>
-    <version>0.0.2</version>
+    <version>0.0.2-j1.6</version>
     <build>
         <pluginManagement>
             <plugins>
@@ -13,8 +13,8 @@
                     <groupId>org.apache.maven.plugins</groupId>
                     <artifactId>maven-compiler-plugin</artifactId>
                     <configuration>
-                        <source>1.8</source>
-                        <target>1.8</target>
+                        <source>1.6</source>
+                        <target>1.6</target>
                     </configuration>
                 </plugin>
             </plugins>
@@ -73,32 +73,32 @@
             <dependency>
                 <groupId>edu.cmu.cs.lti</groupId>
                 <artifactId>zl-utils</artifactId>
-                <version>0.0.2</version>
+                <version>0.0.2-j1.6</version>
             </dependency>
             <dependency>
                 <groupId>edu.cmu.cs.lti</groupId>
                 <artifactId>semafor-parser</artifactId>
-                <version>0.0.1</version>
+                <version>0.0.1-j1.6</version>
             </dependency>
             <dependency>
                 <groupId>edu.cmu.cs.lti</groupId>
                 <artifactId>stanford-corenlp</artifactId>
-                <version>0.0.1</version>
+                <version>0.0.1-j1.6</version>
             </dependency>
             <dependency>
                 <groupId>edu.cmu.cs.lti</groupId>
                 <artifactId>fanse-parser</artifactId>
-                <version>0.0.1</version>
+                <version>0.0.1-j1.6</version>
             </dependency>
             <dependency>
                 <groupId>edu.cmu.cs.lti</groupId>
                 <artifactId>discourse-parser</artifactId>
-                <version>0.0.1</version>
+                <version>0.0.1-j1.6</version>
             </dependency>
             <dependency>
                 <groupId>edu.cmu.cs.lti</groupId>
                 <artifactId>opennlp</artifactId>
-                <version>0.0.1</version>
+                <version>0.0.1-j1.6</version>
             </dependency>
             <dependency>
                 <groupId>edu.stanford.nlp</groupId>
@@ -115,12 +115,12 @@
             <dependency>
                 <groupId>edu.cmu.cs.lti.script</groupId>
                 <artifactId>core</artifactId>
-                <version>0.0.2</version>
+                <version>0.0.2-j1.6</version>
             </dependency>
             <dependency>
                 <groupId>edu.cmu.cs.lti</groupId>
                 <artifactId>corpus-reader</artifactId>
-                <version>0.0.1</version>
+                <version>0.0.1-j1.6</version>
             </dependency>
             <dependency>
                 <groupId>org.uimafit</groupId>
@@ -130,12 +130,12 @@
             <dependency>
                 <groupId>edu.cmu.cs.lti</groupId>
                 <artifactId>uima-util</artifactId>
-                <version>0.0.1</version>
+                <version>0.0.1-j1.6</version>
             </dependency>
             <dependency>
                 <groupId>edu.cmu.cs.lti</groupId>
                 <artifactId>uima-base</artifactId>
-                <version>0.0.1</version>
+                <version>0.0.1-j1.6</version>
             </dependency>
             <dependency>
                 <groupId>org.apache.uima</groupId>
@@ -185,12 +185,19 @@
             <dependency>
                 <groupId>edu.cmu.cs.lti.script</groupId>
                 <artifactId>learning</artifactId>
-                <version>0.0.2</version>
+                <version>0.0.2-j1.6</version>
             </dependency>
             <dependency>
                 <groupId>edu.cmu.cs.lti</groupId>
                 <artifactId>misc-annotators</artifactId>
-                <version>0.0.1</version>
+                <version>0.0.1-j1.6</version>
+            </dependency>
+
+            <!-- Stream support for java under v1.8 -->
+            <dependency>
+                <groupId>net.sourceforge.streamsupport</groupId>
+                <artifactId>streamsupport</artifactId>
+                <version>1.3.2</version>
             </dependency>
         </dependencies>
     </dependencyManagement>

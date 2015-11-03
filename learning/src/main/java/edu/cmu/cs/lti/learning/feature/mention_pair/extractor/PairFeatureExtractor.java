@@ -7,6 +7,7 @@ import edu.cmu.cs.lti.script.type.EventMention;
 import edu.cmu.cs.lti.utils.Configuration;
 import gnu.trove.map.TObjectDoubleMap;
 import gnu.trove.map.hash.TObjectDoubleHashMap;
+import gnu.trove.procedure.TObjectDoubleProcedure;
 import org.apache.uima.fit.util.JCasUtil;
 import org.apache.uima.jcas.JCas;
 
@@ -23,7 +24,7 @@ import java.util.List;
  * @author Zhengzhong Liu
  */
 public class PairFeatureExtractor {
-    private List<AbstractMentionPairFeatures> featureFunctions = new ArrayList<>();
+    private List<AbstractMentionPairFeatures> featureFunctions = new ArrayList<AbstractMentionPairFeatures>();
 
     private boolean useBinary;
 
@@ -56,7 +57,7 @@ public class PairFeatureExtractor {
             ff.initDocumentWorkspace(context);
         }
         this.context = context;
-        this.mentions = new ArrayList<>(JCasUtil.select(context, EventMention.class));
+        this.mentions = new ArrayList<EventMention>(JCasUtil.select(context, EventMention.class));
     }
 
     public FeatureVector newFeatureVector() {
@@ -76,13 +77,18 @@ public class PairFeatureExtractor {
      * @return Feature vector of this mention against the other
      */
     public FeatureVector extract(int mentionId) {
-        FeatureVector featureVector = newFeatureVector();
-        TObjectDoubleMap<String> rawFeatures = new TObjectDoubleHashMap<>();
-        featureFunctions.forEach(ff -> ff.extract(context, rawFeatures, mentions.get(mentionId)));
+        final FeatureVector featureVector = newFeatureVector();
+        TObjectDoubleMap<String> rawFeatures = new TObjectDoubleHashMap<String>();
 
-        rawFeatures.forEachEntry((featureName, featureValue) -> {
-            featureVector.addFeature(featureName, featureValue);
-            return true;
+        for (AbstractMentionPairFeatures ff : featureFunctions) {
+            ff.extract(context, rawFeatures, mentions.get(mentionId));
+        }
+
+        rawFeatures.forEachEntry(new TObjectDoubleProcedure<String>() {
+            @Override
+            public boolean execute(String featureName, double featureValue) {
+                featureVector.addFeature(featureName, featureValue);
+                return true;            }
         });
 
         return featureVector;
@@ -96,14 +102,20 @@ public class PairFeatureExtractor {
      * @return Feature vector of this mention against the other
      */
     public FeatureVector extract(int firstId, int secondId) {
-        FeatureVector featureVector = newFeatureVector();
-        TObjectDoubleMap<String> rawFeatures = new TObjectDoubleHashMap<>();
-        featureFunctions.forEach(ff -> ff.extract(context, rawFeatures, mentions.get(firstId), mentions.get(secondId)));
+        final FeatureVector featureVector = newFeatureVector();
+        TObjectDoubleMap<String> rawFeatures = new TObjectDoubleHashMap<String>();
 
-        rawFeatures.forEachEntry((featureName, featureValue) -> {
-            featureVector.addFeature(featureName, featureValue);
-            return true;
-        });
+        for (AbstractMentionPairFeatures ff : featureFunctions) {
+            ff.extract(context, rawFeatures, mentions.get(firstId), mentions.get(secondId));
+        }
+
+        rawFeatures.forEachEntry(new TObjectDoubleProcedure<String>() {
+            @Override
+            public boolean execute(String featureName, double featureValue){
+                featureVector.addFeature(featureName, featureValue);
+                return true;
+            }
+        } );
 
         return featureVector;
     }

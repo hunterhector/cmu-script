@@ -60,8 +60,8 @@ public class EventMentionTrainer {
     }
 
     public void configFeatures(BiMap<String, Integer> featureNameMap, List<String> allClasses, File outputDir) throws Exception {
-        featureConfiguration = new ArrayList<>();
-        ArrayList<Map.Entry<String, Integer>> featureNames = new ArrayList<>(featureNameMap.entrySet());
+        featureConfiguration = new ArrayList<Attribute>();
+        ArrayList<Map.Entry<String, Integer>> featureNames = new ArrayList<Map.Entry<String, Integer>>(featureNameMap.entrySet());
         declareFeatures(featureNames, featureConfiguration);
         declareClass(allClasses, featureConfiguration);
         logger.info("Number of features : " + featureNames.size() + ". Number of classes : " + allClasses.size());
@@ -86,7 +86,7 @@ public class EventMentionTrainer {
     }
 
     private void declareClass(List<String> allClasses, List<Attribute> featureVector) {
-        List<String> fixedClasses = new ArrayList<>();
+        List<String> fixedClasses = new ArrayList<String>();
         //a bug related to the sparse vector
         fixedClasses.add("dummy_class");
         fixedClasses.addAll(allClasses);
@@ -100,7 +100,7 @@ public class EventMentionTrainer {
     }
 
     private Map<String, Classifier> getClassifiers() throws Exception {
-        Map<String, Classifier> classifiers = new HashMap<>();
+        Map<String, Classifier> classifiers = new HashMap<String, Classifier>();
         classifiers.put("LibSvm_linear", configClassifier(new LibSVM(), new String[]{"-K", "0"}));
         classifiers.put("LibSvm_poly_square", configClassifier(new LibSVM(), new String[]{"-K", "1", "-D", "2", "-G", "1.0"}));
 //        classifiers.put("LibSvm_Gaussian", configClassifier(new LibSVM(), new String[]{"-G","1.0"}));
@@ -128,7 +128,7 @@ public class EventMentionTrainer {
      * @throws Exception
      */
     private Map<String, Classifier> train(Instances trainingSet, String classifierSuffix) throws Exception {
-        Map<String, Classifier> classifiersByName = new HashMap<>();
+        Map<String, Classifier> classifiersByName = new HashMap<String, Classifier>();
 
         for (Map.Entry<String, Classifier> classifierByName : getClassifiers().entrySet()) {
             Classifier classifier = classifierByName.getValue();
@@ -145,7 +145,7 @@ public class EventMentionTrainer {
         Evaluation eval = new Evaluation(trainingSet);
         String classifierName = classifier.getClass().getName();
 
-        List<String> evalResultLines = new ArrayList<>();
+        List<String> evalResultLines = new ArrayList<String>();
 
         double weightedF1 = 0;
         int totalInstances = 0;
@@ -270,7 +270,7 @@ public class EventMentionTrainer {
         generateFeatures(parentInput, trainingBaseDir, 1, true, null, true, featureSubset);
         BiMap<String, Integer> featureNameMap = EventMentionTypeLearner.featureNameMap;
         List<Pair<TIntDoubleMap, String>> trainingFeatures = EventMentionTypeLearner.featuresAndClass;
-        ArrayList<String> allClasses = new ArrayList<>(EventMentionTypeLearner.allTypes);
+        ArrayList<String> allClasses = new ArrayList<String>(EventMentionTypeLearner.allTypes);
         configFeatures(featureNameMap, allClasses, modelOutputDir);
 
         Instances trainingDataset = convertToInstances(trainingFeatures, new File(modelOutputDir, trainingFeatureName).getCanonicalPath());
@@ -313,10 +313,10 @@ public class EventMentionTrainer {
         TypeSystemDescription typeSystemDescription = TypeSystemDescriptionFactory
                 .createTypeSystemDescription(typeSystemDescriptor);
 
-        Set<String> featureSubset = new HashSet<>();
+        Set<String> featureSubset = new HashSet<String>();
 
         EventMentionTrainer trainer = new EventMentionTrainer(semLinkDataPath, brownClusteringDataPath, wordnetDataPath, typeSystemDescription);
-        Map<String, Instances> testSets = new HashMap<>();
+        Map<String, Instances> testSets = new HashMap<String, Instances>();
         for (String testBaseDir : testBaseDirs) {
             logger.info("Preparing test data");
             testSets.put(new File(testBaseDir).getName(), trainer.getDataSet(workingDir, testBaseDir, featureSubset, new File(workingDir, modelBasePath)));

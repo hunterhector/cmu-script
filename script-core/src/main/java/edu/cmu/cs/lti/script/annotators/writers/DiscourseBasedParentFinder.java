@@ -40,7 +40,7 @@ public class DiscourseBasedParentFinder extends JCasAnnotator_ImplBase {
 
     public void initialize(final UimaContext context) throws ResourceInitializationException {
         super.initialize(context);
-        printedEvent = new HashSet<>();
+        printedEvent = new HashSet<EventMention>();
     }
 
     @Override

@@ -44,7 +44,7 @@ public class MultiArgumentClozeTestRunner {
 
         float smoothingParameter = config.getInt("edu.cmu.cs.lti.cds.conditional.smoothing", 1);
 
-        Set<String> methods = new HashSet<>(Arrays.asList(config.getList("edu.cmu.cs.lti.cds.methods")));
+        Set<String> methods = new HashSet<String>(Arrays.asList(config.getList("edu.cmu.cs.lti.cds.methods")));
 
         //prepare data
         logger.info("Loading data");

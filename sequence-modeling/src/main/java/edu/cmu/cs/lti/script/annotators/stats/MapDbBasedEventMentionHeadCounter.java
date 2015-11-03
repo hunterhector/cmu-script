@@ -5,9 +5,8 @@ import edu.cmu.cs.lti.script.type.EventMention;
 import edu.cmu.cs.lti.script.utils.DataPool;
 import edu.cmu.cs.lti.uima.annotator.AbstractLoggingAnnotator;
 import edu.cmu.cs.lti.uima.io.reader.CustomCollectionReaderFactory;
-import edu.cmu.cs.lti.uima.io.writer.CustomAnalysisEngineFactory;
-import edu.cmu.cs.lti.utils.Configuration;
 import edu.cmu.cs.lti.uima.util.TokenAlignmentHelper;
+import edu.cmu.cs.lti.utils.Configuration;
 import gnu.trove.map.TObjectIntMap;
 import gnu.trove.map.hash.TObjectIntHashMap;
 import org.apache.uima.UIMAException;
@@ -16,6 +15,7 @@ import org.apache.uima.analysis_engine.AnalysisEngineDescription;
 import org.apache.uima.analysis_engine.AnalysisEngineProcessException;
 import org.apache.uima.collection.CollectionReaderDescription;
 import org.apache.uima.fit.factory.AnalysisEngineFactory;
+import org.apache.uima.fit.factory.TypeSystemDescriptionFactory;
 import org.apache.uima.fit.pipeline.SimplePipeline;
 import org.apache.uima.fit.util.JCasUtil;
 import org.apache.uima.jcas.JCas;
@@ -24,7 +24,6 @@ import org.apache.uima.resource.metadata.TypeSystemDescription;
 import org.mapdb.DB;
 import org.mapdb.DBMaker;
 import org.mapdb.Fun;
-import org.apache.uima.fit.factory.TypeSystemDescriptionFactory;
 
 import java.io.File;
 import java.io.IOException;
@@ -85,7 +84,7 @@ public class MapDbBasedEventMentionHeadCounter extends AbstractLoggingAnnotator 
             return;
         }
 
-        TObjectIntMap<String> tfCounts = new TObjectIntHashMap<>();
+        TObjectIntMap<String> tfCounts = new TObjectIntHashMap<String>();
 
         align.loadWord2Stanford(aJCas);
 
@@ -99,9 +98,9 @@ public class MapDbBasedEventMentionHeadCounter extends AbstractLoggingAnnotator 
             Fun.Tuple2<Integer, Integer> counts = eventHeadTfDf.get(head);
 
             if (counts == null) {
-                eventHeadTfDf.put(head, new Fun.Tuple2<>(localCount, 1));
+                eventHeadTfDf.put(head, new Fun.Tuple2<Integer, Integer>(localCount, 1));
             } else {
-                eventHeadTfDf.put(head, new Fun.Tuple2<>(counts.a + localCount, counts.b + 1));
+                eventHeadTfDf.put(head, new Fun.Tuple2<Integer, Integer>(counts.a + localCount, counts.b + 1));
             }
         }
 

@@ -5,7 +5,7 @@
     <parent>
         <artifactId>cmu-script</artifactId>
         <groupId>edu.cmu.cs.lti.script</groupId>
-        <version>0.0.2</version>
+        <version>0.0.2-j1.6</version>
     </parent>
     <modelVersion>4.0.0</modelVersion>
 
@@ -46,7 +46,10 @@
             <artifactId>liblinear</artifactId>
             <version>1.94</version>
         </dependency>
+        <dependency>
+            <groupId>net.sourceforge.streamsupport</groupId>
+            <artifactId>streamsupport</artifactId>
+        </dependency>
     </dependencies>
 
-    <distributionManagement></distributionManagement>
 </project>

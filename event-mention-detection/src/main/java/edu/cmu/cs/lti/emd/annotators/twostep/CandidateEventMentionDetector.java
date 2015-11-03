@@ -12,6 +12,8 @@ import edu.cmu.cs.lti.uima.util.UimaAnnotationUtils;
 import edu.cmu.cs.lti.uima.util.UimaConvenience;
 import edu.cmu.cs.lti.uima.util.UimaNlpUtils;
 import edu.mit.jwi.item.POS;
+import java8.util.stream.Collectors;
+import java8.util.stream.StreamSupport;
 import org.apache.commons.io.FileUtils;
 import org.apache.uima.UimaContext;
 import org.apache.uima.analysis_engine.AnalysisEngineProcessException;
@@ -29,7 +31,6 @@ import javax.xml.parsers.ParserConfigurationException;
 import java.io.File;
 import java.io.IOException;
 import java.util.*;
-import java.util.stream.Collectors;
 
 /**
  * Created with IntelliJ IDEA.
@@ -97,7 +98,11 @@ public class CandidateEventMentionDetector extends AbstractLoggingAnnotator {
         try {
             logger.info("Loading frame lexicon");
             lexicon2Frame = FrameDataReader.getLexicon2Frame(frameDirPath);
-        } catch (IOException | ParserConfigurationException | SAXException e) {
+        } catch (IOException e) {
+            e.printStackTrace();
+        } catch (ParserConfigurationException e) {
+            e.printStackTrace();
+        } catch (SAXException e) {
             e.printStackTrace();
         }
 
@@ -129,8 +134,8 @@ public class CandidateEventMentionDetector extends AbstractLoggingAnnotator {
     }
 
     private void readUsefulFrames() throws IOException {
-        usefulFrames = new HashSet<>();
-        usefulHeads = new HashSet<>();
+        usefulFrames = new HashSet<String>();
+        usefulHeads = new HashSet<String>();
 
         for (String line : FileUtils.readLines(new File(usefulFrameDir, UsefulFramDetector.frameFileName))) {
             usefulFrames.add(line.split(" ")[0]);
@@ -144,7 +149,7 @@ public class CandidateEventMentionDetector extends AbstractLoggingAnnotator {
     @Override
     public void process(JCas aJCas) throws AnalysisEngineProcessException {
         UimaConvenience.printProcessLog(aJCas, logger);
-        token2Candidates = new HashMap<>();
+        token2Candidates = new HashMap<StanfordCorenlpToken, CandidateEventMention>();
 
         align = new TokenAlignmentHelper();
         align.loadWord2Stanford(aJCas, TbfEventDataReader.COMPONENT_ID);
@@ -153,7 +158,7 @@ public class CandidateEventMentionDetector extends AbstractLoggingAnnotator {
 
         if (forTraining) {
             JCas goldView = UimaConvenience.getView(aJCas, goldStandardViewName);
-            goldWords = new HashMap<>();
+            goldWords = new HashMap<StanfordCorenlpToken, EventMention>();
             for (EventMention mention : JCasUtil.select(goldView, EventMention.class)) {
                 List<StanfordCorenlpToken> contentWords = getUsefulTokens(mention, aJCas, align);
                 for (StanfordCorenlpToken contentWord : contentWords) {
@@ -171,7 +176,7 @@ public class CandidateEventMentionDetector extends AbstractLoggingAnnotator {
             String frameName = annoSet.getFrameName();
 
             SemaforLabel trigger = null;
-            List<SemaforLabel> frameElements = new ArrayList<>();
+            List<SemaforLabel> frameElements = new ArrayList<SemaforLabel>();
 
 
             for (SemaforLayer layer : FSCollectionFactory.create(annoSet.getLayers(), SemaforLayer.class)) {
@@ -181,8 +186,9 @@ public class CandidateEventMentionDetector extends AbstractLoggingAnnotator {
                 } else if (layerName.equals("FE")) {// Frame element
                     FSArray elements = layer.getLabels();
                     if (elements != null) {
-                        frameElements.addAll(FSCollectionFactory.create(elements, SemaforLabel.class).stream()
-                                .collect(Collectors.toList()));
+                        frameElements.addAll(StreamSupport
+                                .stream(FSCollectionFactory.create(elements, SemaforLabel.class))
+                                .collect(Collectors.<SemaforLabel>toList()));
                     }
                 }
             }
@@ -261,7 +267,7 @@ public class CandidateEventMentionDetector extends AbstractLoggingAnnotator {
                             , role.getEnd());
                     UimaAnnotationUtils.finishAnnotation(argument, COMPONENT_ID, 0, aJCas);
 
-                    Pair<String, String> pbRolePair = new Pair<>(propbankSense, argX);
+                    Pair<String, String> pbRolePair = new Pair<String, String>(propbankSense, argX);
 
                     Pair<String, String> fnRolePair = null;
 
@@ -291,9 +297,9 @@ public class CandidateEventMentionDetector extends AbstractLoggingAnnotator {
     }
 
     private List<StanfordCorenlpToken> getUsefulTokens(EventMention mention, JCas aJCas, TokenAlignmentHelper align) {
-        List<StanfordCorenlpToken> contentTokens = new ArrayList<>();
+        List<StanfordCorenlpToken> contentTokens = new ArrayList<StanfordCorenlpToken>();
 
-        List<StanfordCorenlpToken> goldWords = new ArrayList<>();
+        List<StanfordCorenlpToken> goldWords = new ArrayList<StanfordCorenlpToken>();
         if (mention.getMentionTokens() != null) {
             for (Word word : FSCollectionFactory.create(mention.getMentionTokens(), Word.class)) {
                 goldWords.add(align.getStanfordToken(JCasUtil.selectCovered(aJCas, Word.class, word.getBegin(), word
@@ -318,7 +324,7 @@ public class CandidateEventMentionDetector extends AbstractLoggingAnnotator {
         if (lexicon2Frame.containsKey(word + "." + wordPos)) {
             return lexicon2Frame.get(word + '.' + wordPos);
         } else {
-            Set<String> potentialFrames = new HashSet<>();
+            Set<String> potentialFrames = new HashSet<String>();
             for (POS pos : targetPos) {
                 for (String stem : wns.stem(word, pos)) {
                     String frameLexeme = stem + "." + Character.toUpperCase(pos.getTag());
@@ -327,7 +333,7 @@ public class CandidateEventMentionDetector extends AbstractLoggingAnnotator {
                     }
                 }
             }
-            return new ArrayList<>(potentialFrames);
+            return new ArrayList<String>(potentialFrames);
         }
     }
 

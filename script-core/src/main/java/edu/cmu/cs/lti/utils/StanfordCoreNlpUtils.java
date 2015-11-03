@@ -116,7 +116,7 @@ public class StanfordCoreNlpUtils {
             return tf.newLeaf(uimaTree.getPennTreeLabel());
         } else {
             FSArray uimaChildTree = uimaTree.getChildren();
-            List<Tree> daugheterTreeList = new ArrayList<>(uimaChildTree.size());
+            List<Tree> daugheterTreeList = new ArrayList<Tree>(uimaChildTree.size());
             for (int i = 0; i < uimaChildTree.size(); i++) {
                 StanfordTreeAnnotation childTree = (StanfordTreeAnnotation) uimaChildTree.get(i);
                 Tree daugheterTree = uima2StanfordTree(tf, childTree);

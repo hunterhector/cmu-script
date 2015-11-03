@@ -5,6 +5,7 @@ import edu.cmu.cs.lti.script.type.*;
 import edu.cmu.cs.lti.uima.util.TokenAlignmentHelper;
 import edu.cmu.cs.lti.utils.Configuration;
 import gnu.trove.map.TObjectDoubleMap;
+import java8.util.function.BiConsumer;
 import org.apache.uima.fit.util.FSCollectionFactory;
 import org.apache.uima.fit.util.JCasUtil;
 import org.apache.uima.jcas.JCas;
@@ -14,7 +15,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.function.BiConsumer;
+import java.util.function.Consumer;
 
 /**
  * Created with IntelliJ IDEA.
@@ -41,30 +42,54 @@ public class FanseFeatures extends SequenceFeatureWithFocus {
 
         align = new TokenAlignmentHelper();
 
-        headTemplates = new ArrayList<>();
-        argumentTemplates = new ArrayList<>();
+        headTemplates = new ArrayList<BiConsumer<TObjectDoubleMap<String>, FanseToken>>();
+        argumentTemplates = new ArrayList<BiConsumer<TObjectDoubleMap<String>, FanseSemanticRelation>>();
 
         for (String templateName : featureConfig.getList(this.getClass().getSimpleName() + ".templates")) {
-            switch (templateName) {
-                case "FanseHeadSense":
-                    headTemplates.add(this::fanseHeadSenseTemplate);
-                    break;
-                case "FanseArgumentRole":
-                    argumentTemplates.add(this::fanseArgumentRoles);
-                    break;
-                case "FanseArgumentNer":
-                    argumentTemplates.add(this::fanseArgumentNer);
-                    loadNerTokens = true;
-                    break;
-                case "FanseArgumentLemma":
-                    argumentTemplates.add(this::fanseArgumentLemma);
-                    break;
-                case "FanseArgumentWordNetSense":
-                    argumentTemplates.add((this::fanseArgumentWordNetSense));
-                    loadWordnetSenseTokens = true;
-                    break;
-                default:
-                    logger.warn(String.format("Template [%s] not recognized.", templateName));
+            if (templateName.equals("FanseHeadSense")) {
+                headTemplates.add(new BiConsumer<TObjectDoubleMap<String>, FanseToken>() {
+                    @Override
+                    public void accept(TObjectDoubleMap<String> features, FanseToken fanseToken) {
+                        FanseFeatures.this.fanseHeadSenseTemplate(features, fanseToken);
+                    }
+                });
+
+            } else if (templateName.equals("FanseArgumentRole")) {
+                argumentTemplates.add(new BiConsumer<TObjectDoubleMap<String>, FanseSemanticRelation>() {
+                    @Override
+                    public void accept(TObjectDoubleMap<String> features, FanseSemanticRelation relation) {
+                        FanseFeatures.this.fanseArgumentRoles(features, relation);
+                    }
+                });
+
+            } else if (templateName.equals("FanseArgumentNer")) {
+                argumentTemplates.add(new BiConsumer<TObjectDoubleMap<String>, FanseSemanticRelation>() {
+                    @Override
+                    public void accept(TObjectDoubleMap<String> features, FanseSemanticRelation relation) {
+                        FanseFeatures.this.fanseArgumentNer(features, relation);
+                    }
+                });
+                loadNerTokens = true;
+
+            } else if (templateName.equals("FanseArgumentLemma")) {
+                argumentTemplates.add(new BiConsumer<TObjectDoubleMap<String>, FanseSemanticRelation>() {
+                    @Override
+                    public void accept(TObjectDoubleMap<String> features, FanseSemanticRelation relation) {
+                        FanseFeatures.this.fanseArgumentLemma(features, relation);
+                    }
+                });
+
+            } else if (templateName.equals("FanseArgumentWordNetSense")) {
+                argumentTemplates.add(new BiConsumer<TObjectDoubleMap<String>, FanseSemanticRelation>() {
+                    @Override
+                    public void accept(TObjectDoubleMap<String> features, FanseSemanticRelation relation) {
+                        FanseFeatures.this.fanseArgumentWordNetSense(features, relation);
+                    }
+                });
+                loadWordnetSenseTokens = true;
+
+            } else {
+                logger.warn(String.format("Template [%s] not recognized.", templateName));
             }
         }
     }
@@ -83,7 +108,7 @@ public class FanseFeatures extends SequenceFeatureWithFocus {
         }
 
         if (loadWordnetSenseTokens) {
-            fanseToken2WordnetType = new HashMap<>();
+            fanseToken2WordnetType = new HashMap<Word, String>();
             for (WordNetBasedEntity anno : JCasUtil.select(context, WordNetBasedEntity.class)) {
                 for (FanseToken token : JCasUtil.selectCovered(FanseToken.class, anno)) {
                     fanseToken2WordnetType.put(token, anno.getSense());
@@ -98,22 +123,33 @@ public class FanseFeatures extends SequenceFeatureWithFocus {
     }
 
     @Override
-    public void extract(List<StanfordCorenlpToken> sequence, int focus, TObjectDoubleMap<String> features,
+    public void extract(List<StanfordCorenlpToken> sequence, int focus, final TObjectDoubleMap<String> features,
                         TObjectDoubleMap<String> featuresNeedForState) {
         if (focus > sequence.size() - 1 || focus < 0) {
             return;
         }
         StanfordCorenlpToken token = sequence.get(focus);
 
-        FanseToken fanseToken = align.getFanseToken(token);
+        final FanseToken fanseToken = align.getFanseToken(token);
 
-        headTemplates.forEach(t -> t.accept(features, fanseToken));
+        headTemplates.forEach(new Consumer<BiConsumer<TObjectDoubleMap<String>, FanseToken>>() {
+            @Override
+            public void accept(BiConsumer<TObjectDoubleMap<String>, FanseToken> t) {
+                t.accept(features, fanseToken);
+            }
+        });
 
         FSList childRelations = token.getChildSemanticRelations();
 
         if (childRelations != null) {
-            for (FanseSemanticRelation r : FSCollectionFactory.create(childRelations, FanseSemanticRelation.class)) {
-                argumentTemplates.forEach(t -> t.accept(features, r));
+            for (final FanseSemanticRelation r : FSCollectionFactory.create(childRelations, FanseSemanticRelation
+                    .class)) {
+                argumentTemplates.forEach(new Consumer<BiConsumer<TObjectDoubleMap<String>, FanseSemanticRelation>>() {
+                    @Override
+                    public void accept(BiConsumer<TObjectDoubleMap<String>, FanseSemanticRelation> t) {
+                        t.accept(features, r);
+                    }
+                });
             }
         }
     }

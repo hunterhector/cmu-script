@@ -28,7 +28,7 @@ public class TopCappedUnigramEventDist extends BaseEventDist {
     private static double[] probabilities;
     private Random random;
 
-    private static TIntObjectMap<TIntList> unigramId = new TIntObjectHashMap<>();
+    private static TIntObjectMap<TIntList> unigramId = new TIntObjectHashMap<TIntList>();
 
     public TopCappedUnigramEventDist(TObjectIntMap<TIntList> unigramCounts, int topKtoCap, int numArguments) {
         super(numArguments);
@@ -40,7 +40,7 @@ public class TopCappedUnigramEventDist extends BaseEventDist {
         probabilities = new double[unigramCounts.size()];
         int index = 0;
 
-        Queue<Pair<Integer, String>> topUnigrams = new PriorityQueue<>();
+        Queue<Pair<Integer, String>> topUnigrams = new PriorityQueue<Pair<Integer, String>>();
 
         int eventUnigramTotalCount = 0;
 
@@ -55,7 +55,7 @@ public class TopCappedUnigramEventDist extends BaseEventDist {
         }
 
         int cappedSize = 0;
-        Map<String, Integer> cappingDict = new HashMap<>();
+        Map<String, Integer> cappingDict = new HashMap<String, Integer>();
 
         while (!topUnigrams.isEmpty()) {
             Pair<Integer, String> topUnigramCount = topUnigrams.poll();
@@ -95,7 +95,7 @@ public class TopCappedUnigramEventDist extends BaseEventDist {
 
         String predicate = DataPool.headWords[nextEvent.get(0)];
 
-        Map<Integer, LocalArgumentRepre> chosenArgumentMap = new HashMap<>();
+        Map<Integer, LocalArgumentRepre> chosenArgumentMap = new HashMap<Integer, LocalArgumentRepre>();
         for (int i = 1; i < nextEvent.size(); i++) {
             int argumentId = nextEvent.get(i);
             if (argumentId != KmTargetConstants.nullArgMarker) {

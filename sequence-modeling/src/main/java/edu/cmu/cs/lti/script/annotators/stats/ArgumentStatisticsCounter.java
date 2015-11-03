@@ -38,7 +38,7 @@ public class ArgumentStatisticsCounter extends AbstractLoggingAnnotator {
 
         for (EventMention evm : JCasUtil.select(aJCas, EventMention.class)) {
             numEvents++;
-            Map<String, String> roles = new HashMap<>();
+            Map<String, String> roles = new HashMap<String, String>();
 
             for (EventMentionArgumentLink link : FSCollectionFactory.create(evm.getArguments(), EventMentionArgumentLink.class)) {
                 String roleType = link.getArgumentRole();

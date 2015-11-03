@@ -66,8 +66,8 @@ public class CompactFeatureExtractor {
 
     private static Pair<List<PairwiseFeature>, List<GlobalFeature>> featuresByName(String[] featureImplNames)
             throws ClassNotFoundException, IllegalAccessException, InstantiationException {
-        List<PairwiseFeature> pairwiseFeatureImpls = new ArrayList<>();
-        List<GlobalFeature> globalFeatureImpls = new ArrayList<>();
+        List<PairwiseFeature> pairwiseFeatureImpls = new ArrayList<PairwiseFeature>();
+        List<GlobalFeature> globalFeatureImpls = new ArrayList<GlobalFeature>();
         for (String featureImplName : featureImplNames) {
             Class<?> c = Class.forName(featureImplName);
             Feature f = (Feature) c.newInstance();
@@ -133,7 +133,7 @@ public class CompactFeatureExtractor {
         List<Triple<T, T, Integer>> formerPairs = getSkipGramBefore(sequence, target, index, skipgramN);
         List<Triple<T, T, Integer>> latterPairs = getSkipGramsAfter(sequence, target, index, skipgramN);
 
-        List<Triple<T, T, Integer>> allPairs = new ArrayList<>();
+        List<Triple<T, T, Integer>> allPairs = new ArrayList<Triple<T, T, Integer>>();
         allPairs.addAll(formerPairs);
         allPairs.addAll(latterPairs);
 
@@ -148,7 +148,7 @@ public class CompactFeatureExtractor {
     }
 
     public <T extends Object> List<Triple<T, T, Integer>> getSkipGramsAfter(List<T> sequence, T target, int index, int k) {
-        List<Triple<T, T, Integer>> skipGrams = new ArrayList<>();
+        List<Triple<T, T, Integer>> skipGrams = new ArrayList<Triple<T, T, Integer>>();
 
         int count = 0;
         for (int i = index + 1; i < sequence.size(); i++) {
@@ -162,7 +162,7 @@ public class CompactFeatureExtractor {
     }
 
     private <T extends Object> List<Triple<T, T, Integer>> getSkipGramBefore(List<T> sequence, T target, int index, int k) {
-        List<Triple<T, T, Integer>> skipGrams = new ArrayList<>();
+        List<Triple<T, T, Integer>> skipGrams = new ArrayList<Triple<T, T, Integer>>();
 
         int count = 0;
         for (int i = index - 1; i > 0; i--) {

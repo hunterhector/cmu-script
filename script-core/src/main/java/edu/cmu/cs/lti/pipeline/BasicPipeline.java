@@ -105,7 +105,15 @@ public class BasicPipeline {
                 aggregateAnalysisEngine.process(mergedCas);
                 mergedCas.reset();
             }
-        } catch (AnalysisEngineProcessException | CollectionException | IOException e) {
+        } catch (AnalysisEngineProcessException e) {
+            e.printStackTrace();
+            // Destroy.
+            aggregateAnalysisEngine.destroy();
+        } catch (CollectionException e) {
+            e.printStackTrace();
+            // Destroy.
+            aggregateAnalysisEngine.destroy();
+        } catch (IOException e) {
             e.printStackTrace();
             // Destroy.
             aggregateAnalysisEngine.destroy();

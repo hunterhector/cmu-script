@@ -140,7 +140,7 @@ public class DataPool {
     }
 
     public static void readBlackList(File blackListFile) throws IOException {
-        blackListedArticleId = new HashSet<>();
+        blackListedArticleId = new HashSet<String>();
         for (String line : FileUtils.readLines(blackListFile)) {
             blackListedArticleId.add(line.trim());
         }
@@ -173,7 +173,7 @@ public class DataPool {
         //TODO: this one is not read successfully
         Map<Pair<String, String>, Pair<String, String>> pb2VnRole = FrameDataReader.getVN2PBRoleMap(semLinkDirPath + "/vn-pb/vnpbMappings", true);
 
-        pb2FnFrameMapping = new HashMap<>();
+        pb2FnFrameMapping = new HashMap<String, String>();
 
         for (Map.Entry<String, String> pbvn : pb2Vn.entrySet()) {
             String pbFrame = pbvn.getKey();
@@ -184,7 +184,7 @@ public class DataPool {
             }
         }
 
-        pb2FnFrameRoleMapping = new HashMap<>();
+        pb2FnFrameRoleMapping = new HashMap<String, String>();
 
         for (Map.Entry<Pair<String, String>, Pair<String, String>> pbvn : pb2VnRole.entrySet()) {
             Pair<String, String> pbRole = pbvn.getKey();

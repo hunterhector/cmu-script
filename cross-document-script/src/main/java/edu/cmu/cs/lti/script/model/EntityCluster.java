@@ -17,7 +17,7 @@ public class EntityCluster {
     // Set of representative mentions for cluster
     private List<String> mentionHeads = new ArrayList<String>();
 
-    private List<String> hashedWords = new ArrayList<>();
+    private List<String> hashedWords = new ArrayList<String>();
 
 //    private ArrayListMultimap<String, String> eventMentions = ArrayListMultimap.create();
 

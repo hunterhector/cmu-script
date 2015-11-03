@@ -46,7 +46,7 @@ public class EventMentionTypeFeatureAblation {
     }
 
     private Map<String, Set<String>> configFeatureSubset() {
-        Map<String, Set<String>> allSubsets = new HashMap<>();
+        Map<String, Set<String>> allSubsets = new HashMap<String, Set<String>>();
 
         Set<String> basicFeatures = Sets.newHashSet("TriggerHeadLemma", "HeadPOS", "HeadWordLemmaBrownCluster", "HeadWordSurfaceBrownCluster", "HeadNer");
         Set<String> basicFeaturesWithoutPos = Sets.newHashSet("TriggerHeadLemma", "HeadPOS", "HeadWordLemmaBrownCluster", "HeadWordSurfaceBrownCluster", "HeadNer");
@@ -125,7 +125,7 @@ public class EventMentionTypeFeatureAblation {
     }
 
     private Set<String> joinFeatures(Set<String>... featureSets) {
-        Set<String> joinedFeatures = new HashSet<>();
+        Set<String> joinedFeatures = new HashSet<String>();
         for (Set<String> featureSet : featureSets) {
             joinedFeatures.addAll(featureSet);
         }
@@ -136,10 +136,10 @@ public class EventMentionTypeFeatureAblation {
 
 
     private Map<String, Set<String>> removeOneGeneration(Set<String> baseFeatures, String basename) {
-        Map<String, Set<String>> removedFeatures = new HashMap<>();
+        Map<String, Set<String>> removedFeatures = new HashMap<String, Set<String>>();
 
         for (String removed : baseFeatures) {
-            Set<String> removedSet = new HashSet<>();
+            Set<String> removedSet = new HashSet<String>();
             removedSet.addAll(baseFeatures);
             removedSet.remove(removed);
             removedFeatures.put(basename + "_without_" + removed, removedSet);
@@ -188,7 +188,7 @@ public class EventMentionTypeFeatureAblation {
 //        Map<String, Double> officialResults = new HashMap<>();
         ArrayListMultimap<String, Double> officialResults = ArrayListMultimap.create();
 
-        Map<String, Instances> testSets = new HashMap<>();
+        Map<String, Instances> testSets = new HashMap<String, Instances>();
 
         for (Map.Entry<String, Set<String>> namedFeatureSet : configFeatureSubset().entrySet()) {
             String featureSetName = namedFeatureSet.getKey();

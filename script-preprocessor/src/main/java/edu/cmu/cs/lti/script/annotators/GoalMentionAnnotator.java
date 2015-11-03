@@ -20,7 +20,7 @@ import java.util.*;
  * Time: 4:54 PM
  */
 public class GoalMentionAnnotator extends AbstractLoggingAnnotator {
-    private Set<String> goalIndicatingDep = new HashSet<>(Arrays.asList("purpcl"));
+    private Set<String> goalIndicatingDep = new HashSet<String>(Arrays.asList("purpcl"));
 
     public final String COMPONENT_ID = GoalMentionAnnotator.class.getSimpleName();
 
@@ -64,7 +64,7 @@ public class GoalMentionAnnotator extends AbstractLoggingAnnotator {
     }
 
     private Map<Span, StanfordTreeAnnotation> getHeadSpan2MaxTrees(JCas aJCas) {
-        Map<Span, StanfordTreeAnnotation> headSpan2MaxTree = new HashMap<>();
+        Map<Span, StanfordTreeAnnotation> headSpan2MaxTree = new HashMap<Span, StanfordTreeAnnotation>();
         for (StanfordTreeAnnotation treeAnno : JCasUtil.select(aJCas, StanfordTreeAnnotation.class)) {
             Span headSpan = UimaAnnotationUtils.toSpan(treeAnno.getHead());
 

@@ -95,8 +95,15 @@ public class CrfMentionTypeAnnotator extends AbstractLoggingAnnotator {
             Configuration typeFeatureConfig = specParser.parseFeatureFunctionSpecs(featureSpec);
 
             sentenceExtractor = new SentenceFeatureExtractor(alphabet, config, typeFeatureConfig);
-        } catch (ClassNotFoundException | NoSuchMethodException | InvocationTargetException | InstantiationException
-                | IllegalAccessException e) {
+        } catch (ClassNotFoundException e) {
+            e.printStackTrace();
+        } catch (NoSuchMethodException e) {
+            e.printStackTrace();
+        } catch (InvocationTargetException e) {
+            e.printStackTrace();
+        } catch (InstantiationException e) {
+            e.printStackTrace();
+        } catch (IllegalAccessException e) {
             e.printStackTrace();
         }
         decoder = new ViterbiDecoder(alphabet, classAlphabet);
@@ -143,7 +150,7 @@ public class CrfMentionTypeAnnotator extends AbstractLoggingAnnotator {
     }
 
     private List<Triplet<Integer, Integer, String>> convertTypeTagsToChunks(SequenceSolution solution) {
-        List<Triplet<Integer, Integer, String>> chunkEndPoints = new ArrayList<>();
+        List<Triplet<Integer, Integer, String>> chunkEndPoints = new ArrayList<Triplet<Integer, Integer, String>>();
 
         for (int i = 0; i < solution.getSequenceLength(); i++) {
             int tag = solution.getClassAt(i);

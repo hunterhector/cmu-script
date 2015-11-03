@@ -44,8 +44,8 @@ public class RealisClassifierTrainer extends WekaBasedTrainer {
 
     @Override
     protected Map<String, Classifier> getClassifiers() throws Exception {
-        Map<String, Classifier> classifiers = new HashMap<>();
-        classifierNames = new ArrayList<>();
+        Map<String, Classifier> classifiers = new HashMap<String, Classifier>();
+        classifierNames = new ArrayList<String>();
         classifiers.put("lib-linear", getClassifiers(new LibLINEAR(), "-S", "0", "-C", "1.0", "-E", "0.0001", "-B",
                 "1.0", "-Z"));
 //        classifiers.put("svm-linear", getClassifiers(new LibSVM(), "-K", "0"));
@@ -69,8 +69,19 @@ public class RealisClassifierTrainer extends WekaBasedTrainer {
         try {
             RealisFeatureExtractor.getFeatures(reader, typeSystemDescription, instances, alphabet, classAlphabet,
                     config);
-        } catch (UIMAException | IOException | ClassNotFoundException | InvocationTargetException |
-                InstantiationException | IllegalAccessException | NoSuchMethodException e) {
+        } catch (UIMAException e) {
+            e.printStackTrace();
+        } catch (IOException e) {
+            e.printStackTrace();
+        } catch (ClassNotFoundException e) {
+            e.printStackTrace();
+        } catch (InvocationTargetException e) {
+            e.printStackTrace();
+        } catch (InstantiationException e) {
+            e.printStackTrace();
+        } catch (IllegalAccessException e) {
+            e.printStackTrace();
+        } catch (NoSuchMethodException e) {
             e.printStackTrace();
         }
     }

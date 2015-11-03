@@ -85,8 +85,8 @@ public class EventMentionHeadTfDfCounter extends AbstractLoggingAnnotator {
         align.loadWord2Stanford(aJCas);
         align.loadFanse2Stanford(aJCas);
 
-        TObjectIntMap<String> localTfCounts = new TObjectIntHashMap<>();
-        TObjectIntMap<String> localDfCounts = new TObjectIntHashMap<>();
+        TObjectIntMap<String> localTfCounts = new TObjectIntHashMap<String>();
+        TObjectIntMap<String> localDfCounts = new TObjectIntHashMap<String>();
 
         for (EventMention mention : JCasUtil.select(aJCas, EventMention.class)) {
             String headLemma = align.getLowercaseWordLemma(mention.getHeadWord());

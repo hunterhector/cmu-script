@@ -46,7 +46,7 @@ public class UnigramScriptCounter extends AbstractLoggingAnnotator {
 
     //TODO consider sentence or event distance
 
-    private TObjectIntMap<TIntList> unigramEventCounts = new TObjectIntHashMap<>();
+    private TObjectIntMap<TIntList> unigramEventCounts = new TObjectIntHashMap<TIntList>();
 
     public static final String defaultDBName = "tuple_counts";
 
@@ -108,7 +108,7 @@ public class UnigramScriptCounter extends AbstractLoggingAnnotator {
     }
 
     private List<TIntList> getAllPossibleRewrite(EventMention mention) {
-        List<TIntList> previousPossibleRewrites = new ArrayList<>();
+        List<TIntList> previousPossibleRewrites = new ArrayList<TIntList>();
         TIntList rewritedEvents = new TIntLinkedList();
         rewritedEvents.add(DataPool.headIdMap.get(align.getLowercaseWordLemma(mention.getHeadWord())));
         previousPossibleRewrites.add(rewritedEvents);
@@ -124,7 +124,7 @@ public class UnigramScriptCounter extends AbstractLoggingAnnotator {
             }
         }
 
-        List<TIntList> nextPossibleRewrites = new ArrayList<>();
+        List<TIntList> nextPossibleRewrites = new ArrayList<TIntList>();
         for (boolean hasArg : slotsHasArgument) {
             nextPossibleRewrites.clear();
             if (hasArg) {

@@ -34,7 +34,7 @@ public class SentenceFeatureExtractor extends UimaSequenceFeatureExtractor {
 
     protected List<StanfordCorenlpToken> sentenceTokens;
     protected TObjectIntMap<StanfordCorenlpToken> tokenIndex;
-    protected List<SequenceFeatureWithFocus> featureFunctions = new ArrayList<>();
+    protected List<SequenceFeatureWithFocus> featureFunctions = new ArrayList<SequenceFeatureWithFocus>();
 
     public SentenceFeatureExtractor(FeatureAlphabet alphabet, Configuration generalConfig, Configuration featureConfig)
             throws ClassNotFoundException, NoSuchMethodException, IllegalAccessException, InvocationTargetException,
@@ -61,7 +61,7 @@ public class SentenceFeatureExtractor extends UimaSequenceFeatureExtractor {
     @Override
     public void resetWorkspace(JCas aJCas, int begin, int end) {
         sentenceTokens = JCasUtil.selectCovered(aJCas, StanfordCorenlpToken.class, begin, end);
-        tokenIndex = new TObjectIntHashMap<>();
+        tokenIndex = new TObjectIntHashMap<StanfordCorenlpToken>();
 
         int i = 0;
         for (StanfordCorenlpToken token : sentenceTokens) {
@@ -82,10 +82,12 @@ public class SentenceFeatureExtractor extends UimaSequenceFeatureExtractor {
 
     @Override
     public void extract(int focus, FeatureVector featuresNoState, FeatureVector featuresNeedForState) {
-        TObjectDoubleMap<String> rawFeaturesNoState = new TObjectDoubleHashMap<>();
-        TObjectDoubleMap<String> rawFeaturesNeedForState = new TObjectDoubleHashMap<>();
+        TObjectDoubleMap<String> rawFeaturesNoState = new TObjectDoubleHashMap<String>();
+        TObjectDoubleMap<String> rawFeaturesNeedForState = new TObjectDoubleHashMap<String>();
 
-        featureFunctions.forEach(ff -> ff.extract(sentenceTokens, focus, rawFeaturesNoState, rawFeaturesNeedForState));
+        for (SequenceFeatureWithFocus ff : featureFunctions) {
+            ff.extract(sentenceTokens, focus, rawFeaturesNoState, rawFeaturesNeedForState);
+        }
 
         for (TObjectDoubleIterator<String> iter = rawFeaturesNoState.iterator(); iter.hasNext(); ) {
             iter.advance();
@@ -100,6 +102,8 @@ public class SentenceFeatureExtractor extends UimaSequenceFeatureExtractor {
 
     public void extractRaw(int focus, TObjectDoubleMap<String> rawFeaturesNoState, TObjectDoubleMap<String>
             rawFeaturesNeedForState) {
-        featureFunctions.forEach(ff -> ff.extract(sentenceTokens, focus, rawFeaturesNoState, rawFeaturesNeedForState));
+        for (SequenceFeatureWithFocus ff : featureFunctions) {
+            ff.extract(sentenceTokens, focus, rawFeaturesNoState, rawFeaturesNeedForState);
+        }
     }
 }

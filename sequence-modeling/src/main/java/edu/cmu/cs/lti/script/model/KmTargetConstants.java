@@ -37,7 +37,7 @@ public class KmTargetConstants {
     public static final int numSlots = 3;
 
     static {
-        targetArguments = new LinkedHashMap<>();
+        targetArguments = new LinkedHashMap<String, Integer>();
         targetArguments.put(PropBankTagSet.ARG0, anchorArg0Marker);
         targetArguments.put(PropBankTagSet.ARG1, anchorArg1Marker);
         targetArguments.put(PropBankTagSet.ARG2, anchorArg2Marker);
@@ -48,7 +48,7 @@ public class KmTargetConstants {
         argumentSlotName[1] = PropBankTagSet.ARG1;
         argumentSlotName[2] = PropBankTagSet.ARG2;
 
-        notNullArguments = new ArrayList<>();
+        notNullArguments = new ArrayList<Integer>();
         notNullArguments.addAll(targetArguments.values());
         notNullArguments.add(otherMarker);
     }

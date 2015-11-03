@@ -6,6 +6,7 @@ import edu.cmu.cs.lti.script.type.StanfordEntityMention;
 import edu.cmu.cs.lti.script.type.Word;
 import edu.cmu.cs.lti.utils.Configuration;
 import gnu.trove.map.TObjectDoubleMap;
+import java8.util.function.Function;
 import org.apache.uima.fit.util.FSCollectionFactory;
 import org.apache.uima.fit.util.JCasUtil;
 import org.apache.uima.jcas.JCas;
@@ -15,7 +16,7 @@ import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
-import java.util.function.Function;
+//import java.util.function.Function;
 
 /**
  * Created with IntelliJ IDEA.
@@ -29,8 +30,8 @@ public class DependentWordFeatures extends SequenceFeatureWithFocus {
 
     public DependentWordFeatures(Configuration generalConfig, Configuration featureConfig) {
         super(generalConfig, featureConfig);
-        featureTemplates = new HashSet<>(Arrays.asList(featureConfig.getList(this.getClass().getSimpleName() + "" +
-                ".templates")));
+        featureTemplates = new HashSet<String>(
+                Arrays.asList(featureConfig.getList(this.getClass().getSimpleName() + ".templates")));
     }
 
     @Override
@@ -53,25 +54,55 @@ public class DependentWordFeatures extends SequenceFeatureWithFocus {
     public void extract(List<StanfordCorenlpToken> sequence, int focus, TObjectDoubleMap<String> features,
                         TObjectDoubleMap<String> featuresNeedForState) {
         if (featureTemplates.contains("ChildLemma")) {
-            addDependentFeatures(sequence, focus, features, Word::getLemma, "ChildLemma");
+            addDependentFeatures(sequence, focus, features, new Function<Word, String>() {
+                @Override
+                public String apply(Word word) {
+                    return word.getLemma();
+                }
+            }, "ChildLemma");
         }
         if (featureTemplates.contains("ChildNer")) {
-            addDependentFeatures(sequence, focus, features, Word::getNerTag, "ChildNer");
+            addDependentFeatures(sequence, focus, features, new Function<Word, String>() {
+                @Override
+                public String apply(Word word) {
+                    return word.getNerTag();
+                }
+            }, "ChildNer");
         }
         if (featureTemplates.contains("ChildPos")) {
-            addDependentFeatures(sequence, focus, features, Word::getPos, "ChildPos");
+            addDependentFeatures(sequence, focus, features, new Function<Word, String>() {
+                @Override
+                public String apply(Word word) {
+                    return word.getPos();
+                }
+            }, "ChildPos");
         }
         if (featureTemplates.contains("ChildDepType")) {
             addDependentLabelFeatures(sequence, focus, features, "ChildDepType");
         }
         if (featureTemplates.contains("HeadLemma")) {
-            addGovnerFeatures(sequence, focus, features, Word::getLemma, "HeadLemma");
+            addGovnerFeatures(sequence, focus, features, new Function<Word, String>() {
+                @Override
+                public String apply(Word word) {
+                    return word.getLemma();
+                }
+            }, "HeadLemma");
         }
         if (featureTemplates.contains("HeadNer")) {
-            addGovnerFeatures(sequence, focus, features, Word::getNerTag, "HeadNer");
+            addGovnerFeatures(sequence, focus, features, new Function<Word, String>() {
+                @Override
+                public String apply(Word word) {
+                    return word.getNerTag();
+                }
+            }, "HeadNer");
         }
         if (featureTemplates.contains("HeadPos")) {
-            addGovnerFeatures(sequence, focus, features, Word::getPos, "HeadPos");
+            addGovnerFeatures(sequence, focus, features, new Function<Word, String>() {
+                @Override
+                public String apply(Word word) {
+                    return word.getPos();
+                }
+            }, "HeadPos");
         }
         if (featureTemplates.contains("HeadDepType")) {
             addGovnerLabelFeatures(sequence, focus, features, "HeadDepType");

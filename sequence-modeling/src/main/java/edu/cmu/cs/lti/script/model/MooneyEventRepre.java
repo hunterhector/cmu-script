@@ -149,7 +149,7 @@ public class MooneyEventRepre {
      * @return
      */
     public Fun.Tuple4<String, Integer, Integer, Integer> toTuple() {
-        return new Fun.Tuple4<>(predicate, arg0, arg1, arg2);
+        return new Fun.Tuple4<String, Integer, Integer, Integer>(predicate, arg0, arg1, arg2);
     }
 
     public static MooneyEventRepre fromTuple(Fun.Tuple4<String, Integer, Integer, Integer> tuple) {
@@ -157,7 +157,7 @@ public class MooneyEventRepre {
     }
 
     public static List<MooneyEventRepre> generateTuples(TIntList candidate, String[] idHeadMap) {
-        List<MooneyEventRepre> repres = new ArrayList<>();
+        List<MooneyEventRepre> repres = new ArrayList<MooneyEventRepre>();
 
         if (candidate.get(0) < idHeadMap.length) {
             repres.add(fromCompactForm(candidate, idHeadMap));
@@ -166,19 +166,19 @@ public class MooneyEventRepre {
     }
 
     public static List<MooneyEventRepre> generateTuples(String head, Collection<Integer> entities) {
-        Set<TIntList> baseRepres = new HashSet<>();
+        Set<TIntList> baseRepres = new HashSet<TIntList>();
 
         TIntList base = new TIntLinkedList();
 
         baseRepres.add(base);
 
         //add Null and Other entities
-        List<Integer> baseEntities = new ArrayList<>();
+        List<Integer> baseEntities = new ArrayList<Integer>();
         baseEntities.add(KmTargetConstants.nullArgMarker);
         baseEntities.add(KmTargetConstants.otherMarker);
 
         for (int i = 0; i < 3; i++) {
-            Set<TIntList> newerRepres = new HashSet<>();
+            Set<TIntList> newerRepres = new HashSet<TIntList>();
             for (int entityId : baseEntities) {
                 for (TIntList lastBase : baseRepres) {
                     TIntList nextBase = new TIntLinkedList();
@@ -191,7 +191,7 @@ public class MooneyEventRepre {
         }
 
         for (int entityId : entities) {
-            Set<TIntList> newerRepres = new HashSet<>();
+            Set<TIntList> newerRepres = new HashSet<TIntList>();
             for (int i = 0; i < 3; i++) {
                 for (TIntList lastBase : baseRepres) {
                     TIntList nextBase = new TIntLinkedList();
@@ -204,7 +204,7 @@ public class MooneyEventRepre {
             baseRepres = newerRepres;
         }
 
-        List<MooneyEventRepre> candidateEvmRepre = new ArrayList<>();
+        List<MooneyEventRepre> candidateEvmRepre = new ArrayList<MooneyEventRepre>();
         for (TIntList baseRepre : baseRepres) {
             MooneyEventRepre r = new MooneyEventRepre();
             r.setPredicate(head);

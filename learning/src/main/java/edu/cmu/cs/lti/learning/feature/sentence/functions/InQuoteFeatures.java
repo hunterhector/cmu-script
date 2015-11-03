@@ -4,13 +4,16 @@ import edu.cmu.cs.lti.script.type.QuotedContent;
 import edu.cmu.cs.lti.script.type.StanfordCorenlpToken;
 import edu.cmu.cs.lti.utils.Configuration;
 import gnu.trove.map.TObjectDoubleMap;
+import java8.util.function.Consumer;
+import java8.util.function.Predicate;
+import java8.util.stream.Collectors;
+import java8.util.stream.StreamSupport;
 import org.apache.uima.fit.util.JCasUtil;
 import org.apache.uima.jcas.JCas;
 
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
-import java.util.stream.Collectors;
 
 /**
  * Created with IntelliJ IDEA.
@@ -28,12 +31,20 @@ public class InQuoteFeatures extends SequenceFeatureWithFocus {
 
     @Override
     public void initDocumentWorkspace(JCas context) {
-        phraseQuotedTokens = new HashSet<>();
-        JCasUtil.select(context, QuotedContent.class).stream().filter(QuotedContent::getPhraseQuote)
-                .forEach(quotedContent -> {
-                    phraseQuotedTokens.addAll(JCasUtil.selectCovered(StanfordCorenlpToken.class, quotedContent).stream()
-                            .collect(Collectors.toList()));
-                });
+        phraseQuotedTokens = new HashSet<StanfordCorenlpToken>();
+        StreamSupport.stream(JCasUtil.select(context, QuotedContent.class)).filter(new Predicate<QuotedContent>() {
+            @Override
+            public boolean test(QuotedContent content) {
+                return content.getPhraseQuote();
+            }
+        }).forEach(new Consumer<QuotedContent>() {
+            @Override
+            public void accept(QuotedContent content) {
+                phraseQuotedTokens.addAll(StreamSupport.stream(
+                        JCasUtil.selectCovered(StanfordCorenlpToken.class, content))
+                        .collect(Collectors.<StanfordCorenlpToken>toList()));
+            }
+        });
     }
 
     @Override

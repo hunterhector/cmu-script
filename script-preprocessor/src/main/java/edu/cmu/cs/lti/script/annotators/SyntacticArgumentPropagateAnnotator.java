@@ -26,9 +26,9 @@ import java.util.*;
 public class SyntacticArgumentPropagateAnnotator extends AbstractEntityMentionCreator {
     public static final String COMPONENT_ID = SyntacticArgumentPropagateAnnotator.class.getSimpleName();
 
-    private Set<String> shareSubjDeps = new HashSet<>(Arrays.asList("xcomp", "advcl", "purpcl"));
+    private Set<String> shareSubjDeps = new HashSet<String>(Arrays.asList("xcomp", "advcl", "purpcl"));
 
-    private Set<String> completeMarker = new HashSet<>(Arrays.asList("have", "had", "has"));
+    private Set<String> completeMarker = new HashSet<String>(Arrays.asList("have", "had", "has"));
 
     //using span to communicate probably is the safest way when two types of tokens exists
     private ArrayListMultimap<Span, Pair<Span, String>> shareSubjVerbPairs;
@@ -42,14 +42,14 @@ public class SyntacticArgumentPropagateAnnotator extends AbstractEntityMentionCr
 
         ArrayListMultimap<Span, EntityMention> eventHead2Arg0 = ArrayListMultimap.create();
         ArrayListMultimap<Span, EntityMention> eventHead2Arg1 = ArrayListMultimap.create();
-        Map<Span, EventMention> emptyAgentMentions = new HashMap<>();
-        Map<Span, EventMention> emptyPatientMentions = new HashMap<>();
+        Map<Span, EventMention> emptyAgentMentions = new HashMap<Span, EventMention>();
+        Map<Span, EventMention> emptyPatientMentions = new HashMap<Span, EventMention>();
 
         for (EventMention evm : JCasUtil.select(aJCas, EventMention.class)) {
             Word evmHead = evm.getHeadWord();
 
-            Set<EventMentionArgumentLink> arg0s = new HashSet<>();
-            Set<EventMentionArgumentLink> arg1s = new HashSet<>();
+            Set<EventMentionArgumentLink> arg0s = new HashSet<EventMentionArgumentLink>();
+            Set<EventMentionArgumentLink> arg1s = new HashSet<EventMentionArgumentLink>();
 
             for (EventMentionArgumentLink link : FSCollectionFactory.create(evm.getArguments(), EventMentionArgumentLink.class)) {
                 if (link.getArgumentRole().equals(PropBankTagSet.ARG0)) {
@@ -143,8 +143,8 @@ public class SyntacticArgumentPropagateAnnotator extends AbstractEntityMentionCr
             Span agentSharerSpan = null;
             Span patientSharerSpan = null;
 
-            List<Span> agentShareeSpans = new ArrayList<>();
-            List<Span> patientShareeSpans = new ArrayList<>();
+            List<Span> agentShareeSpans = new ArrayList<Span>();
+            List<Span> patientShareeSpans = new ArrayList<Span>();
 
             for (Word verb : conjVerbs) {
                 Span verbSpan = UimaAnnotationUtils.toSpan(verb);
@@ -215,7 +215,7 @@ public class SyntacticArgumentPropagateAnnotator extends AbstractEntityMentionCr
             }
         }
         if (!existCluster) {
-            Set<Word> newChain = new HashSet<>();
+            Set<Word> newChain = new HashSet<Word>();
             newChain.add(word1);
             newChain.add(word2);
             conjVerbChains.add(newChain);
@@ -223,7 +223,7 @@ public class SyntacticArgumentPropagateAnnotator extends AbstractEntityMentionCr
     }
 
     private List<Set<Word>> findConjVerbs(JCas aJCas) {
-        List<Set<Word>> conjVerbChains = new ArrayList<>();
+        List<Set<Word>> conjVerbChains = new ArrayList<Set<Word>>();
 
         for (StanfordDependencyRelation dep : JCasUtil.select(aJCas, StanfordDependencyRelation.class)) {
 
@@ -236,7 +236,7 @@ public class SyntacticArgumentPropagateAnnotator extends AbstractEntityMentionCr
 
         // check conjVerbs to make it POS consistent
         for (Set<Word> conjVerbs : conjVerbChains) {
-            TObjectIntMap<String> posCounts = new TObjectIntHashMap<>();
+            TObjectIntMap<String> posCounts = new TObjectIntHashMap<String>();
             for (Word v : conjVerbs) {
                 posCounts.adjustOrPutValue(v.getPos(), 1, 1);
             }
@@ -251,7 +251,7 @@ public class SyntacticArgumentPropagateAnnotator extends AbstractEntityMentionCr
                     }
                 }
 
-                List<Word> verbsToRemove = new ArrayList<>();
+                List<Word> verbsToRemove = new ArrayList<Word>();
                 for (Word verb : conjVerbs) {
                     if (!verb.getPos().equals(maxPos)) {
                         verbsToRemove.add(verb);

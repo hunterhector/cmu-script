@@ -114,9 +114,9 @@ public class ArgumentFeatures extends AbstractMentionPairFeatures {
     private List<EventMentionArgumentLink> getArgumentLinks(EventMention mention) {
         FSList firstAnnoFs = mention.getAgentLinks();
         if (firstAnnoFs != null) {
-            return new ArrayList<>(FSCollectionFactory.create(firstAnnoFs, EventMentionArgumentLink.class));
+            return new ArrayList<EventMentionArgumentLink>(FSCollectionFactory.create(firstAnnoFs, EventMentionArgumentLink.class));
         } else {
-            return new ArrayList<>();
+            return new ArrayList<EventMentionArgumentLink>();
         }
     }
 

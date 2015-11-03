@@ -81,7 +81,7 @@ public class GoldStandardEventMentionAnnotator extends AbstractAnnotator {
             mention.removeFromIndexes();
         }
 
-        Map<EventMention, EventMention> from2toMentionMap = new HashMap<>();
+        Map<EventMention, EventMention> from2toMentionMap = new HashMap<EventMention, EventMention>();
         for (EventMention goldMention : JCasUtil.select(fromView, EventMention.class))
             if (validate(goldMention, toView)) {
                 EventMention systemMention = new EventMention(toView, goldMention.getBegin(), goldMention.getEnd());
@@ -116,7 +116,7 @@ public class GoldStandardEventMentionAnnotator extends AbstractAnnotator {
             Event copiedEvent = new Event(toView);
             int fromMentionLength = event.getEventMentions().size();
 
-            List<EventMention> copiedMentions = new ArrayList<>();
+            List<EventMention> copiedMentions = new ArrayList<EventMention>();
 
             for (int i = 0; i < fromMentionLength; i++) {
                 EventMention toMention = from2toMentionMap.get(event.getEventMentions(i));

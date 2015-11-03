@@ -1,5 +1,6 @@
 package edu.cmu.cs.lti.emd.annotators.crf;
 
+import com.google.common.cache.Weigher;
 import com.google.common.collect.ArrayListMultimap;
 import edu.cmu.cs.lti.emd.annotators.EventMentionTypeClassPrinter;
 import edu.cmu.cs.lti.learning.decoding.ViterbiDecoder;
@@ -18,6 +19,10 @@ import edu.cmu.cs.lti.utils.Configuration;
 import edu.cmu.cs.lti.utils.MultiKeyDiskCacher;
 import gnu.trove.map.TIntObjectMap;
 import gnu.trove.map.hash.TIntObjectHashMap;
+import java8.util.function.Function;
+import java8.util.function.IntFunction;
+import java8.util.function.Predicate;
+import java8.util.stream.StreamSupport;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.tuple.Pair;
 import org.apache.uima.UimaContext;
@@ -83,8 +88,30 @@ public class MentionTypeCrfTrainer extends AbstractLoggingAnnotator {
 
         if (classFile != null) {
             try {
-                classes = FileUtils.readLines(classFile).stream().map(l -> l.split("\t"))
-                        .filter(p -> p.length >= 1).map(p -> p[0]).toArray(String[]::new);
+                classes = StreamSupport.stream(FileUtils.readLines(classFile))
+                        .map(new Function<String, String[]>() {
+                            @Override
+                            public String[] apply(String s) {
+                                return s.split("\t");
+                            }
+                        }).filter(new Predicate<String[]>() {
+                            @Override
+                            public boolean test(String[] p) {
+                                return p.length >= 1;
+                            }
+                        }).map(new Function<String[], String>() {
+                            @Override
+                            public String apply(String[] p) {
+                                return p[0];
+                            }
+                        }).toArray(new IntFunction<String[]>() {
+                            @Override
+                            public String[] apply(int i) {
+                                return new String[i];
+                            }
+                        });
+//                classes = FileUtils.readLines(classFile).stream().map(l -> l.split("\t"))
+//                        .filter(p -> p.length >= 1).map(p -> p[0]).toArray(String[]::new);
             } catch (IOException e) {
                 e.printStackTrace();
             }
@@ -99,7 +126,13 @@ public class MentionTypeCrfTrainer extends AbstractLoggingAnnotator {
         trainingStats = new TrainingStats(printLossOverPreviousN);
 
         try {
-            featureCacher = new MultiKeyDiskCacher<>(cacheDir.getPath(), (strings, featureVectors) -> 1,
+            featureCacher = new MultiKeyDiskCacher<ArrayList<TIntObjectMap<FeatureVector[]>>>(cacheDir.getPath(),
+                    new Weigher<List<String>, ArrayList<TIntObjectMap<FeatureVector[]>>>() {
+                        @Override
+                        public int weigh(List<String> strings, ArrayList<TIntObjectMap<FeatureVector[]>> features) {
+                            return 1;
+                        }
+                    },
                     weightLimit, discardAfter, "feature_cache");
         } catch (IOException e) {
             e.printStackTrace();
@@ -113,15 +146,29 @@ public class MentionTypeCrfTrainer extends AbstractLoggingAnnotator {
             sentenceExtractor = new SentenceFeatureExtractor(alphabet, config,
                     new FeatureSpecParser(config.get("edu.cmu.cs.lti.feature.sentence.package.name"))
                             .parseFeatureFunctionSpecs(featureSpec));
-        } catch (ClassNotFoundException | NoSuchMethodException | InvocationTargetException | InstantiationException
-                | IllegalAccessException e) {
+        } catch (ClassNotFoundException e) {
+            e.printStackTrace();
+        } catch (NoSuchMethodException e) {
+            e.printStackTrace();
+        } catch (InvocationTargetException e) {
+            e.printStackTrace();
+        } catch (InstantiationException e) {
+            e.printStackTrace();
+        } catch (IllegalAccessException e) {
             e.printStackTrace();
         }
 
         logger.info("Initializing gold cacher with " + cacheDir.getAbsolutePath());
 
         try {
-            goldCacher = new MultiKeyDiskCacher<>(cacheDir.getPath(), (strings, fv) -> 1,
+            goldCacher = new MultiKeyDiskCacher<ArrayList<Pair<GraphFeatureVector, SequenceSolution>>>(
+                    cacheDir.getPath(),
+                    new Weigher<List<String>, ArrayList<Pair<GraphFeatureVector, SequenceSolution>>>() {
+                        @Override
+                        public int weigh(List<String> k, ArrayList<Pair<GraphFeatureVector, SequenceSolution>> v) {
+                            return 1;
+                        }
+                    },
                     weightLimit, discardAfter, "gold_cache");
         } catch (IOException e) {
             e.printStackTrace();
@@ -137,16 +184,17 @@ public class MentionTypeCrfTrainer extends AbstractLoggingAnnotator {
         String documentKey = JCasUtil.selectSingle(aJCas, Article.class).getArticleName();
 
         List<TIntObjectMap<FeatureVector[]>> documentCacheFeatures = featureCacher.get(documentKey);
-        ArrayList<TIntObjectMap<FeatureVector[]>> featuresToCache = new ArrayList<>();
+        ArrayList<TIntObjectMap<FeatureVector[]>> featuresToCache = new ArrayList<TIntObjectMap<FeatureVector[]>>();
 
         List<Pair<GraphFeatureVector, SequenceSolution>> cachedGold = goldCacher.get(documentKey);
-        ArrayList<Pair<GraphFeatureVector, SequenceSolution>> goldToCache = new ArrayList<>();
+        ArrayList<Pair<GraphFeatureVector, SequenceSolution>> goldToCache = new ArrayList<Pair<GraphFeatureVector,
+                SequenceSolution>>();
 
         int sentenceId = 0;
         for (StanfordCorenlpSentence sentence : JCasUtil.select(aJCas, StanfordCorenlpSentence.class)) {
             sentenceExtractor.resetWorkspace(aJCas, sentence);
 
-            Map<StanfordCorenlpToken, String> tokenTypes = new HashMap<>();
+            Map<StanfordCorenlpToken, String> tokenTypes = new HashMap<StanfordCorenlpToken, String>();
             List<EventMention> mentions = JCasUtil.selectCovered(goldView, EventMention.class, sentence.getBegin(),
                     sentence.getEnd());
             Map<Span, String> mergedMentions = mergeMentionByTypes(mentions);
@@ -180,7 +228,7 @@ public class MentionTypeCrfTrainer extends AbstractLoggingAnnotator {
             if (documentCacheFeatures != null) {
                 sentenceFeatures = documentCacheFeatures.get(sentenceId);
             } else {
-                sentenceFeatures = new TIntObjectHashMap<>();
+                sentenceFeatures = new TIntObjectHashMap<FeatureVector[]>();
             }
 
             double loss = trainer.trainNext(goldSolution, goldFv, sentenceExtractor, 0, sentenceFeatures);
@@ -207,10 +255,10 @@ public class MentionTypeCrfTrainer extends AbstractLoggingAnnotator {
             mergedMentionTypes.put(Span.of(mention.getBegin(), mention.getEnd()), mention.getEventType());
         }
 
-        Map<Span, String> mentionWithMergedTypes = new HashMap<>();
+        Map<Span, String> mentionWithMergedTypes = new HashMap<Span, String>();
 
         for (Span span : mergedMentionTypes.keySet()) {
-            TreeSet<String> uniqueSortedTypes = new TreeSet<>(mergedMentionTypes.get(span));
+            TreeSet<String> uniqueSortedTypes = new TreeSet<String>(mergedMentionTypes.get(span));
             mentionWithMergedTypes.put(span, EventMentionTypeClassPrinter.joinMultipleTypes(uniqueSortedTypes));
         }
 

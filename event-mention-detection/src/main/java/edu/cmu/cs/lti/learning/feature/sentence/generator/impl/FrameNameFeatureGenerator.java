@@ -23,7 +23,7 @@ public class FrameNameFeatureGenerator extends EventMentionFeatureGenerator {
 
     @Override
     public Map<String, Double> genFeatures(CandidateEventMention mention) {
-        Map<String, Double> features = new HashMap<>();
+        Map<String, Double> features = new HashMap<String, Double>();
 
         StringList potentialFrameFs = mention.getPotentialFrames();
 

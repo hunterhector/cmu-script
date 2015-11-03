@@ -49,8 +49,8 @@ public class ArgumentExtractor extends AbstractLoggingAnnotator {
             mention.setHeadWord(headWord);
 
             List<SemaforLabel> coveredSemaforLabel = JCasUtil.selectCovered(SemaforLabel.class, headWord);
-            Map<StanfordCorenlpToken, String> semafordHeadWord2Role = new HashMap<>();
-            Map<String, SemaforLabel> semaforRoles = new HashMap<>();
+            Map<StanfordCorenlpToken, String> semafordHeadWord2Role = new HashMap<StanfordCorenlpToken, String>();
+            Map<String, SemaforLabel> semaforRoles = new HashMap<String, SemaforLabel>();
             for (SemaforLabel label : coveredSemaforLabel) {
                 if (semaforArguments.containsKey(label)) {
                     Pair<String, Map<String, SemaforLabel>> frameNameAndRoles = semaforArguments.get(label);
@@ -69,8 +69,8 @@ public class ArgumentExtractor extends AbstractLoggingAnnotator {
 
             FanseToken headFanseToken = helper.getFanseToken(headWord);
             FSList childSemanticRelations = headFanseToken.getChildSemanticRelations();
-            Map<StanfordCorenlpToken, String> fanseHeadWord2Role = new HashMap<>();
-            Map<String, FanseToken> fanseRoles = new HashMap<>();
+            Map<StanfordCorenlpToken, String> fanseHeadWord2Role = new HashMap<StanfordCorenlpToken, String>();
+            Map<String, FanseToken> fanseRoles = new HashMap<String, FanseToken>();
             if (childSemanticRelations != null) {
                 for (FanseSemanticRelation childRelation : JCasUtil.select(childSemanticRelations,
                         FanseSemanticRelation.class)) {
@@ -84,7 +84,7 @@ public class ArgumentExtractor extends AbstractLoggingAnnotator {
             }
 
             // For the same mention, all arguments should be merged together.
-            Set<StanfordCorenlpToken> mappedArguments = new HashSet<>();
+            Set<StanfordCorenlpToken> mappedArguments = new HashSet<StanfordCorenlpToken>();
 
             for (Map.Entry<StanfordCorenlpToken, String> semaforRoleHead : semafordHeadWord2Role.entrySet()) {
                 StanfordCorenlpToken headToken = semaforRoleHead.getKey();
@@ -123,11 +123,11 @@ public class ArgumentExtractor extends AbstractLoggingAnnotator {
     }
 
     private Map<SemaforLabel, Pair<String, Map<String, SemaforLabel>>> getSemaforArguments(JCas aJCas) {
-        Map<SemaforLabel, Pair<String, Map<String, SemaforLabel>>> semaforArguments = new HashMap<>();
+        Map<SemaforLabel, Pair<String, Map<String, SemaforLabel>>> semaforArguments = new HashMap<SemaforLabel, Pair<String, Map<String, SemaforLabel>>>();
 
         for (SemaforAnnotationSet annotationSet : JCasUtil.select(aJCas, SemaforAnnotationSet.class)) {
             SemaforLabel targetLabel = null;
-            Map<String, SemaforLabel> roleLabels = new HashMap<>();
+            Map<String, SemaforLabel> roleLabels = new HashMap<String, SemaforLabel>();
 
             for (SemaforLayer layer : JCasUtil.select(annotationSet.getLayers(), SemaforLayer.class)) {
                 String layerName = layer.getName();

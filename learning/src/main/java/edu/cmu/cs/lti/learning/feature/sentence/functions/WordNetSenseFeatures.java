@@ -7,6 +7,10 @@ import edu.cmu.cs.lti.script.type.StanfordCorenlpToken;
 import edu.cmu.cs.lti.script.type.WordNetBasedEntity;
 import edu.cmu.cs.lti.utils.Configuration;
 import gnu.trove.map.TObjectDoubleMap;
+import java8.util.function.BiConsumer;
+import java8.util.function.Consumer;
+import java8.util.stream.Collectors;
+import java8.util.stream.StreamSupport;
 import org.apache.uima.fit.util.FSCollectionFactory;
 import org.apache.uima.fit.util.JCasUtil;
 import org.apache.uima.jcas.JCas;
@@ -18,8 +22,6 @@ import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
-import java.util.function.BiConsumer;
-import java.util.stream.Collectors;
 
 /**
  * Created with IntelliJ IDEA.
@@ -38,32 +40,48 @@ public class WordNetSenseFeatures extends SequenceFeatureWithFocus {
         super(generalConfig, featureConfig);
         searcher = new WordNetSearcher(generalConfig.get("edu.cmu.cs.lti.wndict.path"));
 
-        featureTemplates = new ArrayList<>();
+        featureTemplates = new ArrayList<BiConsumer<TObjectDoubleMap<String>, StanfordCorenlpToken>>();
+
+        final WordNetSenseFeatures featureExtractor = this;
 
         for (String templateName : featureConfig.getList(this.getClass().getSimpleName() + ".templates")) {
-            switch (templateName) {
-                case "JobTitle":
-                    featureTemplates.add(this::modifyingJobTitle);
-                    break;
-                case "Synonym":
-                    featureTemplates.add(this::synonymFeatures);
-                    break;
-                case "Derivation":
-                    featureTemplates.add(this::derivationFeatures);
-                    break;
-                default:
-                    logger.warn(String.format("Template [%s] not recognized.", templateName));
+            if (templateName.equals("JobTitle")) {
+                featureTemplates.add(new BiConsumer<TObjectDoubleMap<String>, StanfordCorenlpToken>() {
+                    @Override
+                    public void accept(TObjectDoubleMap<String> features, StanfordCorenlpToken token) {
+                        WordNetSenseFeatures.this.modifyingJobTitle(features, token);
+                    }
+                });
+
+            } else if (templateName.equals("Synonym")) {
+                featureTemplates.add(new BiConsumer<TObjectDoubleMap<String>, StanfordCorenlpToken>() {
+                    @Override
+                    public void accept(TObjectDoubleMap<String> features, StanfordCorenlpToken token) {
+                        WordNetSenseFeatures.this.synonymFeatures(features, token);
+                    }
+                });
+
+            } else if (templateName.equals("Derivation")) {
+                featureTemplates.add(new BiConsumer<TObjectDoubleMap<String>, StanfordCorenlpToken>() {
+                    @Override
+                    public void accept(TObjectDoubleMap<String> features, StanfordCorenlpToken token) {
+                        WordNetSenseFeatures.this.derivationFeatures(features, token);
+                    }
+                });
+
+            } else {
+                logger.warn(String.format("Template [%s] not recognized.", templateName));
             }
         }
     }
 
     @Override
     public void initDocumentWorkspace(JCas context) {
-        jobTitleWords = new HashSet<>();
+        jobTitleWords = new HashSet<StanfordCorenlpToken>();
         for (WordNetBasedEntity title : JCasUtil.select(context, WordNetBasedEntity.class)) {
             if (title.getSense().equals("JobTitle")) {
-                jobTitleWords.addAll(JCasUtil.selectCovered(StanfordCorenlpToken.class, title).stream().collect
-                        (Collectors.toList()));
+                jobTitleWords.addAll(StreamSupport.stream(JCasUtil.selectCovered(StanfordCorenlpToken.class, title))
+                        .collect(Collectors.<StanfordCorenlpToken>toList()));
             }
         }
     }
@@ -83,12 +101,15 @@ public class WordNetSenseFeatures extends SequenceFeatureWithFocus {
         }
     }
 
-    private void modifyingJobTitle(TObjectDoubleMap<String> features, StanfordCorenlpToken token) {
+    private void modifyingJobTitle(final TObjectDoubleMap<String> features, StanfordCorenlpToken token) {
         FSList headDeps = token.getHeadDependencyRelations();
         if (headDeps != null) {
-            FSCollectionFactory.create(headDeps, Dependency.class).stream().forEach(dep -> {
-                if (dep.getDependencyType().endsWith("mod") && jobTitleWords.contains(dep.getHead())) {
-                    features.put("TriggerModifyingJobTitle", 1);
+            StreamSupport.stream(FSCollectionFactory.create(headDeps, Dependency.class)).forEach(new Consumer<Dependency>() {
+                @Override
+                public void accept(Dependency dep) {
+                    if (dep.getDependencyType().endsWith("mod") && jobTitleWords.contains(dep.getHead())) {
+                        features.put("TriggerModifyingJobTitle", 1);
+                    }
                 }
             });
         }
@@ -101,7 +122,7 @@ public class WordNetSenseFeatures extends SequenceFeatureWithFocus {
     }
 
     private void derivationFeatures(TObjectDoubleMap<String> features, StanfordCorenlpToken token) {
-        Set<String> derivedWordType = new HashSet<>();
+        Set<String> derivedWordType = new HashSet<String>();
 
         for (Pair<String, String> der : searcher.getDerivations(token.getLemma().toLowerCase(), token.getPos())) {
             derivedWordType.add(der.getValue0());

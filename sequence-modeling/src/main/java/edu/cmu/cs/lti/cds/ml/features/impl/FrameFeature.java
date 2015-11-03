@@ -46,7 +46,7 @@ public class FrameFeature extends GlobalFeature {
 
             LocalArgumentRepre[] args = element.getMention().getArgs();
 
-            Map<String, String> pb2FrameRoleNames = new HashMap<>();
+            Map<String, String> pb2FrameRoleNames = new HashMap<String, String>();
             for (int argIdx = 0; argIdx < args.length; argIdx++) {
                 LocalArgumentRepre arg = args[argIdx];
                 if (arg != null && !arg.isOther()) {
@@ -61,8 +61,8 @@ public class FrameFeature extends GlobalFeature {
 
     @Override
     public Map<String, Double> getFeature(ContextElement targetElement, int targetIndex) {
-        Map<String, Double> features = new HashMap<>();
-        TIntObjectMap<String> targetArgumentIds = new TIntObjectHashMap<>();
+        Map<String, Double> features = new HashMap<String, Double>();
+        TIntObjectMap<String> targetArgumentIds = new TIntObjectHashMap<String>();
 
         LocalArgumentRepre[] targetArgs = targetElement.getMention().getArgs();
         for (int slotId = 0; slotId < targetArgs.length; slotId++) {
@@ -74,7 +74,7 @@ public class FrameFeature extends GlobalFeature {
         }
 
         TObjectIntMap<String> frameCounts = new TObjectIntHashMap();
-        Map<String, TObjectIntMap<String>> frameRoleCounts = new HashMap<>();
+        Map<String, TObjectIntMap<String>> frameRoleCounts = new HashMap<String, TObjectIntMap<String>>();
 
         for (int i = 0; i < elements.size(); i++) {
             if (i == targetIndex) {

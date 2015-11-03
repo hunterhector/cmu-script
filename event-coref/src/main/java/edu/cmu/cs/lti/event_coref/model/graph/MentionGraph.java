@@ -50,7 +50,7 @@ public class MentionGraph implements Serializable {
      * @param mentions List of event mentions.
      */
     public MentionGraph(List<EventMention> mentions, boolean useAverage) {
-        this(mentions, new ArrayList<>());
+        this(mentions, new ArrayList<EventMentionRelation>());
         this.useAverage = useAverage;
     }
 

@@ -46,7 +46,7 @@ public class WordNetSenseIdentifier {
     }
 
     public List<String> getInterestingSupertype(String word) {
-        List<String> interestTypes = new ArrayList<>();
+        List<String> interestTypes = new ArrayList<String>();
         Set<String> hypernyms = wns.getAllNounHypernymsForAllSense(word);
         for (String interestingWordType : injuryRelatedSenses) {
             if (hypernyms.contains(interestingWordType)) {

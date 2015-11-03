@@ -38,9 +38,9 @@ public class ArgumentTypeFeature extends GlobalFeature {
 
     @Override
     public Map<String, Double> getFeature(ContextElement targetElement, int targetIndex) {
-        Map<String, Double> features = new HashMap<>();
+        Map<String, Double> features = new HashMap<String, Double>();
 
-        TIntObjectMap<String> targetArgumentIds = new TIntObjectHashMap<>();
+        TIntObjectMap<String> targetArgumentIds = new TIntObjectHashMap<String>();
 
         LocalArgumentRepre[] targetArgs = targetElement.getMention().getArgs();
         for (int slotId = 0; slotId < targetArgs.length; slotId++) {
@@ -51,8 +51,8 @@ public class ArgumentTypeFeature extends GlobalFeature {
             }
         }
 
-        Map<String, TObjectIntMap<String>> argumentEntityTypeCounts = new HashMap<>();
-        Map<String, TObjectIntMap<String>> argumentWordTypeCounts = new HashMap<>();
+        Map<String, TObjectIntMap<String>> argumentEntityTypeCounts = new HashMap<String, TObjectIntMap<String>>();
+        Map<String, TObjectIntMap<String>> argumentWordTypeCounts = new HashMap<String, TObjectIntMap<String>>();
 
         for (int i = 0; i < elements.size(); i++) {
             if (i == targetIndex) {
@@ -119,7 +119,7 @@ public class ArgumentTypeFeature extends GlobalFeature {
     }
 
     private Map<String, EntityMention> getArguments(ContextElement element) {
-        Map<String, EntityMention> argumentsByRoleName = new HashMap<>();
+        Map<String, EntityMention> argumentsByRoleName = new HashMap<String, EntityMention>();
         EventMention mention = element.getOriginalMention();
         if (mention.getArguments() != null) {
             for (EventMentionArgumentLink link : FSCollectionFactory.create(mention.getArguments(), EventMentionArgumentLink.class)) {

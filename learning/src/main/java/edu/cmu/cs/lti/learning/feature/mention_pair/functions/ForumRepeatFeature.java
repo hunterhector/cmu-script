@@ -26,7 +26,7 @@ public class ForumRepeatFeature extends AbstractMentionPairFeatures {
 
     @Override
     public void initDocumentWorkspace(JCas context) {
-        mention2Sentence = new HashMap<>();
+        mention2Sentence = new HashMap<EventMention, StanfordCorenlpSentence>();
         for (StanfordCorenlpSentence sentence : JCasUtil.select(context, StanfordCorenlpSentence.class)) {
             for (EventMention mention : JCasUtil.selectCovered(EventMention.class, sentence)) {
                 mention2Sentence.put(mention, sentence);

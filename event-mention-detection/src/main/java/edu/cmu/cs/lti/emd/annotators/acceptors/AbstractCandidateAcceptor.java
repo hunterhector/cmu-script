@@ -22,18 +22,20 @@ public abstract class AbstractCandidateAcceptor extends AbstractLoggingAnnotator
     public void process(JCas aJCas) throws AnalysisEngineProcessException {
         List<CandidateEventMention> candidates = UimaConvenience.getAnnotationList(aJCas, CandidateEventMention.class);
 
-        candidates.stream().filter(this::accept).forEach
-                (candidate -> {
-                    EventMention mention = new EventMention(aJCas);
-                    mention.setBegin(candidate.getBegin());
-                    mention.setEnd(candidate.getEnd());
-                    mention.setEventType(candidate.getPredictedType());
-                    mention.setRealisType(candidate.getPredictedRealis());
-                    UimaAnnotationUtils.finishAnnotation(mention, candidate.getBegin(), candidate.getEnd(),
-                            COMPONENT_ID, 0, aJCas);
-                });
-
-        candidates.forEach(edu.cmu.cs.lti.script.type.CandidateEventMention::removeFromIndexes);
+        for (CandidateEventMention candidate : candidates) {
+            if (this.accept(candidate)){
+                EventMention mention = new EventMention(aJCas);
+                mention.setBegin(candidate.getBegin());
+                mention.setEnd(candidate.getEnd());
+                mention.setEventType(candidate.getPredictedType());
+                mention.setRealisType(candidate.getPredictedRealis());
+                UimaAnnotationUtils.finishAnnotation(mention, candidate.getBegin(), candidate.getEnd(),
+                        COMPONENT_ID, 0, aJCas);
+            }
+        }
+        for (CandidateEventMention candidate : candidates) {
+            candidate.removeFromIndexes();
+        }
     }
 
     protected abstract boolean accept(CandidateEventMention candidate);

@@ -78,7 +78,7 @@ public class GraphUtils {
      * @return List of non-singleton coreference chains sorted by event mention id.
      */
     public static <T> int[][] createSortedCorefChains(ArrayListMultimap<T, Integer> group2Clusters) {
-        SortedMap<Integer, int[]> chainsSortedByHead = new TreeMap<>();
+        SortedMap<Integer, int[]> chainsSortedByHead = new TreeMap<Integer, int[]>();
         for (Map.Entry<T, Collection<Integer>> entry : group2Clusters.asMap().entrySet()) {
             Collection<Integer> chainList = entry.getValue();
             if (chainList.size() > 1) {
@@ -109,7 +109,7 @@ public class GraphUtils {
     public static <T> Map<MentionGraphEdge.EdgeType, int[][]> resolveRelations(
             ArrayListMultimap<MentionGraphEdge.EdgeType, Pair<T, T>> interClusterRelations,
             ArrayListMultimap<T, Integer> clusters, int numNodes) {
-        Map<MentionGraphEdge.EdgeType, int[][]> edgeAdjacentList = new HashMap<>();
+        Map<MentionGraphEdge.EdgeType, int[][]> edgeAdjacentList = new HashMap<MentionGraphEdge.EdgeType, int[][]>();
 
         for (Map.Entry<MentionGraphEdge.EdgeType, Collection<Pair<T, T>>> relationsByType : interClusterRelations
                 .asMap().entrySet()) {

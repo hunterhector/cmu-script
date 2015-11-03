@@ -60,8 +60,8 @@ public class UsefulFramDetector extends AbstractLoggingAnnotator {
     @ConfigurationParameter(name = PARAM_OUTPUT_DIR)
     private String outputDirPath;
 
-    TObjectIntMap<String> frameCounter = new TObjectIntHashMap<>();
-    TObjectIntMap<String> headCounter = new TObjectIntHashMap<>();
+    TObjectIntMap<String> frameCounter = new TObjectIntHashMap<String>();
+    TObjectIntMap<String> headCounter = new TObjectIntHashMap<String>();
 
     private ArrayListMultimap<String, String> lexicon2Frame;
 
@@ -88,7 +88,11 @@ public class UsefulFramDetector extends AbstractLoggingAnnotator {
         try {
             logger.info("Loading frame lexicon");
             lexicon2Frame = FrameDataReader.getLexicon2Frame(frameDirPath);
-        } catch (IOException | ParserConfigurationException | SAXException e) {
+        } catch (IOException e) {
+            e.printStackTrace();
+        } catch (ParserConfigurationException e) {
+            e.printStackTrace();
+        } catch (SAXException e) {
             e.printStackTrace();
         }
 
@@ -159,9 +163,9 @@ public class UsefulFramDetector extends AbstractLoggingAnnotator {
     }
 
     private List<StanfordCorenlpToken> getUsefulTokens(EventMention mention, JCas aJCas, TokenAlignmentHelper align) {
-        List<StanfordCorenlpToken> contentTokens = new ArrayList<>();
+        List<StanfordCorenlpToken> contentTokens = new ArrayList<StanfordCorenlpToken>();
 
-        List<StanfordCorenlpToken> goldWords = new ArrayList<>();
+        List<StanfordCorenlpToken> goldWords = new ArrayList<StanfordCorenlpToken>();
         if (mention.getMentionTokens() != null) {
             for (Word word : FSCollectionFactory.create(mention.getMentionTokens(), Word.class)) {
                 goldWords.add(align.getStanfordToken(JCasUtil.selectCovered(aJCas, Word.class, word.getBegin(), word.getEnd()).get(0)));
@@ -181,7 +185,7 @@ public class UsefulFramDetector extends AbstractLoggingAnnotator {
     }
 
     private Map<Word, String> getFrameAnnotations(JCas aJCas) {
-        Map<Word, String> invokeMapping = new HashMap<>();
+        Map<Word, String> invokeMapping = new HashMap<Word, String>();
 
         for (SemaforAnnotationSet annotationSet : JCasUtil.select(aJCas, SemaforAnnotationSet.class)) {
             FSArray layers = annotationSet.getLayers();
@@ -206,7 +210,7 @@ public class UsefulFramDetector extends AbstractLoggingAnnotator {
         if (lexicon2Frame.containsKey(word + "." + shortPos)) {
             return lexicon2Frame.get(word + '.' + shortPos);
         } else {
-            Set<String> potentialFrames = new HashSet<>();
+            Set<String> potentialFrames = new HashSet<String>();
             for (POS pos : targetPos) {
                 for (String stem : wns.stem(word, pos)) {
                     String frameLexeme = stem + "." + Character.toUpperCase(pos.getTag());
@@ -215,7 +219,7 @@ public class UsefulFramDetector extends AbstractLoggingAnnotator {
                     }
                 }
             }
-            return new ArrayList<>(potentialFrames);
+            return new ArrayList<String>(potentialFrames);
         }
     }
 

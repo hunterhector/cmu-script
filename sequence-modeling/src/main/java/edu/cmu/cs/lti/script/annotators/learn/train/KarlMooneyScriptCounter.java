@@ -55,11 +55,11 @@ public class KarlMooneyScriptCounter extends AbstractLoggingAnnotator {
 
     public static final String PARAM_IGNORE_LOW_FREQ = "ignoreLowFreq";
 
-    private TObjectIntMap<String> headIdMap = new TObjectIntHashMap<>();
+    private TObjectIntMap<String> headIdMap = new TObjectIntHashMap<String>();
 
-    private TObjectIntMap<TIntList> cooccCounts = new TObjectIntHashMap<>();
+    private TObjectIntMap<TIntList> cooccCounts = new TObjectIntHashMap<TIntList>();
 
-    private TObjectIntMap<TIntList> occCounts = new TObjectIntHashMap<>();
+    private TObjectIntMap<TIntList> occCounts = new TObjectIntHashMap<TIntList>();
 
     private int skippedBigramN;
 
@@ -247,19 +247,19 @@ public class KarlMooneyScriptCounter extends AbstractLoggingAnnotator {
             }
         }
 
-        Fun.Tuple4<String, Integer, Integer, Integer> eventTuple1 = new Fun.Tuple4<>(evm1.getMentionHead(),
+        Fun.Tuple4<String, Integer, Integer, Integer> eventTuple1 = new Fun.Tuple4<String, Integer, Integer, Integer>(evm1.getMentionHead(),
                 evm1Slots.containsKey(KmTargetConstants.anchorArg0Marker) ? evm1Slots.get(KmTargetConstants.anchorArg0Marker) : KmTargetConstants.nullArgMarker,
                 evm1Slots.containsKey(KmTargetConstants.anchorArg1Marker) ? evm1Slots.get(KmTargetConstants.anchorArg1Marker) : KmTargetConstants.nullArgMarker,
                 evm1Slots.containsKey(KmTargetConstants.anchorArg2Marker) ? evm1Slots.get(KmTargetConstants.anchorArg2Marker) : KmTargetConstants.nullArgMarker
         );
 
-        Fun.Tuple4<String, Integer, Integer, Integer> eventTuple2 = new Fun.Tuple4<>(evm2.getMentionHead(),
+        Fun.Tuple4<String, Integer, Integer, Integer> eventTuple2 = new Fun.Tuple4<String, Integer, Integer, Integer>(evm2.getMentionHead(),
                 evm2Slots.containsKey(KmTargetConstants.anchorArg0Marker) ? evm2Slots.get(KmTargetConstants.anchorArg0Marker) : KmTargetConstants.nullArgMarker,
                 evm2Slots.containsKey(KmTargetConstants.anchorArg1Marker) ? evm2Slots.get(KmTargetConstants.anchorArg1Marker) : KmTargetConstants.nullArgMarker,
                 evm2Slots.containsKey(KmTargetConstants.anchorArg2Marker) ? evm2Slots.get(KmTargetConstants.anchorArg2Marker) : KmTargetConstants.nullArgMarker
         );
 
-        return new Fun.Tuple2<>(eventTuple1, eventTuple2);
+        return new Fun.Tuple2<Fun.Tuple4<String, Integer, Integer, Integer>, Fun.Tuple4<String, Integer, Integer, Integer>>(eventTuple1, eventTuple2);
     }
 
     public static Fun.Tuple2<Fun.Tuple4<String, Integer, Integer, Integer>, Fun.Tuple4<String, Integer, Integer, Integer>> firstBasedSubstitution(
@@ -301,19 +301,19 @@ public class KarlMooneyScriptCounter extends AbstractLoggingAnnotator {
             }
         }
 
-        Fun.Tuple4<String, Integer, Integer, Integer> eventTuple1 = new Fun.Tuple4<>(align.getLowercaseWordLemma(evm1.getHeadWord()),
+        Fun.Tuple4<String, Integer, Integer, Integer> eventTuple1 = new Fun.Tuple4<String, Integer, Integer, Integer>(align.getLowercaseWordLemma(evm1.getHeadWord()),
                 evm1Slots.containsKey(KmTargetConstants.anchorArg0Marker) ? evm1Slots.get(KmTargetConstants.anchorArg0Marker) : KmTargetConstants.nullArgMarker,
                 evm1Slots.containsKey(KmTargetConstants.anchorArg1Marker) ? evm1Slots.get(KmTargetConstants.anchorArg1Marker) : KmTargetConstants.nullArgMarker,
                 evm1Slots.containsKey(KmTargetConstants.anchorArg2Marker) ? evm1Slots.get(KmTargetConstants.anchorArg2Marker) : KmTargetConstants.nullArgMarker
         );
 
-        Fun.Tuple4<String, Integer, Integer, Integer> eventTuple2 = new Fun.Tuple4<>(align.getLowercaseWordLemma(evm2.getHeadWord()),
+        Fun.Tuple4<String, Integer, Integer, Integer> eventTuple2 = new Fun.Tuple4<String, Integer, Integer, Integer>(align.getLowercaseWordLemma(evm2.getHeadWord()),
                 evm2Slots.containsKey(KmTargetConstants.anchorArg0Marker) ? evm2Slots.get(KmTargetConstants.anchorArg0Marker) : KmTargetConstants.nullArgMarker,
                 evm2Slots.containsKey(KmTargetConstants.anchorArg1Marker) ? evm2Slots.get(KmTargetConstants.anchorArg1Marker) : KmTargetConstants.nullArgMarker,
                 evm2Slots.containsKey(KmTargetConstants.anchorArg2Marker) ? evm2Slots.get(KmTargetConstants.anchorArg2Marker) : KmTargetConstants.nullArgMarker
         );
 
-        return new Fun.Tuple2<>(eventTuple1, eventTuple2);
+        return new Fun.Tuple2<Fun.Tuple4<String, Integer, Integer, Integer>, Fun.Tuple4<String, Integer, Integer, Integer>>(eventTuple1, eventTuple2);
     }
 
     @Override

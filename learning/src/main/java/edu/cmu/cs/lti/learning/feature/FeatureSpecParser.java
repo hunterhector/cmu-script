@@ -29,15 +29,18 @@ public class FeatureSpecParser {
     public Configuration parseFeatureFunctionSpecs(String rawFeatureSpecs) {
         Configuration featureSpec = new Configuration();
         featureSpec.add(FEATURE_FUNCTION_PACKAGE_KEY, featureFunctionPackageName);
-        List<String> allFunctions = new ArrayList<>();
+        List<String> allFunctions = new ArrayList<String>();
 
         for (String rawFeatureSpec : rawFeatureSpecs.split(";")) {
             String[] featureSpecKeyValue = rawFeatureSpec.split("\\s+", 2);
             String featureFunctionName = featureSpecKeyValue[0];
             allFunctions.add(featureFunctionName);
             if (featureSpecKeyValue.length == 2) {
-                parseFeatureTemplateSpec(featureSpecKeyValue[1]).entrySet().forEach(entry -> featureSpec.add(
-                        featureFunctionName + "." + entry.getKey(), entry.getValue()));
+//                parseFeatureTemplateSpec(featureSpecKeyValue[1]).entrySet().forEach(entry -> featureSpec.add(
+//                        featureFunctionName + "." + entry.getKey(), entry.getValue()));
+                for (Map.Entry<String, String> entry : parseFeatureTemplateSpec(featureSpecKeyValue[1]).entrySet()) {
+                    featureSpec.add(featureFunctionName + "." + entry.getKey(), entry.getValue());
+                }
             }
         }
         featureSpec.add(FEATURE_FUNCTION_NAME_KEY, Joiner.on(",").join(allFunctions));
@@ -45,7 +48,7 @@ public class FeatureSpecParser {
     }
 
     public Map<String, String> parseFeatureTemplateSpec(String templateSpecStr) {
-        Map<String, String> featureTemplateSpec = new HashMap<>();
+        Map<String, String> featureTemplateSpec = new HashMap<String, String>();
         for (String s : templateSpecStr.split(":")) {
             String[] keyVal = s.split("=", 2);
             featureTemplateSpec.put(keyVal[0], keyVal[1]);

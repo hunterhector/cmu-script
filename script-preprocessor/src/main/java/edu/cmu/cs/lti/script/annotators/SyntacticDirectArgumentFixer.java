@@ -50,8 +50,8 @@ public class SyntacticDirectArgumentFixer extends AbstractEntityMentionCreator {
             List<Dependency> evmHeadDependencies = UimaConvenience.convertFSListToList(evmHead.getHeadDependencyRelations(), Dependency.class);
             List<Dependency> evmChildDependencies = UimaConvenience.convertFSListToList(evmHead.getChildDependencyRelations(), Dependency.class);
 
-            Set<EventMentionArgumentLink> arg0s = new HashSet<>();
-            Set<EventMentionArgumentLink> arg1s = new HashSet<>();
+            Set<EventMentionArgumentLink> arg0s = new HashSet<EventMentionArgumentLink>();
+            Set<EventMentionArgumentLink> arg1s = new HashSet<EventMentionArgumentLink>();
 
             for (EventMentionArgumentLink link : FSCollectionFactory.create(evm.getArguments(), EventMentionArgumentLink.class)) {
                 if (link.getArgumentRole().equals(PropBankTagSet.ARG0)) {
@@ -63,7 +63,7 @@ public class SyntacticDirectArgumentFixer extends AbstractEntityMentionCreator {
 
             //fix duplicate arg1 with subj
             if (arg1s.size() > 1 && arg0s.isEmpty()) {
-                Map<Span, EventMentionArgumentLink> head2Arg1Links = new HashMap<>();
+                Map<Span, EventMentionArgumentLink> head2Arg1Links = new HashMap<Span, EventMentionArgumentLink>();
                 for (EventMentionArgumentLink arg1Link : arg1s) {
                     EntityMention arg1 = arg1Link.getArgument();
                     head2Arg1Links.put(UimaAnnotationUtils.toSpan(arg1.getHead()), arg1Link);

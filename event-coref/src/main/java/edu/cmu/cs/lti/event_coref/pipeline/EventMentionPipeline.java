@@ -164,8 +164,8 @@ public class EventMentionPipeline {
      * @throws UIMAException
      * @throws IOException
      */
-    public void prepare(Configuration taskConfig, String workingDirPath, String goldStandardPath,
-                        String plainTextPath, String tokenMapPath) throws
+    public void prepare(final Configuration taskConfig, String workingDirPath, final String goldStandardPath,
+                        final String plainTextPath, final String tokenMapPath) throws
             UIMAException, IOException {
         if (workingDirPath == null) {
             logger.info("Working directory not provided, not running");
@@ -274,9 +274,9 @@ public class EventMentionPipeline {
         );
     }
 
-    public CollectionReaderDescription goldMentionAnnotator(CollectionReaderDescription reader, String mainDir,
-                                                            String baseOutput, boolean copyType, boolean copyRealis,
-                                                            boolean copyCluster) throws UIMAException, IOException {
+    public CollectionReaderDescription goldMentionAnnotator(final CollectionReaderDescription reader, String mainDir,
+                                                            String baseOutput, final boolean copyType, final boolean copyRealis,
+                                                            final boolean copyCluster) throws UIMAException, IOException {
         new BasicPipeline(new ProcessorWrapper() {
             @Override
             public CollectionReaderDescription getCollectionReader() throws ResourceInitializationException {
@@ -291,8 +291,8 @@ public class EventMentionPipeline {
         return CustomCollectionReaderFactory.createXmiReader(typeSystemDescription, mainDir, baseOutput);
     }
 
-    public CollectionReaderDescription crfMentionDetection(Configuration taskConfig, CollectionReaderDescription reader,
-                                                           String modelDir, String mainDir, String baseOutput)
+    public CollectionReaderDescription crfMentionDetection(final Configuration taskConfig, final CollectionReaderDescription reader,
+                                                           final String modelDir, String mainDir, String baseOutput)
             throws UIMAException, IOException {
 
         new BasicPipeline(new ProcessorWrapper() {
@@ -334,8 +334,8 @@ public class EventMentionPipeline {
         return realisCvModelDir;
     }
 
-    public CollectionReaderDescription realisAnnotation(Configuration config, CollectionReaderDescription reader,
-                                                        String modelDir, String mainDir, String realisOutputBase)
+    public CollectionReaderDescription realisAnnotation(final Configuration config, final CollectionReaderDescription reader,
+                                                        final String modelDir, String mainDir, String realisOutputBase)
             throws IOException, UIMAException {
         new BasicPipeline(new ProcessorWrapper() {
             @Override
@@ -359,7 +359,7 @@ public class EventMentionPipeline {
         return CustomCollectionReaderFactory.createXmiReader(typeSystemDescription, mainDir, realisOutputBase);
     }
 
-    private CollectionReaderDescription prepareCorefTraining(CollectionReaderDescription reader, String workingDir,
+    private CollectionReaderDescription prepareCorefTraining(final CollectionReaderDescription reader, String workingDir,
                                                              String outputBase, int seed)
             throws UIMAException, IOException {
         if (!new File(workingDir, outputBase).exists()) {
@@ -419,9 +419,9 @@ public class EventMentionPipeline {
         return cvModelDir;
     }
 
-    private CollectionReaderDescription corefResolution(Configuration config, CollectionReaderDescription reader,
-                                                        String modelDir, String mainDir, String outputBase,
-                                                        boolean useAverage) throws UIMAException, IOException {
+    private CollectionReaderDescription corefResolution(final Configuration config, final CollectionReaderDescription reader,
+                                                        final String modelDir, String mainDir, String outputBase,
+                                                        final boolean useAverage) throws UIMAException, IOException {
         logger.info("Running coreference resolution, output at " + outputBase);
         logger.info("Runing with average ? " + useAverage);
 
@@ -455,7 +455,7 @@ public class EventMentionPipeline {
 
     }
 
-    public void writeResults(CollectionReaderDescription processedResultReader, String tbfOutput, String systemId)
+    public void writeResults(final CollectionReaderDescription processedResultReader, final String tbfOutput, final String systemId)
             throws UIMAException, IOException {
         logger.info("Writing results to " + tbfOutput);
 
@@ -479,7 +479,7 @@ public class EventMentionPipeline {
         }).run();
     }
 
-    public void writeGold(CollectionReaderDescription reader, String goldTbfOutput) throws UIMAException, IOException {
+    public void writeGold(final CollectionReaderDescription reader, final String goldTbfOutput) throws UIMAException, IOException {
         new BasicPipeline(new ProcessorWrapper() {
             @Override
             public CollectionReaderDescription getCollectionReader() throws ResourceInitializationException {
@@ -569,15 +569,15 @@ public class EventMentionPipeline {
      * @param reader     Collection reader for the input dataset.
      * @param testConfig Configuration file for the test.
      */
-    public void endToEndTest(Configuration testConfig, CollectionReaderDescription reader)
+    public void endToEndTest(final Configuration testConfig, final CollectionReaderDescription reader)
             throws UIMAException, IOException {
-        String crfTypeModel = joinPaths(outputModelDir,
+        final String crfTypeModel = joinPaths(outputModelDir,
                 testConfig.get("edu.cmu.cs.lti.model.crf.mention.lv1.dir"), fullRunSuffix);
 
-        String realisModel = joinPaths(outputModelDir,
+        final String realisModel = joinPaths(outputModelDir,
                 testConfig.get("edu.cmu.cs.lti.model.realis.dir"), fullRunSuffix);
 
-        String corefModel = joinPaths(outputModelDir,
+        final String corefModel = joinPaths(outputModelDir,
                 testConfig.get("edu.cmu.cs.lti.model.event.latent_tree"), fullRunSuffix);
 
         new BasicPipeline(new ProcessorWrapper() {

@@ -42,8 +42,8 @@ public class RealisTrainer {
 
     public void configFeatures(BiMap<String, Integer> featureNameMap, List<String> allClasses, File outputDir) throws
             Exception {
-        featureConfiguration = new ArrayList<>();
-        ArrayList<Map.Entry<String, Integer>> featureNames = new ArrayList<>(featureNameMap.entrySet());
+        featureConfiguration = new ArrayList<Attribute>();
+        ArrayList<Map.Entry<String, Integer>> featureNames = new ArrayList<Map.Entry<String, Integer>>(featureNameMap.entrySet());
         declareFeatures(featureNames, featureConfiguration);
         declareClass(allClasses, featureConfiguration);
         System.out.println("Number of features : " + featureNames.size() + ". Number of classes : " + allClasses.size
@@ -69,7 +69,7 @@ public class RealisTrainer {
     }
 
     private void declareClass(List<String> allClasses, List<Attribute> featureVector) {
-        List<String> fixedClasses = new ArrayList<>();
+        List<String> fixedClasses = new ArrayList<String>();
         //a bug related to the sparse vector
         fixedClasses.add("dummy_class");
         fixedClasses.addAll(allClasses);
@@ -84,7 +84,7 @@ public class RealisTrainer {
     }
 
     private List<Classifier> getClassifiers() throws Exception {
-        List<Classifier> classifiers = new ArrayList<>();
+        List<Classifier> classifiers = new ArrayList<Classifier>();
         classifiers.add(getSMO());
 //        classifiers.add(new RandomForest());
 //        classifiers.add(new Logistic());
@@ -210,7 +210,7 @@ public class RealisTrainer {
                 wordnetDataPath, true, null, true);
         BiMap<String, Integer> featureNameMap = EventMentionRealisLearner.featureNameMap;
         List<Pair<TIntDoubleMap, String>> trainingFeatures = EventMentionRealisLearner.featuresAndClass;
-        ArrayList<String> allClasses = new ArrayList<>(EventMentionRealisLearner.allTypes);
+        ArrayList<String> allClasses = new ArrayList<String>(EventMentionRealisLearner.allTypes);
         configFeatures(featureNameMap, allClasses, modelOutputDir);
 
         Instances trainingDataset = prepareDataSet(trainingFeatures, new File(modelOutputDir, "training.arff")
@@ -222,7 +222,7 @@ public class RealisTrainer {
                 featureConfiguration);
 
         System.out.println("Preparing dev datasets");
-        List<Instances> testSets = new ArrayList<>();
+        List<Instances> testSets = new ArrayList<Instances>();
         for (String devBaseDir : devBaseDirs) {
             generateFeatures(typeSystemDescription, parentInput, devBaseDir, 1,
                     semLinkDataPath, bwClusterPath, wordnetDataPath, false, modelOutputDir.getCanonicalPath(), true);

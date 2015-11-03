@@ -78,7 +78,7 @@ public class ConditionProbabilityTester extends MultiArgumentClozeTest {
 
     @Override
     protected PriorityQueue<Pair<MooneyEventRepre, Double>> predict(List<ContextElement> chain, Set<Integer> entities, int testIndex, int numArguments) {
-        PriorityQueue<Pair<MooneyEventRepre, Double>> rankedEvents = new PriorityQueue<>(allPredicates.length, new Comparators.DescendingScoredPairComparator<MooneyEventRepre, Double>());
+        PriorityQueue<Pair<MooneyEventRepre, Double>> rankedEvents = new PriorityQueue<Pair<MooneyEventRepre, Double>>(allPredicates.length, new Comparators.DescendingScoredPairComparator<MooneyEventRepre, Double>());
 
         MooneyEventRepre answer = chain.get(testIndex).getMention().toMooneyMention();
 

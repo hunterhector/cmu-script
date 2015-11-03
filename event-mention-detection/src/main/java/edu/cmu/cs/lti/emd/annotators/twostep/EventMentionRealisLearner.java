@@ -13,6 +13,9 @@ import edu.cmu.cs.lti.uima.util.UimaConvenience;
 import gnu.trove.iterator.TIntDoubleIterator;
 import gnu.trove.map.TIntDoubleMap;
 import gnu.trove.map.hash.TIntDoubleHashMap;
+import java8.util.function.Consumer;
+import java8.util.function.Predicate;
+import java8.util.stream.StreamSupport;
 import org.apache.commons.io.FileUtils;
 import org.apache.uima.UimaContext;
 import org.apache.uima.analysis_engine.AnalysisEngineProcessException;
@@ -117,9 +120,9 @@ public class EventMentionRealisLearner extends AbstractLoggingAnnotator {
         } catch (IOException e) {
             e.printStackTrace();
         }
-        allTypes = new HashSet<>();
+        allTypes = new HashSet<String>();
 //        allTypes.add(OTHER_TYPE);
-        featuresAndClass = new ArrayList<>();
+        featuresAndClass = new ArrayList<Pair<TIntDoubleMap, String>>();
 
         if (isTraining) {
             featureNameMap = HashBiMap.create();
@@ -138,7 +141,7 @@ public class EventMentionRealisLearner extends AbstractLoggingAnnotator {
     }
 
     private void readBrownCluster() throws IOException {
-        brownClusters = new HashMap<>();
+        brownClusters = new HashMap<String, String>();
         for (String line : FileUtils.readLines(new File(brownClusteringPath))) {
             String[] parts = line.split("\t");
             if (parts.length > 2) {
@@ -237,7 +240,7 @@ public class EventMentionRealisLearner extends AbstractLoggingAnnotator {
 
         double[] dist = pretrainedClassifier.distributionForInstance(instance);
 
-        PriorityQueue<Pair<Double, String>> rankList = new PriorityQueue<>(dist.length, Collections.reverseOrder());
+        PriorityQueue<Pair<Double, String>> rankList = new PriorityQueue<Pair<Double, String>>(dist.length, Collections.reverseOrder());
 
         for (int i = 1; i < dist.length; i++) {
             rankList.add(Pair.with(dist[i], classesToPredict.get(i - 1)));
@@ -285,7 +288,7 @@ public class EventMentionRealisLearner extends AbstractLoggingAnnotator {
         }
     }
 
-    private void addHeadWordFeatures(StanfordCorenlpToken triggerWord, TIntDoubleMap features) {
+    private void addHeadWordFeatures(StanfordCorenlpToken triggerWord, final TIntDoubleMap features) {
         String lemma = triggerWord.getLemma().toLowerCase();
 
         addFeature("TriggerHeadLemma_" + lemma, features);
@@ -310,9 +313,22 @@ public class EventMentionRealisLearner extends AbstractLoggingAnnotator {
         if (triggerWord.getHeadDependencyRelations() != null) {
             //                addFeatureInternal("HeadDepType_" + dep.getDependencyType(), features);
 //                addFeatureInternal("HeadDepLemma_" + dep.getHead().getLemma(), features);
-            FSCollectionFactory.create(triggerWord.getHeadDependencyRelations(), Dependency
-                    .class).stream().filter(dep -> dep.getHead().getNerTag() != null).forEach(dep -> {
-                addFeature("HeadDep_" + dep.getDependencyType() + "_" + dep.getHead().getLemma(), features);
+//            FSCollectionFactory.create(triggerWord.getHeadDependencyRelations(), Dependency
+//                    .class).stream().filter(dep -> dep.getHead().getNerTag() != null).forEach(dep -> {
+//                addFeature("HeadDep_" + dep.getDependencyType() + "_" + dep.getHead().getLemma(), features);
+//            });
+
+            StreamSupport.stream(FSCollectionFactory.create(triggerWord.getHeadDependencyRelations(), Dependency
+                    .class)).filter(new Predicate<Dependency>() {
+                @Override
+                public boolean test(Dependency dep) {
+                    return dep.getHead().getNerTag() != null;
+                }
+            }).forEach(new Consumer<Dependency>() {
+                @Override
+                public void accept(Dependency dep) {
+                    addFeature("HeadDep_" + dep.getDependencyType() + "_" + dep.getHead().getLemma(), features);
+                }
             });
         }
 
@@ -343,8 +359,8 @@ public class EventMentionRealisLearner extends AbstractLoggingAnnotator {
 
 
     private void indexWords(JCas aJCas) {
-        allWords = new ArrayList<>(JCasUtil.select(aJCas, StanfordCorenlpToken.class));
-        wordIds = new HashMap<>();
+        allWords = new ArrayList<StanfordCorenlpToken>(JCasUtil.select(aJCas, StanfordCorenlpToken.class));
+        wordIds = new HashMap<Word, Integer>();
         int i = 0;
         for (Word word : allWords) {
             wordIds.put(word, i++);

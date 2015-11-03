@@ -116,7 +116,11 @@ public class PerceptronTraining extends AbstractLoggingAnnotator {
 
         try {
             extractor = new CompactFeatureExtractor(trainingFeatureTable, featureImplNames, false);
-        } catch (IllegalAccessException | InstantiationException | ClassNotFoundException e) {
+        } catch (IllegalAccessException e) {
+            throw new IllegalArgumentException(e);
+        } catch (InstantiationException e) {
+            throw new IllegalArgumentException(e);
+        } catch (ClassNotFoundException e) {
             throw new IllegalArgumentException(e);
         }
 
@@ -143,8 +147,8 @@ public class PerceptronTraining extends AbstractLoggingAnnotator {
         align.loadWord2Stanford(aJCas);
         align.loadFanse2Stanford(aJCas);
 
-        List<ContextElement> chain = new ArrayList<>();
-        List<LocalArgumentRepre> arguments = new ArrayList<>();
+        List<ContextElement> chain = new ArrayList<ContextElement>();
+        List<LocalArgumentRepre> arguments = new ArrayList<LocalArgumentRepre>();
 
         for (Sentence sent : JCasUtil.select(aJCas, Sentence.class)) {
             for (EventMention mention : JCasUtil.selectCovered(EventMention.class, sent)) {
@@ -154,10 +158,10 @@ public class PerceptronTraining extends AbstractLoggingAnnotator {
             }
         }
 
-        Map<LocalEventMentionRepre, TLongIntDoubleHashTable> mention2Features = new HashMap<>();
+        Map<LocalEventMentionRepre, TLongIntDoubleHashTable> mention2Features = new HashMap<LocalEventMentionRepre, TLongIntDoubleHashTable>();
 
-        List<List<TLongIntDoubleHashTable>> batchedNegativeFeatures = new ArrayList<>();
-        List<TLongIntDoubleHashTable> batchedCorrectFeatures = new ArrayList<>();
+        List<List<TLongIntDoubleHashTable>> batchedNegativeFeatures = new ArrayList<List<TLongIntDoubleHashTable>>();
+        List<TLongIntDoubleHashTable> batchedCorrectFeatures = new ArrayList<TLongIntDoubleHashTable>();
 
         extractor.prepareGlobalFeatures(chain);
 
@@ -170,7 +174,7 @@ public class PerceptronTraining extends AbstractLoggingAnnotator {
             TLongIntDoubleHashTable correctFeature = extractor.getFeatures(chain, realSample, sampleIndex, maxSkippedN);
             Sentence sampleSent = realSample.getSent();
 
-            PriorityQueue<Pair<Double, LocalEventMentionRepre>> scores = new PriorityQueue<>(rankListSize,
+            PriorityQueue<Pair<Double, LocalEventMentionRepre>> scores = new PriorityQueue<Pair<Double, LocalEventMentionRepre>>(rankListSize,
                     Collections.reverseOrder());
 
             Set<LocalEventMentionRepre> sampledCandidates = sampleCandidatesWithReal(arguments, realSample.getMention
@@ -240,8 +244,8 @@ public class PerceptronTraining extends AbstractLoggingAnnotator {
         int rank = 0;
 
 
-        List<TLongIntDoubleHashTable> negativeInstancesToTrain = new ArrayList<>();
-        List<LocalEventMentionRepre> topPredictions = new ArrayList<>();
+        List<TLongIntDoubleHashTable> negativeInstancesToTrain = new ArrayList<TLongIntDoubleHashTable>();
+        List<LocalEventMentionRepre> topPredictions = new ArrayList<LocalEventMentionRepre>();
 
         int nonOriginalPredictionCount = 0;
         while (!scoredItems.isEmpty()) {
@@ -295,7 +299,7 @@ public class PerceptronTraining extends AbstractLoggingAnnotator {
     private Map<LocalEventMentionRepre, Double> getGuidingScores(List<ContextElement> chain, int sampleIndex,
                                                                  LocalEventMentionRepre realMention,
                                                                  List<LocalEventMentionRepre> topPredictions) {
-        Map<LocalEventMentionRepre, Double> pseudoNegatives = new HashMap<>();
+        Map<LocalEventMentionRepre, Double> pseudoNegatives = new HashMap<LocalEventMentionRepre, Double>();
 
         double guidedRealScore = guidedScorer(chain, sampleIndex, realMention);
 
@@ -359,7 +363,7 @@ public class PerceptronTraining extends AbstractLoggingAnnotator {
      */
     private Set<LocalEventMentionRepre> sampleCandidatesWithReal(List<LocalArgumentRepre> arguments,
                                                                  LocalEventMentionRepre realSample) {
-        Set<LocalEventMentionRepre> samples = new HashSet<>();
+        Set<LocalEventMentionRepre> samples = new HashSet<LocalEventMentionRepre>();
         boolean containsReal = false;
 
         for (int i = 0; i < rankListSize; i++) {

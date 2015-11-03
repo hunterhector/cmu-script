@@ -146,7 +146,7 @@ public class MentionSubGraph {
      * Convert the tree to transitive and equivalence resolved graph
      */
     public void resolveTree() {
-        List<Set<Integer>> clusters = new ArrayList<>();
+        List<Set<Integer>> clusters = new ArrayList<Set<Integer>>();
 
         ArrayListMultimap<EdgeType, Pair<Integer, Integer>> allRelations = ArrayListMultimap.create();
         ArrayListMultimap<EdgeType, Pair<Integer, Integer>> generalizedRelations = ArrayListMultimap.create();
@@ -158,7 +158,7 @@ public class MentionSubGraph {
 
             if (type.equals(EdgeType.Root)) {
                 // If this link to root, start a new cluster.
-                Set<Integer> newCluster = new HashSet<>();
+                Set<Integer> newCluster = new HashSet<Integer>();
                 newCluster.add(depNode);
                 clusters.add(newCluster);
             } else if (type.equals(EdgeType.Coreference)) {

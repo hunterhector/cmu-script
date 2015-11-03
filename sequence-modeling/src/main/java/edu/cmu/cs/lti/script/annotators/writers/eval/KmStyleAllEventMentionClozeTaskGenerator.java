@@ -85,8 +85,8 @@ public class KmStyleAllEventMentionClozeTaskGenerator extends AbstractCustomized
         align.loadFanse2Stanford(aJCas);
         StringBuilder sb = new StringBuilder();
 
-        List<TIntIntHashMap> allSlots = new ArrayList<>();
-        List<EventMention> allEvms = new ArrayList<>();
+        List<TIntIntHashMap> allSlots = new ArrayList<TIntIntHashMap>();
+        List<EventMention> allEvms = new ArrayList<EventMention>();
 
         for (EventMention mention : JCasUtil.select(aJCas, EventMention.class)) {
             if (ignoreLowFreq) {

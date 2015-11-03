@@ -82,7 +82,7 @@ public class EventMentionHeadCooccCounter extends AbstractLoggingAnnotator {
 
         align.loadWord2Stanford(aJCas);
 
-        List<String> allPredicates = new ArrayList<>();
+        List<String> allPredicates = new ArrayList<String>();
 
         for (EventMention mention : JCasUtil.select(aJCas, EventMention.class)) {
             String head = align.getLowercaseWordLemma(mention.getHeadWord());

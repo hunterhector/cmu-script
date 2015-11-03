@@ -61,9 +61,9 @@ public abstract class MultiArgumentClozeTest extends AbstractLoggingAnnotator {
 
     private TokenAlignmentHelper align = new TokenAlignmentHelper();
 
-    private List<String> evalResults = new ArrayList<>();
+    private List<String> evalResults = new ArrayList<String>();
 
-    private List<String> evalInfos = new ArrayList<>();
+    private List<String> evalInfos = new ArrayList<String>();
 
     @Override
     public void initialize(UimaContext aContext) throws ResourceInitializationException {
@@ -167,7 +167,7 @@ public abstract class MultiArgumentClozeTest extends AbstractLoggingAnnotator {
 
         int rank = 0;
         boolean oov = true;
-        List<String> rankResults = new ArrayList<>();
+        List<String> rankResults = new ArrayList<String>();
 
         while (!results.isEmpty()) {
             rank++;
@@ -209,8 +209,8 @@ public abstract class MultiArgumentClozeTest extends AbstractLoggingAnnotator {
             e.printStackTrace();
         }
 
-        evalResults = new ArrayList<>();
-        evalInfos = new ArrayList<>();
+        evalResults = new ArrayList<String>();
+        evalInfos = new ArrayList<String>();
     }
 
     protected void logEvalResult(String record) {
@@ -232,7 +232,7 @@ public abstract class MultiArgumentClozeTest extends AbstractLoggingAnnotator {
     protected abstract PriorityQueue<Pair<MooneyEventRepre, Double>> predict(List<ContextElement> chain, Set<Integer> entities, int testIndex, int numArguments);
 
     private List<Triple<List<MooneyEventRepre>, Integer, String>> getPreselectedClozeTask(String fileName) {
-        List<Triple<List<MooneyEventRepre>, Integer, String>> clozeTasks = new ArrayList<>();
+        List<Triple<List<MooneyEventRepre>, Integer, String>> clozeTasks = new ArrayList<Triple<List<MooneyEventRepre>, Integer, String>>();
 
         File clozeFile = new File(clozeDir, fileName);
         if (!clozeFile.exists()) {
@@ -248,9 +248,9 @@ public abstract class MultiArgumentClozeTest extends AbstractLoggingAnnotator {
             e.printStackTrace();
         }
 
-        List<MooneyEventRepre> repres = new ArrayList<>();
+        List<MooneyEventRepre> repres = new ArrayList<MooneyEventRepre>();
 
-        List<Integer> blankIndices = new ArrayList<>();
+        List<Integer> blankIndices = new ArrayList<Integer>();
 
         for (int i = 0; i < lines.size(); i++) {
             String line = lines.get(i);
@@ -276,7 +276,7 @@ public abstract class MultiArgumentClozeTest extends AbstractLoggingAnnotator {
      * @return
      */
     private List<Triple<List<MooneyEventRepre>, Integer, String>> getAllPoissibleMooneyStyleClozes(String fileName) {
-        List<Triple<List<MooneyEventRepre>, Integer, String>> clozeTasks = new ArrayList<>();
+        List<Triple<List<MooneyEventRepre>, Integer, String>> clozeTasks = new ArrayList<Triple<List<MooneyEventRepre>, Integer, String>>();
 
         File clozeFile = new File(clozeDir, fileName);
         if (!clozeFile.exists()) {
@@ -292,7 +292,7 @@ public abstract class MultiArgumentClozeTest extends AbstractLoggingAnnotator {
             e.printStackTrace();
         }
 
-        List<MooneyEventRepre> repres = new ArrayList<>();
+        List<MooneyEventRepre> repres = new ArrayList<MooneyEventRepre>();
 
         for (int i = 0; i < lines.size(); i++) {
             String line = lines.get(i);
@@ -311,7 +311,7 @@ public abstract class MultiArgumentClozeTest extends AbstractLoggingAnnotator {
     }
 
     private List<ContextElement> getTestingEventMentions(JCas aJCas) {
-        List<ContextElement> chain = new ArrayList<>();
+        List<ContextElement> chain = new ArrayList<ContextElement>();
 
         for (Sentence sent : JCasUtil.select(aJCas, Sentence.class)) {
             for (EventMention mention : JCasUtil.selectCovered(EventMention.class, sent)) {
@@ -330,7 +330,7 @@ public abstract class MultiArgumentClozeTest extends AbstractLoggingAnnotator {
     }
 
     public static Set<Integer> getRewritedEntitiesFromChain(List<ContextElement> chain) {
-        Set<Integer> entities = new HashSet<>();
+        Set<Integer> entities = new HashSet<Integer>();
         for (ContextElement rep : chain) {
             for (LocalArgumentRepre arg : rep.getMention().getArgs()) {
                 if (arg != null && !arg.isOther()) {

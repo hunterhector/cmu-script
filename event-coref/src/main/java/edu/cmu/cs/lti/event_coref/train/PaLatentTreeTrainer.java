@@ -1,5 +1,6 @@
 package edu.cmu.cs.lti.event_coref.train;
 
+import com.google.common.cache.Weigher;
 import edu.cmu.cs.lti.event_coref.decoding.BestFirstLatentTreeDecoder;
 import edu.cmu.cs.lti.event_coref.decoding.LatentTreeDecoder;
 import edu.cmu.cs.lti.event_coref.model.graph.MentionGraph;
@@ -72,8 +73,13 @@ public class PaLatentTreeTrainer extends AbstractLoggingAnnotator {
 
         try {
             logger.info("Initialize auto-eviction cache with weight limit of " + weightLimit);
-            graphCacher = new MultiKeyDiskCacher<>(
-                    cacheDir, (k, g) -> g.numNodes() * g.numNodes(), weightLimit, discardAfter
+            graphCacher = new MultiKeyDiskCacher<MentionGraph>(
+                    cacheDir, new Weigher<List<String>, MentionGraph>() {
+                @Override
+                public int weigh(List<String> keys, MentionGraph g) {
+                    return g.numNodes() * g.numNodes();
+                }
+            }, weightLimit, discardAfter
             );
         } catch (IOException e) {
             e.printStackTrace();
@@ -97,8 +103,15 @@ public class PaLatentTreeTrainer extends AbstractLoggingAnnotator {
             ).parseFeatureFunctionSpecs(featureSpec);
             extractor = new PairFeatureExtractor(featureAlphabet, classAlphabet, useBinaryFeatures, config,
                     featureConfig);
-        } catch (ClassNotFoundException | NoSuchMethodException | InvocationTargetException | InstantiationException
-                | IllegalAccessException e) {
+        } catch (ClassNotFoundException e) {
+            e.printStackTrace();
+        } catch (NoSuchMethodException e) {
+            e.printStackTrace();
+        } catch (InvocationTargetException e) {
+            e.printStackTrace();
+        } catch (InstantiationException e) {
+            e.printStackTrace();
+        } catch (IllegalAccessException e) {
             e.printStackTrace();
         }
         trainingStats = new TrainingStats(5);
@@ -107,8 +120,8 @@ public class PaLatentTreeTrainer extends AbstractLoggingAnnotator {
 
     @Override
     public void process(JCas aJCas) throws AnalysisEngineProcessException {
-        List<EventMention> allMentions = new ArrayList<>(JCasUtil.select(aJCas, EventMention.class));
-        List<EventMentionRelation> allMentionRelations = new ArrayList<>(
+        List<EventMention> allMentions = new ArrayList<EventMention>(JCasUtil.select(aJCas, EventMention.class));
+        List<EventMentionRelation> allMentionRelations = new ArrayList<EventMentionRelation>(
                 JCasUtil.select(aJCas, EventMentionRelation.class));
 
         int eventIdx = 0;

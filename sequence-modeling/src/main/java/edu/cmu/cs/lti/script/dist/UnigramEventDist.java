@@ -24,7 +24,7 @@ public class UnigramEventDist {
     AliasMethod alias;
     private static double[] probabilities;
 
-    private static TIntObjectMap<TIntList> unigramId = new TIntObjectHashMap<>();
+    private static TIntObjectMap<TIntList> unigramId = new TIntObjectHashMap<TIntList>();
 
     public UnigramEventDist(TObjectIntMap<TIntList> unigramCounts) {
         alias = new AliasMethod(unigramProb(unigramCounts), new Random());

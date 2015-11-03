@@ -36,7 +36,7 @@ public class WindowWordFeatureGenerator extends EventMentionFeatureGenerator {
     @Override
     public Map<String, Double> genFeatures(CandidateEventMention mention) {
         StanfordCorenlpToken candidateHead = mention.getHeadWord();
-        Map<String, Double> features = new HashMap<>();
+        Map<String, Double> features = new HashMap<String, Double>();
         int centerId = wordIds.get(candidateHead);
         int leftLimit = centerId - windowSize > 0 ? centerId - windowSize : 0;
         int rightLimit = centerId + windowSize < allWords.size() - 1 ? centerId + windowSize : allWords.size() - 1;
@@ -64,7 +64,7 @@ public class WindowWordFeatureGenerator extends EventMentionFeatureGenerator {
     }
 
     private void indexWords() {
-        wordIds = new HashMap<>();
+        wordIds = new HashMap<Word, Integer>();
         int i = 0;
         for (Word word : allWords) {
             wordIds.put(word, i++);

@@ -148,9 +148,9 @@ public class EventMentionTypeLearner extends AbstractLoggingAnnotator {
         }
 
 
-        allTypes = new HashSet<>();
+        allTypes = new HashSet<String>();
         allTypes.add(OTHER_TYPE);
-        featuresAndClass = new ArrayList<>();
+        featuresAndClass = new ArrayList<Pair<TIntDoubleMap, String>>();
 
         if (isTraining) {
             featureNameMap = HashBiMap.create();
@@ -168,7 +168,7 @@ public class EventMentionTypeLearner extends AbstractLoggingAnnotator {
         }
 
         if (featureSubset == null) {
-            featureSubset = new HashSet<>();
+            featureSubset = new HashSet<String>();
         }
 
 
@@ -191,7 +191,7 @@ public class EventMentionTypeLearner extends AbstractLoggingAnnotator {
     }
 
     private void registerFeatures() {
-        featureGenerators = new ArrayList<>();
+        featureGenerators = new ArrayList<EventMentionFeatureGenerator>();
         featureGenerators.add(new HeadWordFeatureGenerator(brownClusters, wnsi, featureSubset));
         featureGenerators.add(new FrameNameFeatureGenerator(featureSubset));
         featureGenerators.add(new FrameArgumentLemmaFeatureGenerator(brownClusters, wnsi, featureSubset));
@@ -289,7 +289,7 @@ public class EventMentionTypeLearner extends AbstractLoggingAnnotator {
     private Pair<Double, String> predict(TIntDoubleMap features) throws Exception {
         Instance instance = createInstance(features);
         double[] dist = pretrainedClassifier.distributionForInstance(instance);
-        PriorityQueue<Pair<Double, String>> rankList = new PriorityQueue<>(dist.length, Collections.reverseOrder());
+        PriorityQueue<Pair<Double, String>> rankList = new PriorityQueue<Pair<Double, String>>(dist.length, Collections.reverseOrder());
 
         for (int i = 1; i < dist.length; i++) {
             rankList.add(Pair.of(dist[i], classesToPredict.get(i - 1)));
@@ -324,7 +324,7 @@ public class EventMentionTypeLearner extends AbstractLoggingAnnotator {
 
 
     private void indexWords(JCas aJCas) {
-        allWords = new ArrayList<>(JCasUtil.select(aJCas, StanfordCorenlpToken.class));
+        allWords = new ArrayList<StanfordCorenlpToken>(JCasUtil.select(aJCas, StanfordCorenlpToken.class));
         for (StanfordEntityMention mention : JCasUtil.select(aJCas, StanfordEntityMention.class)) {
             String entityType = mention.getEntityType();
             for (StanfordCorenlpToken token : JCasUtil.selectCovered(StanfordCorenlpToken.class, mention)) {

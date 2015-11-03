@@ -37,7 +37,7 @@ public class PredicatePmiCalculator extends AbstractCustomizedTextWriterAnalysis
             return null;
         }
 
-        List<EventMention> allMentions = new ArrayList<>(JCasUtil.select(aJCas, EventMention.class));
+        List<EventMention> allMentions = new ArrayList<EventMention>(JCasUtil.select(aJCas, EventMention.class));
         computePmiTable(allMentions, aJCas);
 
         StringBuffer outStr = new StringBuffer();
@@ -62,7 +62,7 @@ public class PredicatePmiCalculator extends AbstractCustomizedTextWriterAnalysis
         TokenAlignmentHelper alignmentHelper = new TokenAlignmentHelper();
         alignmentHelper.loadWord2Stanford(aJCas);
 
-        Set<String> predicates = new HashSet<>();
+        Set<String> predicates = new HashSet<String>();
 
         for (int i = 0; i < allMentions.size(); i++) {
             EventMention mention = allMentions.get(i);
@@ -70,7 +70,7 @@ public class PredicatePmiCalculator extends AbstractCustomizedTextWriterAnalysis
             predicates.add(predicate);
         }
 
-        uniqPredicates = new ArrayList<>(predicates);
+        uniqPredicates = new ArrayList<String>(predicates);
 
         pmiTable = new double[uniqPredicates.size()][uniqPredicates.size()];
 
