@@ -15,7 +15,6 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.function.Consumer;
 
 /**
  * Created with IntelliJ IDEA.
@@ -132,24 +131,32 @@ public class FanseFeatures extends SequenceFeatureWithFocus {
 
         final FanseToken fanseToken = align.getFanseToken(token);
 
-        headTemplates.forEach(new Consumer<BiConsumer<TObjectDoubleMap<String>, FanseToken>>() {
-            @Override
-            public void accept(BiConsumer<TObjectDoubleMap<String>, FanseToken> t) {
-                t.accept(features, fanseToken);
-            }
-        });
+//        headTemplates.forEach(new Consumer<BiConsumer<TObjectDoubleMap<String>, FanseToken>>() {
+//            @Override
+//            public void accept(BiConsumer<TObjectDoubleMap<String>, FanseToken> t) {
+//                t.accept(features, fanseToken);
+//            }
+//        });
+
+        for (BiConsumer<TObjectDoubleMap<String>, FanseToken> headTemplate : headTemplates) {
+            headTemplate.accept(features, fanseToken);
+        }
 
         FSList childRelations = token.getChildSemanticRelations();
 
         if (childRelations != null) {
             for (final FanseSemanticRelation r : FSCollectionFactory.create(childRelations, FanseSemanticRelation
                     .class)) {
-                argumentTemplates.forEach(new Consumer<BiConsumer<TObjectDoubleMap<String>, FanseSemanticRelation>>() {
-                    @Override
-                    public void accept(BiConsumer<TObjectDoubleMap<String>, FanseSemanticRelation> t) {
-                        t.accept(features, r);
-                    }
-                });
+//                argumentTemplates.forEach(new Consumer<BiConsumer<TObjectDoubleMap<String>, FanseSemanticRelation>>() {
+//                    @Override
+//                    public void accept(BiConsumer<TObjectDoubleMap<String>, FanseSemanticRelation> t) {
+//                        t.accept(features, r);
+//                    }
+//                });
+
+                for (BiConsumer<TObjectDoubleMap<String>, FanseSemanticRelation> argumentTemplate : argumentTemplates) {
+                    argumentTemplate.accept(features, r);
+                }
             }
         }
     }
