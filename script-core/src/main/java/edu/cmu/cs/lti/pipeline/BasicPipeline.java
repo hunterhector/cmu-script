@@ -34,8 +34,7 @@ public class BasicPipeline {
     private AnalysisEngine aggregateAnalysisEngine;
     private CAS mergedCas;
 
-    public BasicPipeline(ProcessorWrapper wrapper) throws
-            UIMAException {
+    public BasicPipeline(ProcessorWrapper wrapper) throws UIMAException {
         // Create the components
         reader = CollectionReaderFactory.createReader(wrapper.getCollectionReader());
         engines = wrapper.getProcessors();
@@ -66,7 +65,7 @@ public class BasicPipeline {
      * RUn processor from provided reader, write processed CAS as XMI to the given directory.
      *
      * @param workingDir Parent directory of the data.
-     * @param outputDir  Base directory of the data.
+     * @param outputDir  Sse directory of the data.
      * @throws UIMAException
      * @throws IOException
      */
@@ -125,13 +124,19 @@ public class BasicPipeline {
      *
      * @throws AnalysisEngineProcessException
      */
-    public void complete() throws AnalysisEngineProcessException {
+    public void complete() throws AnalysisEngineProcessException, IOException {
         try {
             // Signal end of processing.
             aggregateAnalysisEngine.collectionProcessComplete();
         } finally {
             // Destroy.
-            aggregateAnalysisEngine.destroy();
+            if (aggregateAnalysisEngine != null) {
+                aggregateAnalysisEngine.destroy();
+            }
+            if (reader != null) {
+                reader.close();
+                reader.destroy();
+            }
         }
     }
 
