@@ -39,7 +39,7 @@
         <dependency>
             <groupId>nz.ac.waikato.cms.weka</groupId>
             <artifactId>LibLINEAR</artifactId>
-            <version>1.9.5-SNAPSHOT</version>
+            <version>1.9.5</version>
         </dependency>
         <dependency>
             <groupId>de.bwaldvogel</groupId>

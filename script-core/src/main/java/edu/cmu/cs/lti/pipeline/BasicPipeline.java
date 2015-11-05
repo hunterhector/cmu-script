@@ -120,6 +120,32 @@ public class BasicPipeline {
     }
 
     /**
+     * Process the one CAS in the reader.
+     */
+    public void processNext() {
+        try {
+            // Process.
+            if (reader.hasNext()) {
+                reader.getNext(mergedCas);
+                aggregateAnalysisEngine.process(mergedCas);
+                mergedCas.reset();
+            }
+        } catch (AnalysisEngineProcessException e) {
+            e.printStackTrace();
+            // Destroy.
+            aggregateAnalysisEngine.destroy();
+        } catch (CollectionException e) {
+            e.printStackTrace();
+            // Destroy.
+            aggregateAnalysisEngine.destroy();
+        } catch (IOException e) {
+            e.printStackTrace();
+            // Destroy.
+            aggregateAnalysisEngine.destroy();
+        }
+    }
+
+    /**
      * Complete the process.
      *
      * @throws AnalysisEngineProcessException
