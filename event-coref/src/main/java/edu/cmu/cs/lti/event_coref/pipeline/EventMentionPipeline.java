@@ -40,7 +40,7 @@ import java.lang.reflect.InvocationTargetException;
 /**
  * A pipeline structure for KBP 2015 event task of both Mention Detection and Coreference.
  * This pipeline should be easily adapted to a general pipeline by replacing the preprocessors.
- * <p>
+ * <p/>
  * Date: 8/16/15
  * Time: 4:21 PM
  *
@@ -230,8 +230,9 @@ public class EventMentionPipeline {
                 AnalysisEngineDescription wordNetEntityAnnotator = AnalysisEngineFactory.createEngineDescription(
                         WordNetBasedEntityAnnotator.class, typeSystemDescription,
                         WordNetBasedEntityAnnotator.PARAM_WN_PATH,
-                        taskConfig.get("edu.cmu.cs.lti.wndict.path")
-                );
+                        edu.cmu.cs.lti.utils.FileUtils.joinPaths(taskConfig.get("edu.cmu.cs.lti.resource.dir"),
+                                taskConfig.get("edu.cmu.cs.lti.wndict.path"))
+                        );
 
                 return new AnalysisEngineDescription[]{
                         stanfordAnalyzer, semaforAnalyzer, fanseParser, opennlp, quoteAnnotator, wordNetEntityAnnotator
@@ -275,8 +276,10 @@ public class EventMentionPipeline {
     }
 
     public CollectionReaderDescription goldMentionAnnotator(final CollectionReaderDescription reader, String mainDir,
-                                                            String baseOutput, final boolean copyType, final boolean copyRealis,
-                                                            final boolean copyCluster) throws UIMAException, IOException {
+                                                            String baseOutput, final boolean copyType, final boolean
+                                                                    copyRealis,
+                                                            final boolean copyCluster) throws UIMAException,
+            IOException {
         new BasicPipeline(new ProcessorWrapper() {
             @Override
             public CollectionReaderDescription getCollectionReader() throws ResourceInitializationException {
@@ -291,7 +294,8 @@ public class EventMentionPipeline {
         return CustomCollectionReaderFactory.createXmiReader(typeSystemDescription, mainDir, baseOutput);
     }
 
-    public CollectionReaderDescription crfMentionDetection(final Configuration taskConfig, final CollectionReaderDescription reader,
+    public CollectionReaderDescription crfMentionDetection(final Configuration taskConfig, final
+    CollectionReaderDescription reader,
                                                            final String modelDir, String mainDir, String baseOutput)
             throws UIMAException, IOException {
 
@@ -334,7 +338,8 @@ public class EventMentionPipeline {
         return realisCvModelDir;
     }
 
-    public CollectionReaderDescription realisAnnotation(final Configuration config, final CollectionReaderDescription reader,
+    public CollectionReaderDescription realisAnnotation(final Configuration config, final CollectionReaderDescription
+            reader,
                                                         final String modelDir, String mainDir, String realisOutputBase)
             throws IOException, UIMAException {
         new BasicPipeline(new ProcessorWrapper() {
@@ -359,7 +364,8 @@ public class EventMentionPipeline {
         return CustomCollectionReaderFactory.createXmiReader(typeSystemDescription, mainDir, realisOutputBase);
     }
 
-    private CollectionReaderDescription prepareCorefTraining(final CollectionReaderDescription reader, String workingDir,
+    private CollectionReaderDescription prepareCorefTraining(final CollectionReaderDescription reader, String
+            workingDir,
                                                              String outputBase, int seed)
             throws UIMAException, IOException {
         if (!new File(workingDir, outputBase).exists()) {
@@ -419,7 +425,8 @@ public class EventMentionPipeline {
         return cvModelDir;
     }
 
-    private CollectionReaderDescription corefResolution(final Configuration config, final CollectionReaderDescription reader,
+    private CollectionReaderDescription corefResolution(final Configuration config, final CollectionReaderDescription
+            reader,
                                                         final String modelDir, String mainDir, String outputBase,
                                                         final boolean useAverage) throws UIMAException, IOException {
         logger.info("Running coreference resolution, output at " + outputBase);
@@ -455,7 +462,8 @@ public class EventMentionPipeline {
 
     }
 
-    public void writeResults(final CollectionReaderDescription processedResultReader, final String tbfOutput, final String systemId)
+    public void writeResults(final CollectionReaderDescription processedResultReader, final String tbfOutput, final
+    String systemId)
             throws UIMAException, IOException {
         logger.info("Writing results to " + tbfOutput);
 
@@ -479,7 +487,8 @@ public class EventMentionPipeline {
         }).run();
     }
 
-    public void writeGold(final CollectionReaderDescription reader, final String goldTbfOutput) throws UIMAException, IOException {
+    public void writeGold(final CollectionReaderDescription reader, final String goldTbfOutput) throws UIMAException,
+            IOException {
         new BasicPipeline(new ProcessorWrapper() {
             @Override
             public CollectionReaderDescription getCollectionReader() throws ResourceInitializationException {
