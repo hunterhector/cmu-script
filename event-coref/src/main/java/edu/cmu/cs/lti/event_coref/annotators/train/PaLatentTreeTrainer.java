@@ -12,10 +12,7 @@ import edu.cmu.cs.lti.script.type.Event;
 import edu.cmu.cs.lti.script.type.EventMention;
 import edu.cmu.cs.lti.uima.annotator.AbstractLoggingAnnotator;
 import edu.cmu.cs.lti.uima.util.UimaConvenience;
-import edu.cmu.cs.lti.utils.Configuration;
-import edu.cmu.cs.lti.utils.FileUtils;
-import edu.cmu.cs.lti.utils.MentionUtils;
-import edu.cmu.cs.lti.utils.MultiKeyDiskCacher;
+import edu.cmu.cs.lti.utils.*;
 import org.apache.uima.UimaContext;
 import org.apache.uima.analysis_engine.AnalysisEngineProcessException;
 import org.apache.uima.fit.descriptor.ConfigurationParameter;
@@ -108,7 +105,8 @@ public class PaLatentTreeTrainer extends AbstractLoggingAnnotator {
                 new ArrayList<>(JCasUtil.select(aJCas, EventMention.class))
         );
 
-        List<MentionCandidate> candidates = MentionUtils.createCandidates(aJCas, allMentions);
+//        List<MentionCandidate> candidates = MentionUtils.createCandidates(aJCas, allMentions);
+        List<MentionCandidate> candidates = MentionUtils.getSpanBasedCandidates(aJCas);
 
         extractor.initWorkspace(aJCas);
 
@@ -117,10 +115,14 @@ public class PaLatentTreeTrainer extends AbstractLoggingAnnotator {
         // Decoding.
         MentionSubGraph predictedTree = decoder.decode(mentionGraph, candidates, weights, false);
 
+        logger.info(predictedTree.toString());
+
         if (!predictedTree.graphMatch()) {
 //            logger.debug("Found unmatched graph");
 
             MentionSubGraph latentTree = decoder.decode(mentionGraph, candidates, weights, true);
+
+            logger.info(latentTree.toString());
 
 //            logger.debug("Best Gold Tree.");
 //            logger.debug(latentTree.toString());
@@ -139,6 +141,8 @@ public class PaLatentTreeTrainer extends AbstractLoggingAnnotator {
         } else {
             trainingStats.addLoss(logger, 0);
         }
+
+        DebugUtils.pause();
     }
 
     private MentionGraph getMentionGraph(JCas aJCas) {
@@ -154,6 +158,7 @@ public class PaLatentTreeTrainer extends AbstractLoggingAnnotator {
 
         if (mentionGraph == null) {
             List<MentionCandidate> candidates = MentionUtils.getSpanBasedCandidates(aJCas);
+
             mentionGraph = MentionUtils.createSpanBasedMentionGraph(aJCas, candidates, extractor, false);
             graphCacher.addWithMultiKey(mentionGraph, cacheKey);
         }

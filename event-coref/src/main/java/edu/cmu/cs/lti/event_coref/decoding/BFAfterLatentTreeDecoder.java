@@ -81,7 +81,7 @@ public class BFAfterLatentTreeDecoder extends LatentTreeDecoder {
                 // No previous node link to it. And it does not link to previous nodes. We link to ROOT.
                 if (!linkedNodes.contains(fromNode)) {
                     MentionGraphEdge edge = mentionGraph.getEdge(fromNode.getNodeIndex(), 0);
-                    LabelledMentionGraphEdge rootEdge = edge.getLabelledEdge(candidates, NodeKey.rootKey(), fromNode);
+                    LabelledMentionGraphEdge rootEdge = edge.getLabelledEdge(candidates, NodeKey.getRootKey(EdgeType.After), fromNode);
                     goldTree.addLabelledEdge(rootEdge, EdgeType.Root);
                 }
             }
