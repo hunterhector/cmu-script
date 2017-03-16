@@ -154,7 +154,7 @@ public class MentionGraph implements Serializable {
         int dep = realDepKey.getNodeIndex();
         MentionGraphEdge goldEdge = getEdge(dep, gov);
 
-        logger.info("Creating node between " + gov + " and " + dep);
+//        logger.info("Creating node between " + gov + " and " + dep);
         goldEdge.addRealLabelledEdge(candidates, realGovKey, realDepKey, edgeType);
         return goldEdge;
     }

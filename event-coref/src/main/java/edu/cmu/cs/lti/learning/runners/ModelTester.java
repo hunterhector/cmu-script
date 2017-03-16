@@ -6,6 +6,7 @@ import org.apache.commons.io.FilenameUtils;
 import org.apache.uima.UIMAException;
 import org.apache.uima.collection.CollectionReaderDescription;
 import org.apache.uima.collection.metadata.CpeDescriptorException;
+import org.apache.uima.resource.metadata.TypeSystemDescription;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.xml.sax.SAXException;
@@ -57,6 +58,7 @@ public abstract class ModelTester {
      * @throws InterruptedException
      */
     CollectionReaderDescription run(Configuration taskConfig, CollectionReaderDescription reader,
+                                    TypeSystemDescription typeSystemDescription,
                                     String sliceSuffix, String runName, String outputDir, String subEval,
                                     File gold)
             throws SAXException, UIMAException, CpeDescriptorException, IOException, InterruptedException {
@@ -67,7 +69,7 @@ public abstract class ModelTester {
         CollectionReaderDescription output = runModel(taskConfig, reader, trainingWorkingDir, annotatedOutput);
 
         String tbfOutput = FileUtils.joinPaths(outputDir, sliceSuffix, modelName, runName + ".tbf");
-        RunnerUtils.writeResults(output, tbfOutput, runName, charOffset, false);
+        RunnerUtils.writeResults(output, typeSystemDescription, tbfOutput, runName, charOffset, false);
 
         if (gold.isFile()) {
             logger.info("Evaluating over all event types.");

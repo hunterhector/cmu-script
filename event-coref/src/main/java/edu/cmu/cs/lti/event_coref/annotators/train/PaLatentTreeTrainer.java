@@ -115,14 +115,14 @@ public class PaLatentTreeTrainer extends AbstractLoggingAnnotator {
         // Decoding.
         MentionSubGraph predictedTree = decoder.decode(mentionGraph, candidates, weights, false);
 
-        logger.info(predictedTree.toString());
+//        logger.info(predictedTree.toString());
 
         if (!predictedTree.graphMatch()) {
 //            logger.debug("Found unmatched graph");
 
             MentionSubGraph latentTree = decoder.decode(mentionGraph, candidates, weights, true);
 
-            logger.info(latentTree.toString());
+//            logger.info(latentTree.toString());
 
 //            logger.debug("Best Gold Tree.");
 //            logger.debug(latentTree.toString());
@@ -142,7 +142,7 @@ public class PaLatentTreeTrainer extends AbstractLoggingAnnotator {
             trainingStats.addLoss(logger, 0);
         }
 
-        DebugUtils.pause();
+//        DebugUtils.pause();
     }
 
     private MentionGraph getMentionGraph(JCas aJCas) {
@@ -159,7 +159,7 @@ public class PaLatentTreeTrainer extends AbstractLoggingAnnotator {
         if (mentionGraph == null) {
             List<MentionCandidate> candidates = MentionUtils.getSpanBasedCandidates(aJCas);
 
-            mentionGraph = MentionUtils.createSpanBasedMentionGraph(aJCas, candidates, extractor, false);
+            mentionGraph = MentionUtils.createSpanBasedMentionGraph(aJCas, candidates, extractor, true);
             graphCacher.addWithMultiKey(mentionGraph, cacheKey);
         }
         return mentionGraph;

@@ -715,7 +715,8 @@ public class EventMentionPipeline {
                 skipType && skipRealis && skipCoref);
 
         String tbfOutput = FileUtils.joinPaths(outputDir, sliceSuffix, runName + ".tbf");
-        RunnerUtils.writeResults(corefSentMentions, tbfOutput, runName, useCharOffset, addSemanticRole);
+        RunnerUtils.writeResults(corefSentMentions, typeSystemDescription, tbfOutput, runName, useCharOffset,
+                addSemanticRole);
 
         return tbfOutput;
     }

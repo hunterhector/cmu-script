@@ -122,7 +122,7 @@ public class PlainAfterModelRunner extends AbstractMentionModelRunner {
                     CpeDescriptorException, IOException {
                 return afterLinking(taskConfig, reader, afterModel, trainingWorkingDir, baseDir, skipTest);
             }
-        }.run(taskConfig, reader, sliceSuffix, runName, outputDir, subEval, gold);
+        }.run(taskConfig, reader, typeSystemDescription, sliceSuffix, runName, outputDir, subEval, gold);
     }
 
     public CollectionReaderDescription afterLinking(Configuration taskConfig, CollectionReaderDescription reader,
