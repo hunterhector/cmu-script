@@ -29,7 +29,7 @@ public class SyntacticFeatures extends AbstractMentionPairFeatures {
     @Override
     public void initDocumentWorkspace(JCas context) {
         for (StanfordTreeAnnotation tree : JCasUtil.select(context, StanfordTreeAnnotation.class)) {
-            StanfordCorenlpToken head = tree.getHead();
+            StanfordCorenlpToken head = (StanfordCorenlpToken) tree.getHead();
             if (head2LargestSpanTree.containsKey(head)) {
                 StanfordTreeAnnotation previousTree = head2LargestSpanTree.get(head);
                 if (tree.getCoveredText().length() > previousTree.getCoveredText().length()) {
