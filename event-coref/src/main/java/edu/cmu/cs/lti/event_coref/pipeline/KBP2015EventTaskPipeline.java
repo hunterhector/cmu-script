@@ -447,7 +447,7 @@ public class KBP2015EventTaskPipeline {
         String modelPath = commonConfig.get("edu.cmu.cs.lti.model.dir");
         String typeSystemName = commonConfig.get("edu.cmu.cs.lti.event.typesystem");
 
-        String workingDir = kbpConfig.get("edu.cmu.cs.lti.working.dir");
+        String workingDir = kbpConfig.get("edu.cmu.cs.lti.training.dir");
         String goldTbf = kbpConfig.get("edu.cmu.cs.lti.gold.tbf");
         String sourceDir = kbpConfig.get("edu.cmu.cs.lti.source_text.dir");
         String tokenDir = kbpConfig.get("edu.cmu.cs.lti.token_map.dir");
@@ -456,9 +456,11 @@ public class KBP2015EventTaskPipeline {
                 tokenDir, modelPath, workingDir);
 
         String preprocessBase = "preprocessed";
-        pipeline.prepare(kbpConfig, preprocessBase);
-//        pipeline.trainAll(kbpConfig, preprocessBase);
-        pipeline.crossValidation(kbpConfig, preprocessBase);
-//        pipeline.test(kbpConfig, preprocessBase);
+
+        pipeline.trainAll(kbpConfig, preprocessBase);
+        pipeline.test(kbpConfig, preprocessBase);
+
+//        pipeline.prepare(kbpConfig, preprocessBase);
+//        pipeline.crossValidation(kbpConfig, preprocessBase);
     }
 }

@@ -64,7 +64,7 @@ public class EventCorefAnnotator extends AbstractLoggingAnnotator {
     @Override
     public void initialize(UimaContext context) throws ResourceInitializationException {
         super.initialize(context);
-        logger.info("Initialize perceptron trainer");
+        logger.info("Initializing coreference annotator");
 
         boolean useBinaryFeatures = config.getBoolean("edu.cmu.cs.lti.coref.binaryFeature", false);
 

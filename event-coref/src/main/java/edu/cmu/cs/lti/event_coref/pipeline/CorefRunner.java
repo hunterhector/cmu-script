@@ -27,15 +27,20 @@ public class CorefRunner {
         CorefPipeline pipeline = new CorefPipeline(typeSystemName, modelPath, taskConfig);
 
         String preprocesseBase = "preprocessed";
-//        pipeline.prepareEventMentions(preprocesseBase);
-//        pipeline.extra("preprocessed_bak", preprocesseBase);
+        String mentionBase = "mention_annotated";
+
+        String testDir = taskConfig.get("edu.cmu.cs.lti.coref.test.dir");
+
+//        pipeline.prepareEventMentions(testDir, preprocesseBase);
+//        pipeline.extra(testDir, preprocesseBase, mentionBase);
 
 //        String finalModel = pipeline.trainFinal(preprocesseBase);
 
         // TODO a rough way of running all iterations.
         for (int i = 15; i <= 15; i++) {
-            pipeline.testCoref(taskConfig, taskConfig.get("edu.cmu.cs.lti.coref.test.dir"), preprocesseBase,
-                    "../models/latent_tree_coref/all_iter" + i, "test_out", String.valueOf(i));
+            pipeline.testCoref(taskConfig, testDir, mentionBase,
+                    "../models/latent_tree_coref_kbp/all_iter" + i, "test_out",
+                    "_coref_model_" + String.valueOf(i));
         }
     }
 }

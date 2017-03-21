@@ -52,7 +52,7 @@ public class CorefPipeline {
     final String tokenMapDir;
 
     // Output directory.
-    final String workingDir;
+    final String trainingDir;
     // Models.
     final String modelDir;
     // The task configuration.
@@ -73,15 +73,15 @@ public class CorefPipeline {
         this.goldStandardFilePath = taskConfig.get("edu.cmu.cs.lti.gold.tbf");
         this.plainTextDataDir = taskConfig.get("edu.cmu.cs.lti.source_text.dir");
         this.tokenMapDir = taskConfig.get("edu.cmu.cs.lti.token_map.dir");
-        this.workingDir = taskConfig.get("edu.cmu.cs.lti.working.dir");
+        this.trainingDir = taskConfig.get("edu.cmu.cs.lti.training.dir");
         this.taskConfig = taskConfig;
         this.modelDir = modelDir;
         logger.info(String.format("Reading gold tbf from %s , token from %s, source from %s", goldStandardFilePath,
                 tokenMapDir, plainTextDataDir));
-        logger.info(String.format("Main output can be found at %s.", workingDir));
+        logger.info(String.format("Main output can be found at %s.", trainingDir));
     }
 
-    public void prepareEventMentions(String preprocessBase) throws UIMAException, IOException {
+    public void prepareEventMentions(String workingDir, String preprocessBase) throws UIMAException, IOException {
         final String semaforModelDirectory = modelDir + "/semafor_malt_model_20121129";
         final String fanseModelDirectory = modelDir + "/fanse_models";
         final String opennlpDirectory = modelDir + "/opennlp/en-chunker.bin";
@@ -155,18 +155,18 @@ public class CorefPipeline {
         pipeline.run();
     }
 
-    public void extra(String inputBase, String outputBase) throws UIMAException, IOException {
+    public void extra(String parentDir, String inputBase, String outputBase) throws UIMAException, IOException {
         BasicPipeline pipeline = new BasicPipeline(new AbstractProcessorBuilder() {
             @Override
             public CollectionReaderDescription buildCollectionReader() throws ResourceInitializationException {
-                return CustomCollectionReaderFactory.createXmiReader(typeSystemDescription, workingDir, inputBase);
+                return CustomCollectionReaderFactory.createXmiReader(typeSystemDescription, parentDir, inputBase);
             }
 
             @Override
             public AnalysisEngineDescription[] buildProcessors() throws
                     ResourceInitializationException {
 
-                AnalysisEngineDescription mentionAndCorefGoldAnnotator = AnalysisEngineFactory
+                AnalysisEngineDescription goldMentionAnnotator = AnalysisEngineFactory
                         .createEngineDescription(
                                 GoldStandardEventMentionAnnotator.class, typeSystemDescription,
                                 GoldStandardEventMentionAnnotator.PARAM_COPY_MENTION_ONLY, true,
@@ -178,12 +178,12 @@ public class CorefPipeline {
                         ArgumentExtractor.class, typeSystemDescription
                 );
 
-                AnalysisEngineDescription xmiWriter = CustomAnalysisEngineFactory.createXmiWriter(workingDir,
+                AnalysisEngineDescription xmiWriter = CustomAnalysisEngineFactory.createXmiWriter(parentDir,
                         outputBase);
 
 //                return new AnalysisEngineDescription[]{argumentExtractor, xmiWriter};
 
-                return new AnalysisEngineDescription[]{mentionAndCorefGoldAnnotator, argumentExtractor, xmiWriter};
+                return new AnalysisEngineDescription[]{goldMentionAnnotator, argumentExtractor, xmiWriter};
             }
         }, typeSystemDescription);
         pipeline.run();
@@ -241,11 +241,13 @@ public class CorefPipeline {
         String evalPath = taskConfig.get("edu.cmu.cs.lti.eval.base");
 
         writeResults(corefResultReader, FileUtils.joinPaths(testWorkingDir, evalPath,
-                        "treeCoref", "coref_final" + suffix + ".tbf"), "treeCoref"
+                "treeCoref", "coref_final" + suffix + ".tbf"), "treeCoref"
         );
     }
 
-    private CollectionReaderDescription corefResolution(CollectionReaderDescription reader, Configuration config,
+    private CollectionReaderDescription corefResolution(CollectionReaderDescription reader,
+                                                        String workingDir,
+                                                        Configuration config,
                                                         String modelDir, String outputBase)
             throws UIMAException, IOException {
         logger.info("Running coreference resolution, output at " + outputBase);
@@ -302,7 +304,8 @@ public class CorefPipeline {
         systemPipeline.run();
     }
 
-    private CollectionReaderDescription annotateGoldCoref(CollectionReaderDescription reader, String outputBase)
+    private CollectionReaderDescription annotateGoldCoref(CollectionReaderDescription reader, String workingDir,
+                                                          String outputBase)
             throws UIMAException, IOException {
         if (!new File(workingDir, outputBase).exists()) {
             BasicPipeline pipeline = new BasicPipeline(new AbstractProcessorBuilder() {
@@ -335,7 +338,7 @@ public class CorefPipeline {
         return CustomCollectionReaderFactory.createXmiReader(typeSystemDescription, workingDir, outputBase);
     }
 
-    public void crossValidation(String inputBaseDir) throws UIMAException, IOException {
+    public void crossValidation(String inputBaseDir, String workingDir) throws UIMAException, IOException {
         int numSplit = taskConfig.getInt("edu.cmu.cs.lti.cv.split", 5);
         int seed = taskConfig.getInt("edu.cmu.cs.lti.cv.seed", 17);
         String evalPath = taskConfig.get("edu.cmu.cs.lti.eval.base");
@@ -353,19 +356,20 @@ public class CorefPipeline {
                     typeSystemDescription, workingDir, inputBaseDir, true, seed, slice);
 
             String trainingDataOutuput = FileUtils.joinPaths(middleResults, sliceSuffix, "coref_training");
-            CollectionReaderDescription trainingAnnotatedReader = annotateGoldCoref(trainingSliceReader,
+            CollectionReaderDescription trainingAnnotatedReader = annotateGoldCoref(trainingSliceReader, workingDir,
                     trainingDataOutuput);
 
             String treeCorefModel = trainLatentTreeCoref(taskConfig, trainingAnnotatedReader, sliceSuffix);
 
             // Produce gold standard on gold data.
             String goldCorefOutput = FileUtils.joinPaths(middleResults, sliceSuffix, "gold_coref");
-            CollectionReaderDescription goldCorefResultReader = annotateGoldCoref(devSliceReader, goldCorefOutput);
+            CollectionReaderDescription goldCorefResultReader = annotateGoldCoref(devSliceReader, workingDir,
+                    goldCorefOutput);
 
             // Run coreference on dev data.
             String corefOutput = FileUtils.joinPaths(middleResults, sliceSuffix, "treeCoref");
-            CollectionReaderDescription corefResultReader = corefResolution(devSliceReader, taskConfig, treeCorefModel,
-                    corefOutput);
+            CollectionReaderDescription corefResultReader = corefResolution(devSliceReader, workingDir,
+                    taskConfig, treeCorefModel, corefOutput);
 
             // Output final result.
             writeResults(corefResultReader,
@@ -378,13 +382,13 @@ public class CorefPipeline {
         }
     }
 
-    public String trainFinal(String inputBaseDir) throws UIMAException, IOException {
+    public String trainFinal(String inputBaseDir, String workingDir) throws UIMAException, IOException {
         String sliceSuffix = "all";
         CollectionReaderDescription trainingReaader = CustomCollectionReaderFactory.createXmiReader
                 (typeSystemDescription, workingDir, inputBaseDir);
 
         String trainingDataOutuput = FileUtils.joinPaths(middleResults, sliceSuffix, "coref_training");
-        CollectionReaderDescription trainingAnnotatedReader = annotateGoldCoref(trainingReaader,
+        CollectionReaderDescription trainingAnnotatedReader = annotateGoldCoref(trainingReaader, workingDir,
                 trainingDataOutuput);
 
         return trainLatentTreeCoref(taskConfig, trainingAnnotatedReader, sliceSuffix);
@@ -401,16 +405,19 @@ public class CorefPipeline {
         String modelPath = commonConfig.get("edu.cmu.cs.lti.model.dir");
         String typeSystemName = commonConfig.get("edu.cmu.cs.lti.event.typesystem");
 
+        String testDir = taskConfig.get("edu.cmu.cs.lti.coref.test.dir");
+        String model = taskConfig.get("edu.cmu.cs.lti.coref.test.model");
+
         CorefPipeline pipeline = new CorefPipeline(typeSystemName, modelPath, taskConfig);
 
         String preprocesseBase = "preprocessed";
+        String mentionBase = "mention_annotated";
 //        pipeline.prepareEventMentions(preprocesseBase);
-//        pipeline.extra("preprocessed_bak", preprocesseBase);
+        pipeline.extra(testDir, preprocesseBase, mentionBase);
 
-        String finalModel = pipeline.trainFinal(preprocesseBase);
+//        String finalModel = pipeline.trainFinal(preprocesseBase);
 //        pipeline.crossValidation(preprocesseBase);
 
-//        pipeline.testCoref(taskConfig, taskConfig.get("edu.cmu.cs.lti.coref.test.dir"), preprocesseBase,
-//                "../models/latent_tree_coref/all_iter1", "test_out");
+        pipeline.testCoref(taskConfig, testDir, mentionBase, model, "test_out", "_all_with_aver");
     }
 }

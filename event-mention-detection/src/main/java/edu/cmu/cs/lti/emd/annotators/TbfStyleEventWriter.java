@@ -5,11 +5,12 @@ import edu.cmu.cs.lti.collection_reader.TbfEventDataReader;
 import edu.cmu.cs.lti.script.type.*;
 import edu.cmu.cs.lti.uima.io.writer.AbstractSimpleTextWriterAnalysisEngine;
 import edu.cmu.cs.lti.uima.util.TokenAlignmentHelper;
-import edu.cmu.cs.lti.uima.util.UimaConvenience;
+import org.apache.uima.UimaContext;
 import org.apache.uima.fit.descriptor.ConfigurationParameter;
 import org.apache.uima.fit.util.FSCollectionFactory;
 import org.apache.uima.fit.util.JCasUtil;
 import org.apache.uima.jcas.JCas;
+import org.apache.uima.resource.ResourceInitializationException;
 import org.javatuples.Pair;
 
 import java.util.*;
@@ -29,9 +30,13 @@ public class TbfStyleEventWriter extends AbstractSimpleTextWriterAnalysisEngine 
     public static final String goldCompontnentId = TbfEventDataReader.COMPONENT_ID;
 
     @Override
-    public String getTextToPrint(JCas aJCas) {
-        UimaConvenience.printProcessLog(aJCas, logger);
+    public void initialize(UimaContext context) throws ResourceInitializationException {
+        super.initialize(context);
+        logger.info("Preparing to write as TBFs.");
+    }
 
+    @Override
+    public String getTextToPrint(JCas aJCas) {
         StringBuilder sb = new StringBuilder();
 
         Article article = JCasUtil.selectSingle(aJCas, Article.class);
