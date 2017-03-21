@@ -44,10 +44,15 @@ public class ArgumentExtractor extends AbstractLoggingAnnotator {
             StanfordCorenlpToken headWord = UimaNlpUtils.findHeadFromTreeAnnotation(mention);
 
             if (headWord == null) {
+                headWord = UimaConvenience.selectCoveredFirst(mention, StanfordCorenlpToken.class);
+            }
+
+            if (headWord == null) {
                 // TODO this is a temporary solution.
 //                logger.debug("Found null headword for " + mention.getId() + " : " + mention.getCoveredText());
                 headWord = JCasUtil.selectCovering(StanfordCorenlpToken.class, mention).get(0);
             }
+
             mention.setHeadWord(headWord);
 
             List<SemaforLabel> coveredSemaforLabel = JCasUtil.selectCovered(SemaforLabel.class, headWord);

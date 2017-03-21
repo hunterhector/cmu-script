@@ -503,8 +503,9 @@ public class EventMentionPipeline {
         logger.info("Staring training a full model on all data in " + preprocessBase);
         CollectionReaderDescription trainingReader = CustomCollectionReaderFactory.createXmiReader(
                 typeSystemDescription, trainingWorkingDir, preprocessBase);
-        trainMentionTypeLv1(config, trainingReader, fullRunSuffix, skipTypeTrain);
-        trainRealisTypes(config, trainingReader, fullRunSuffix, skipRealisTrain);
+        //TODO temporarily comment out to check coref only.
+//        trainMentionTypeLv1(config, trainingReader, fullRunSuffix, skipTypeTrain);
+//        trainRealisTypes(config, trainingReader, fullRunSuffix, skipRealisTrain);
         trainLatentTreeCoref(config, trainingReader, fullRunSuffix, skipCorefTrain);
         logger.info("All training done.");
     }
@@ -513,24 +514,24 @@ public class EventMentionPipeline {
         CollectionReaderDescription testDataReader = CustomCollectionReaderFactory.createXmiReader(
                 typeSystemDescription, testingWorkingDir, preprocessBase);
 
-        String crfTypeModel = joinPaths(outputModelDir,
-                testConfig.get("edu.cmu.cs.lti.model.crf.mention.lv1.dir"), fullRunSuffix);
-        String mentionLv1Output = joinPaths(middleResults, fullRunSuffix, "mention_lv1");
-
-        logger.info("Going to run mention type on [" + testingWorkingDir + "/"
-                + preprocessBase + "], output will be at " + mentionLv1Output);
-        CollectionReaderDescription lv1OutputReader = crfMentionDetection(testConfig, testDataReader, crfTypeModel,
-                testingWorkingDir, mentionLv1Output);
-
-        // Run realis on Lv1 crf mentions.
-        String realisModel = joinPaths(outputModelDir,
-                testConfig.get("edu.cmu.cs.lti.model.realis.dir"), fullRunSuffix);
-        String lv1RealisOutput = joinPaths(middleResults, fullRunSuffix, "lv1_realis");
-
-        logger.info("Going to run realis classifier on " + mentionLv1Output + " output will be at " + lv1RealisOutput);
-        CollectionReaderDescription lv1MentionRealisResults = realisAnnotation(testConfig, lv1OutputReader,
-                realisModel, testingWorkingDir, lv1RealisOutput);
-
+//        String crfTypeModel = joinPaths(outputModelDir,
+//                testConfig.get("edu.cmu.cs.lti.model.crf.mention.lv1.dir"), fullRunSuffix);
+//        String mentionLv1Output = joinPaths(middleResults, fullRunSuffix, "mention_lv1");
+//
+//        logger.info("Going to run mention type on [" + testingWorkingDir + "/"
+//                + preprocessBase + "], output will be at " + mentionLv1Output);
+//        CollectionReaderDescription lv1OutputReader = crfMentionDetection(testConfig, testDataReader, crfTypeModel,
+//                testingWorkingDir, mentionLv1Output);
+//
+//        // Run realis on Lv1 crf mentions.
+//        String realisModel = joinPaths(outputModelDir,
+//                testConfig.get("edu.cmu.cs.lti.model.realis.dir"), fullRunSuffix);
+//        String lv1RealisOutput = joinPaths(middleResults, fullRunSuffix, "lv1_realis");
+//
+//        logger.info("Going to run realis classifier on " + mentionLv1Output + " output will be at " + lv1RealisOutput);
+//        CollectionReaderDescription lv1MentionRealisResults = realisAnnotation(testConfig, lv1OutputReader,
+//                realisModel, testingWorkingDir, lv1RealisOutput);
+//
         // Run gold standard mention detection.
         String goldMentionOutput = joinPaths(middleResults, fullRunSuffix, "gold");
         CollectionReaderDescription goldMentions = goldMentionAnnotator(testDataReader, testingWorkingDir,
@@ -539,18 +540,18 @@ public class EventMentionPipeline {
         // Run coreference.
         String corefModel = joinPaths(outputModelDir,
                 testConfig.get("edu.cmu.cs.lti.model.event.latent_tree"), fullRunSuffix);
-        String fullResultOutput = joinPaths(middleResults, fullRunSuffix, "lv1_realis_coref");
+//        String fullResultOutput = joinPaths(middleResults, fullRunSuffix, "lv1_realis_coref");
         String goldCorefOutput = joinPaths(middleResults, fullRunSuffix, "gold_coref");
 
-        logger.info("Going to run coreference on [" + lv1RealisOutput + "], output will be at " + fullResultOutput);
-        CollectionReaderDescription fullResults = corefResolution(testConfig, lv1MentionRealisResults,
-                corefModel, testingWorkingDir, fullResultOutput, true);
+//        logger.info("Going to run coreference on [" + lv1RealisOutput + "], output will be at " + fullResultOutput);
+//        CollectionReaderDescription fullResults = corefResolution(testConfig, lv1MentionRealisResults,
+//                corefModel, testingWorkingDir, fullResultOutput, true);
         CollectionReaderDescription goldBasedCoref = corefResolution(testConfig, goldMentions, corefModel,
                 testingWorkingDir, goldCorefOutput, true);
 
         // Output final result.
         String evalDir = joinPaths(testingWorkingDir, evalBase, "full_run");
-        writeResults(fullResults, joinPaths(evalDir, "lv1_realis_coref_" + fullRunSuffix + ".tbf"), "sys-coref");
+//        writeResults(fullResults, joinPaths(evalDir, "lv1_realis_coref_" + fullRunSuffix + ".tbf"), "sys-coref");
         writeResults(goldBasedCoref, joinPaths(evalDir, "gold_coref_" + fullRunSuffix + ".tbf"), "gold-coref");
     }
 
