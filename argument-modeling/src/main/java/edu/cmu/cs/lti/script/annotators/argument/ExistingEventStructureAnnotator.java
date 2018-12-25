@@ -16,7 +16,7 @@ import java.util.Map;
 
 /**
  * To work with pre-annotated dataset, we need to combine the automatic annotations and gold annotations. This
- * inludes the following steps:
+ * includes the following steps:
  * <p>
  * Prerequisite:
  * 1. SRL annotation (Semafor and ArgumentMerger).

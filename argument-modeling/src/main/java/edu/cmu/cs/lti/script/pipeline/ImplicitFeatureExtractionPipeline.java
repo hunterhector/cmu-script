@@ -1,5 +1,6 @@
 package edu.cmu.cs.lti.script.pipeline;
 
+import edu.cmu.cs.lti.annotators.FanseAnnotator;
 import edu.cmu.cs.lti.annotators.StanfordCoreNlpAnnotator;
 import edu.cmu.cs.lti.collection_reader.JsonEventDataReader;
 import edu.cmu.cs.lti.pipeline.BasicPipeline;
@@ -7,6 +8,7 @@ import edu.cmu.cs.lti.script.annotators.ArgumentMerger;
 import edu.cmu.cs.lti.script.annotators.SemaforAnnotator;
 import edu.cmu.cs.lti.script.annotators.argument.ExistingEventStructureAnnotator;
 import edu.cmu.cs.lti.script.annotators.writer.ArgumentClozeTaskWriter;
+import edu.cmu.cs.lti.uima.annotator.AbstractAnnotator;
 import edu.cmu.cs.lti.uima.io.reader.PlainTextCollectionReader;
 import org.apache.uima.UIMAException;
 import org.apache.uima.analysis_engine.AnalysisEngineDescription;
@@ -15,6 +17,7 @@ import org.apache.uima.collection.metadata.CpeDescriptorException;
 import org.apache.uima.fit.factory.AnalysisEngineFactory;
 import org.apache.uima.fit.factory.CollectionReaderFactory;
 import org.apache.uima.fit.factory.TypeSystemDescriptionFactory;
+import org.apache.uima.fit.pipeline.SimplePipeline;
 import org.apache.uima.resource.metadata.TypeSystemDescription;
 import org.xml.sax.SAXException;
 
@@ -35,7 +38,7 @@ public class ImplicitFeatureExtractionPipeline {
         String workingDir = args[2];
 
         String semaforModelDirectory = "../models/semafor_malt_model_20121129";
-
+        String fanseModelDirectory = "../models/fanse_models";
 
         TypeSystemDescription des = TypeSystemDescriptionFactory.createTypeSystemDescription("TypeSystem");
 
@@ -58,6 +61,12 @@ public class ImplicitFeatureExtractionPipeline {
                 SemaforAnnotator.class, des,
                 SemaforAnnotator.SEMAFOR_MODEL_PATH, semaforModelDirectory);
 
+        AnalysisEngineDescription fanse = AnalysisEngineFactory.createEngineDescription(
+                FanseAnnotator.class, des,
+                FanseAnnotator.PARAM_MODEL_BASE_DIR, fanseModelDirectory,
+                AbstractAnnotator.MULTI_THREAD, true
+        );
+
         AnalysisEngineDescription merger = AnalysisEngineFactory.createEngineDescription(
                 ArgumentMerger.class, des);
 
@@ -65,12 +74,19 @@ public class ImplicitFeatureExtractionPipeline {
                 ExistingEventStructureAnnotator.class, des
         );
 
+        BasicPipeline pipeline = new BasicPipeline(reader, workingDir, "gold", goldAnnotator, parser, fanse, semafor,
+                merger, eventAnnotator);
+
+//        pipeline.run();
+
+        CollectionReaderDescription dataReader = pipeline.getOutput();
+
         AnalysisEngineDescription featureExtractor = AnalysisEngineFactory.createEngineDescription(
                 ArgumentClozeTaskWriter.class, des,
                 ArgumentClozeTaskWriter.PARAM_OUTPUT_FILE, new File(workingDir, "cloze.json")
         );
 
-        new BasicPipeline(reader, workingDir, "gold", goldAnnotator, parser, semafor, merger, eventAnnotator,
-                featureExtractor).run();
+        SimplePipeline.runPipeline(dataReader, featureExtractor);
+
     }
 }

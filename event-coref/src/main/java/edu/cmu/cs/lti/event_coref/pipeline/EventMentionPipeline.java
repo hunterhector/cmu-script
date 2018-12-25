@@ -274,7 +274,6 @@ public class EventMentionPipeline {
         CollectionReaderDescription output = CustomCollectionReaderFactory.createXmiReader(typeSystemDescription,
                 workingDir.getAbsolutePath(), paths.getPreprocessBase());
 
-
         if (skipIfExists && preprocessDir.exists()) {
             logger.info("Preprocessed data exists, not running.");
             return output;
