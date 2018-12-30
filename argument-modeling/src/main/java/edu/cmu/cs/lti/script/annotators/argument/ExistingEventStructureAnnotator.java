@@ -40,13 +40,12 @@ public class ExistingEventStructureAnnotator extends AbstractLoggingAnnotator {
     }
 
     private void handleEvents(JCas aJCas, JCas goldView) {
-        for (EventMention mention : JCasUtil.select(goldView, EventMention.class)) {
-            EventMention sysMention = new EventMention(aJCas);
+        for (EventMention goldMention : JCasUtil.select(goldView, EventMention.class)) {
+            EventMention sysMention = new EventMention(aJCas, goldMention.getBegin(), goldMention.getEnd());
             StanfordCorenlpToken headword = UimaNlpUtils.findHeadFromStanfordAnnotation(sysMention);
             sysMention.setFrameName(headword.getFrameName());
             sysMention.setHeadWord(headword);
-            UimaAnnotationUtils.finishAnnotation(sysMention, mention.getBegin(), mention.getEnd(), COMPONENT_ID,
-                    mention.getId(), aJCas);
+            UimaAnnotationUtils.finishAnnotation(sysMention, COMPONENT_ID, goldMention.getId(), aJCas);
         }
     }
 

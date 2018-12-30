@@ -77,7 +77,7 @@ public class ImplicitFeatureExtractionPipeline {
         BasicPipeline pipeline = new BasicPipeline(reader, workingDir, "gold", goldAnnotator, parser, fanse, semafor,
                 merger, eventAnnotator);
 
-//        pipeline.run();
+        pipeline.run();
 
         CollectionReaderDescription dataReader = pipeline.getOutput();
 
@@ -87,6 +87,5 @@ public class ImplicitFeatureExtractionPipeline {
         );
 
         SimplePipeline.runPipeline(dataReader, featureExtractor);
-
     }
 }

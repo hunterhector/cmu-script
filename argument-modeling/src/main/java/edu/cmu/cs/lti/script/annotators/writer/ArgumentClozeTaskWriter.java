@@ -16,6 +16,7 @@ import edu.cmu.cs.lti.uima.annotator.AbstractLoggingAnnotator;
 import edu.cmu.cs.lti.uima.io.reader.CustomCollectionReaderFactory;
 import edu.cmu.cs.lti.uima.util.UimaConvenience;
 import edu.cmu.cs.lti.uima.util.UimaNlpUtils;
+import edu.cmu.cs.lti.utils.DebugUtils;
 import gnu.trove.map.TObjectIntMap;
 import gnu.trove.map.hash.TObjectIntHashMap;
 import org.apache.commons.io.FileUtils;
@@ -143,7 +144,6 @@ public class ArgumentClozeTaskWriter extends AbstractLoggingAnnotator {
                     eventMention.setHeadWord(UimaNlpUtils.findHeadFromStanfordAnnotation(eventMention));
                 }
 
-
                 ClozeEvent ce = new ClozeEvent();
                 ce.sentenceId = sentId;
 
@@ -209,6 +209,7 @@ public class ArgumentClozeTaskWriter extends AbstractLoggingAnnotator {
                     argumentMap.put(en, ca);
                 }
                 ce.arguments = clozeArguments;
+
                 doc.events.add(ce);
             }
         }
