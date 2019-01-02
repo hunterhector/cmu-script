@@ -6,7 +6,6 @@ import edu.cmu.cs.lti.collection_reader.JsonEventDataReader;
 import edu.cmu.cs.lti.pipeline.BasicPipeline;
 import edu.cmu.cs.lti.script.annotators.ArgumentMerger;
 import edu.cmu.cs.lti.script.annotators.SemaforAnnotator;
-import edu.cmu.cs.lti.script.annotators.argument.ExistingEventStructureAnnotator;
 import edu.cmu.cs.lti.script.annotators.writer.ArgumentClozeTaskWriter;
 import edu.cmu.cs.lti.uima.annotator.AbstractAnnotator;
 import edu.cmu.cs.lti.uima.io.reader.PlainTextCollectionReader;
@@ -47,14 +46,15 @@ public class ImplicitFeatureExtractionPipeline {
                 PlainTextCollectionReader.PARAM_INPUTDIR, sourceTextDir,
                 PlainTextCollectionReader.PARAM_TEXT_SUFFIX, ".txt");
 
-        AnalysisEngineDescription goldAnnotator = AnalysisEngineFactory.createEngineDescription(
-                JsonEventDataReader.class, des,
-                JsonEventDataReader.PARAM_JSON_ANNO_DIR, annotateDir
-        );
 
         AnalysisEngineDescription parser = AnalysisEngineFactory.createEngineDescription(
                 StanfordCoreNlpAnnotator.class, des,
                 StanfordCoreNlpAnnotator.PARAM_LANGUAGE, "en"
+        );
+
+        AnalysisEngineDescription goldAnnotator = AnalysisEngineFactory.createEngineDescription(
+                JsonEventDataReader.class, des,
+                JsonEventDataReader.PARAM_JSON_ANNO_DIR, annotateDir
         );
 
         AnalysisEngineDescription semafor = AnalysisEngineFactory.createEngineDescription(
@@ -70,12 +70,8 @@ public class ImplicitFeatureExtractionPipeline {
         AnalysisEngineDescription merger = AnalysisEngineFactory.createEngineDescription(
                 ArgumentMerger.class, des);
 
-        AnalysisEngineDescription eventAnnotator = AnalysisEngineFactory.createEngineDescription(
-                ExistingEventStructureAnnotator.class, des
-        );
-
         BasicPipeline pipeline = new BasicPipeline(reader, workingDir, "gold", goldAnnotator, parser, fanse, semafor,
-                merger, eventAnnotator);
+                merger);
 
         pipeline.run();
 
