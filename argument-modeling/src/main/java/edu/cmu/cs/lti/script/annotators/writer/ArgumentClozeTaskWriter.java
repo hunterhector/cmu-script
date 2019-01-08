@@ -16,7 +16,6 @@ import edu.cmu.cs.lti.uima.annotator.AbstractLoggingAnnotator;
 import edu.cmu.cs.lti.uima.io.reader.CustomCollectionReaderFactory;
 import edu.cmu.cs.lti.uima.util.UimaConvenience;
 import edu.cmu.cs.lti.uima.util.UimaNlpUtils;
-import edu.cmu.cs.lti.utils.DebugUtils;
 import gnu.trove.map.TObjectIntMap;
 import gnu.trove.map.hash.TObjectIntHashMap;
 import org.apache.commons.io.FileUtils;
@@ -198,6 +197,11 @@ public class ArgumentClozeTaskWriter extends AbstractLoggingAnnotator {
                     ca.feName = fe;
                     ca.dep = role;
                     ca.context = argumentContext;
+
+                    UimaConvenience.printProcessLog(aJCas, logger);
+                    logger.info(en.getCoveredText());
+                    logger.info(en.getReferingEntity().getRepresentativeMention().getCoveredText());
+
                     ca.entityId = en.getReferingEntity().getIndex();
                     ca.text = onlySpace(argText);
 

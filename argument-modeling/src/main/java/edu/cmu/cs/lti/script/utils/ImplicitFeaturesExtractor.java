@@ -8,6 +8,8 @@ import org.apache.uima.fit.util.FSCollectionFactory;
 import org.apache.uima.fit.util.JCasUtil;
 import org.apache.uima.jcas.JCas;
 import org.apache.uima.jcas.cas.FSList;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.*;
 
@@ -19,6 +21,9 @@ import java.util.*;
  * @author Zhengzhong Liu
  */
 public class ImplicitFeaturesExtractor {
+
+    private static final Logger logger = LoggerFactory.getLogger(ImplicitFeaturesExtractor.class);
+
     private static Set<String> animacyTypes = new HashSet<>();
     private static Set<String> namedTypes = new HashSet<>();
     private static String[] grammarRoleCategories = {"Subject", "Adjunct", "Verb_Argument", "Noun_Argument", "Other"};
@@ -166,7 +171,8 @@ public class ImplicitFeaturesExtractor {
 
             EntityMention representEnt = entity.getRepresentativeMention();
             if (representEnt == null) {
-                System.out.println(UimaConvenience.getArticleName(aJCas));
+                logger.info(String.format("Cannot find representative entity in article %s for entity %s.",
+                        UimaConvenience.getArticleName(aJCas), entity.getId()));
             }
 
             for (EntityMention mention : FSCollectionFactory.create(entity.getEntityMentions(), EntityMention.class)) {

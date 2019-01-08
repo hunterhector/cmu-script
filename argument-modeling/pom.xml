@@ -35,6 +35,10 @@
             <artifactId>semafor-parser</artifactId>
         </dependency>
         <dependency>
+            <groupId>edu.cmu.cs.lti.script</groupId>
+            <artifactId>preprocessor</artifactId>
+        </dependency>
+        <dependency>
             <groupId>com.google.guava</groupId>
             <artifactId>guava</artifactId>
             <!--<version>22.0</version>-->

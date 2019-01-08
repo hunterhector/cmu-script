@@ -6,6 +6,7 @@ import edu.cmu.cs.lti.collection_reader.JsonEventDataReader;
 import edu.cmu.cs.lti.pipeline.BasicPipeline;
 import edu.cmu.cs.lti.script.annotators.ArgumentMerger;
 import edu.cmu.cs.lti.script.annotators.SemaforAnnotator;
+import edu.cmu.cs.lti.script.annotators.SingletonAnnotator;
 import edu.cmu.cs.lti.script.annotators.writer.ArgumentClozeTaskWriter;
 import edu.cmu.cs.lti.uima.annotator.AbstractAnnotator;
 import edu.cmu.cs.lti.uima.io.reader.PlainTextCollectionReader;
@@ -46,7 +47,6 @@ public class ImplicitFeatureExtractionPipeline {
                 PlainTextCollectionReader.PARAM_INPUTDIR, sourceTextDir,
                 PlainTextCollectionReader.PARAM_TEXT_SUFFIX, ".txt");
 
-
         AnalysisEngineDescription parser = AnalysisEngineFactory.createEngineDescription(
                 StanfordCoreNlpAnnotator.class, des,
                 StanfordCoreNlpAnnotator.PARAM_LANGUAGE, "en"
@@ -67,20 +67,26 @@ public class ImplicitFeatureExtractionPipeline {
                 AbstractAnnotator.MULTI_THREAD, true
         );
 
+        AnalysisEngineDescription singletonCreator = AnalysisEngineFactory.createEngineDescription(
+                SingletonAnnotator.class, des);
+
         AnalysisEngineDescription merger = AnalysisEngineFactory.createEngineDescription(
                 ArgumentMerger.class, des);
-
-        BasicPipeline pipeline = new BasicPipeline(reader, workingDir, "gold", goldAnnotator, parser, fanse, semafor,
-                merger);
-
-        pipeline.run();
-
-        CollectionReaderDescription dataReader = pipeline.getOutput();
 
         AnalysisEngineDescription featureExtractor = AnalysisEngineFactory.createEngineDescription(
                 ArgumentClozeTaskWriter.class, des,
                 ArgumentClozeTaskWriter.PARAM_OUTPUT_FILE, new File(workingDir, "cloze.json")
         );
+
+        BasicPipeline pipeline = new BasicPipeline(reader, workingDir, "gold", goldAnnotator);
+
+//        BasicPipeline pipeline = new BasicPipeline(reader, workingDir, "gold", parser, fanse, semafor, goldAnnotator,
+//                merger, singletonCreator);
+
+        pipeline.run();
+
+        CollectionReaderDescription dataReader = pipeline.getOutput();
+
 
         SimplePipeline.runPipeline(dataReader, featureExtractor);
     }

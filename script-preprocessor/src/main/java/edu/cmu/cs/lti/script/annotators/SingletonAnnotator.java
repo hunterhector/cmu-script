@@ -1,5 +1,5 @@
 /**
- * 
+ *
  */
 package edu.cmu.cs.lti.script.annotators;
 
@@ -18,54 +18,54 @@ import java.util.Collection;
 
 /**
  * For each mention, if there is not high level cluster, then assign it with a entity
- * 
+ *
  * @author zhengzhongliu
- * 
+ *
  */
 public class SingletonAnnotator extends AbstractLoggingAnnotator {
 
-  public static String COMPONENT_ID = SingletonAnnotator.class.getSimpleName();
+    public static String COMPONENT_ID = SingletonAnnotator.class.getSimpleName();
 
-  /*
-   * (non-Javadoc)
-   * 
-   * @see
-   * org.apache.uima.analysis_component.JCasAnnotator_ImplBase#process(org.apache.uima.jcas.JCas)
-   */
-  @Override
-  public void process(JCas aJCas) throws AnalysisEngineProcessException {
-    startProcessInfo(aJCas);
-    int id = 0;
-    Collection<EventMention> eventMentions = JCasUtil.select(aJCas, EventMention.class);
-    for (EventMention mention : eventMentions) {
-      if (mention.getReferringEvent() == null) {
-        Event event = new Event(aJCas);
-        event.setEventMentions(new FSArray(aJCas, 1));
-        event.setEventMentions(0, mention);
-        mention.setReferringEvent(event);
-        UimaAnnotationUtils.finishTop(event, COMPONENT_ID, null, aJCas);
-      }
-      mention.setId(Integer.toString(id));
-      id++;
+    /*
+     * (non-Javadoc)
+     *
+     * @see
+     * org.apache.uima.analysis_component.JCasAnnotator_ImplBase#process(org.apache.uima.jcas.JCas)
+     */
+    @Override
+    public void process(JCas aJCas) throws AnalysisEngineProcessException {
+        int mentionId = 0;
+        int entityId = 0;
+        Collection<EventMention> eventMentions = JCasUtil.select(aJCas, EventMention.class);
+        for (EventMention mention : eventMentions) {
+            if (mention.getReferringEvent() == null) {
+                Event event = new Event(aJCas);
+                event.setEventMentions(new FSArray(aJCas, 1));
+                event.setEventMentions(0, mention);
+                mention.setReferringEvent(event);
+                UimaAnnotationUtils.finishTop(event, COMPONENT_ID, String.format("singleton_%s", entityId++), aJCas);
+            }
+            mention.setId(Integer.toString(mentionId));
+            mentionId++;
+        }
+
+        UimaAnnotationUtils.assignAnnotationIds(eventMentions);
+        UimaAnnotationUtils.assignTopIds(JCasUtil.select(aJCas, Event.class));
+
+        Collection<EntityMention> entityMentions = JCasUtil.select(aJCas, EntityMention.class);
+        for (EntityMention enm : entityMentions) {
+            if (enm.getReferingEntity() == null) {
+                Entity entity = new Entity(aJCas);
+                entity.setEntityMentions(new FSArray(aJCas, 1));
+                entity.setEntityMentions(0, enm);
+                enm.setReferingEntity(entity);
+                entity.setRepresentativeMention(enm);
+                UimaAnnotationUtils.finishTop(entity, COMPONENT_ID, null, aJCas);
+            }
+        }
+
+        UimaAnnotationUtils.assignAnnotationIds(entityMentions);
+        UimaAnnotationUtils.assignTopIds(JCasUtil.select(aJCas, Entity.class));
+
     }
-
-    UimaAnnotationUtils.assignAnnotationIds(eventMentions);
-    UimaAnnotationUtils.assignTopIds(JCasUtil.select(aJCas, Event.class));
-
-    Collection<EntityMention> entityMentions = JCasUtil.select(aJCas, EntityMention.class);
-    for (EntityMention enm : entityMentions) {
-      if (enm.getReferingEntity() == null) {
-        Entity entity = new Entity(aJCas);
-        entity.setEntityMentions(new FSArray(aJCas, 1));
-        entity.setEntityMentions(0, enm);
-        enm.setReferingEntity(entity);
-        entity.setRepresentativeMention(enm);
-        UimaAnnotationUtils.finishTop(entity, COMPONENT_ID, null, aJCas);
-      }
-    }
-
-    UimaAnnotationUtils.assignAnnotationIds(entityMentions);
-    UimaAnnotationUtils.assignTopIds(JCasUtil.select(aJCas, Entity.class));
-
-  }
 }
