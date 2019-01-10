@@ -5,6 +5,7 @@ import edu.cmu.cs.lti.annotators.StanfordCoreNlpAnnotator;
 import edu.cmu.cs.lti.collection_reader.JsonEventDataReader;
 import edu.cmu.cs.lti.pipeline.BasicPipeline;
 import edu.cmu.cs.lti.script.annotators.ArgumentMerger;
+import edu.cmu.cs.lti.script.annotators.MergedArgumentAnnotator;
 import edu.cmu.cs.lti.script.annotators.SemaforAnnotator;
 import edu.cmu.cs.lti.script.annotators.SingletonAnnotator;
 import edu.cmu.cs.lti.script.annotators.writer.ArgumentClozeTaskWriter;
@@ -17,7 +18,6 @@ import org.apache.uima.collection.metadata.CpeDescriptorException;
 import org.apache.uima.fit.factory.AnalysisEngineFactory;
 import org.apache.uima.fit.factory.CollectionReaderFactory;
 import org.apache.uima.fit.factory.TypeSystemDescriptionFactory;
-import org.apache.uima.fit.pipeline.SimplePipeline;
 import org.apache.uima.resource.metadata.TypeSystemDescription;
 import org.xml.sax.SAXException;
 
@@ -67,27 +67,25 @@ public class ImplicitFeatureExtractionPipeline {
                 AbstractAnnotator.MULTI_THREAD, true
         );
 
-        AnalysisEngineDescription singletonCreator = AnalysisEngineFactory.createEngineDescription(
-                SingletonAnnotator.class, des);
+        AnalysisEngineDescription singletonCreator =
+                AnalysisEngineFactory.createEngineDescription(SingletonAnnotator.class, des);
 
-        AnalysisEngineDescription merger = AnalysisEngineFactory.createEngineDescription(
-                ArgumentMerger.class, des);
+        AnalysisEngineDescription merger = AnalysisEngineFactory.createEngineDescription(ArgumentMerger.class, des);
+
+        AnalysisEngineDescription mover = AnalysisEngineFactory.createEngineDescription(
+                MergedArgumentAnnotator.class, des);
 
         AnalysisEngineDescription featureExtractor = AnalysisEngineFactory.createEngineDescription(
                 ArgumentClozeTaskWriter.class, des,
                 ArgumentClozeTaskWriter.PARAM_OUTPUT_FILE, new File(workingDir, "cloze.json")
         );
 
-        BasicPipeline pipeline = new BasicPipeline(reader, workingDir, "gold", goldAnnotator);
+        BasicPipeline pipeline = new BasicPipeline(reader, workingDir, "gold", parser, fanse, semafor, merger);
 
-//        BasicPipeline pipeline = new BasicPipeline(reader, workingDir, "gold", parser, fanse, semafor, goldAnnotator,
-//                merger, singletonCreator);
-
-        pipeline.run();
+//        pipeline.run();
 
         CollectionReaderDescription dataReader = pipeline.getOutput();
 
-
-        SimplePipeline.runPipeline(dataReader, featureExtractor);
+        new BasicPipeline(dataReader, workingDir, "events", goldAnnotator, mover, featureExtractor).run();
     }
 }

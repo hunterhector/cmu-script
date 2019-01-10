@@ -186,10 +186,10 @@ public class ArgumentClozeTaskWriter extends AbstractLoggingAnnotator {
                     if (fe == null) {
                         fe = "NA";
                     }
-                    EntityMention en = argLink.getArgument();
-                    Word argHead = en.getHead();
+                    EntityMention ent = argLink.getArgument();
+                    Word argHead = ent.getHead();
 
-                    String argText = en.getHead().getLemma();
+                    String argText = ent.getHead().getLemma();
                     argText = onlySpace(argText);
 
                     String argumentContext = getContext(lemmas, (StanfordCorenlpToken) argHead);
@@ -198,19 +198,19 @@ public class ArgumentClozeTaskWriter extends AbstractLoggingAnnotator {
                     ca.dep = role;
                     ca.context = argumentContext;
 
-                    UimaConvenience.printProcessLog(aJCas, logger);
-                    logger.info(en.getCoveredText());
-                    logger.info(en.getReferingEntity().getRepresentativeMention().getCoveredText());
+                    UimaConvenience.printProcessLog(aJCas);
+                    logger.info(String.format("Entity mention is %s, %d : %d",  ent.getCoveredText(),
+                            ent.getBegin(), ent.getEnd()));
 
-                    ca.entityId = en.getReferingEntity().getIndex();
+                    ca.entityId = ent.getReferingEntity().getIndex();
                     ca.text = onlySpace(argText);
 
-                    ca.argStart = en.getBegin() - sentence.getBegin();
-                    ca.argEnd = en.getEnd() - sentence.getBegin();
+                    ca.argStart = ent.getBegin() - sentence.getBegin();
+                    ca.argEnd = ent.getEnd() - sentence.getBegin();
 
                     clozeArguments.add(ca);
 
-                    argumentMap.put(en, ca);
+                    argumentMap.put(ent, ca);
                 }
                 ce.arguments = clozeArguments;
 

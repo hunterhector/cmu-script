@@ -9,7 +9,7 @@ import edu.cmu.cs.lti.emd.annotators.misc.TypeBasedMentionSelector;
 import edu.cmu.cs.lti.emd.annotators.postprocessors.MentionTypeSplitter;
 import edu.cmu.cs.lti.event_coref.annotators.EventCorefAnnotator;
 import edu.cmu.cs.lti.script.annotators.EventHeadWordAnnotator;
-import edu.cmu.cs.lti.event_coref.annotators.prepare.MergedArgumentAnnotator;
+import edu.cmu.cs.lti.script.annotators.MergedArgumentAnnotator;
 import edu.cmu.cs.lti.learning.utils.ModelUtils;
 import edu.cmu.cs.lti.pipeline.BasicPipeline;
 import edu.cmu.cs.lti.uima.io.reader.CustomCollectionReaderFactory;

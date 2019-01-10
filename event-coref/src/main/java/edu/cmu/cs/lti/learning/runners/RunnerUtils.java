@@ -4,7 +4,7 @@ import edu.cmu.cs.lti.annotators.GoldStandardEventMentionAnnotator;
 import edu.cmu.cs.lti.collection_reader.TbfEventDataReader;
 import edu.cmu.cs.lti.script.annotators.writers.TbfStyleEventWriter;
 import edu.cmu.cs.lti.event_coref.annotators.misc.GoldRemover;
-import edu.cmu.cs.lti.event_coref.annotators.prepare.MergedArgumentAnnotator;
+import edu.cmu.cs.lti.script.annotators.MergedArgumentAnnotator;
 import edu.cmu.cs.lti.script.annotators.EventHeadWordAnnotator;
 import edu.cmu.cs.lti.model.UimaConst;
 import edu.cmu.cs.lti.pipeline.BasicPipeline;

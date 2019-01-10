@@ -1,4 +1,4 @@
-package edu.cmu.cs.lti.event_coref.annotators.prepare;
+package edu.cmu.cs.lti.script.annotators;
 
 import edu.cmu.cs.lti.script.type.*;
 import edu.cmu.cs.lti.uima.annotator.AbstractLoggingAnnotator;
@@ -14,20 +14,14 @@ import org.apache.uima.jcas.cas.FSList;
 import java.util.ArrayList;
 
 /**
- * Quick and dirty argument extractor based on Semafor and Fanse parsers.
+ * After arguments being annotated to tokens (such as ArgumentMerger), we move them to the event mentions for further
+ * processing.
  *
  * @author Zhengzhong Liu
  */
 public class MergedArgumentAnnotator extends AbstractLoggingAnnotator {
-    public static final String ANNOTATOR_COMPONENT_ID = MergedArgumentAnnotator.class.getSimpleName();
-
-//    TokenAlignmentHelper helper = new TokenAlignmentHelper();
-
     @Override
     public void process(JCas aJCas) throws AnalysisEngineProcessException {
-//        helper.loadStanford2Fanse(aJCas);
-//        helper.loadFanse2Stanford(aJCas);
-
         for (EventMention mention : JCasUtil.select(aJCas, EventMention.class)) {
             StanfordCorenlpToken headWord = (StanfordCorenlpToken) mention.getHeadWord();
             FSList headArgsFS = headWord.getChildSemanticRelations();
