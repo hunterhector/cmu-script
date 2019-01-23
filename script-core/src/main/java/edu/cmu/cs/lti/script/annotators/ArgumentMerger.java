@@ -75,8 +75,8 @@ public class ArgumentMerger extends AbstractLoggingAnnotator {
                     SemanticArgument arg = new SemanticArgument(aJCas, frameSpan.getBegin(), frameSpan.getEnd());
                     arg.setHead(argHead);
                     relation.setChild(arg);
-                    UimaAnnotationUtils.finishAnnotation(arg, FanseAnnotator.class.getSimpleName(), 0, aJCas);
-                    UimaAnnotationUtils.finishTop(relation, FanseAnnotator.class.getSimpleName(), 0, aJCas);
+                    UimaAnnotationUtils.finishAnnotation(arg, FanseAnnotator.COMPONENT_ID, 0, aJCas);
+                    UimaAnnotationUtils.finishTop(relation, FanseAnnotator.COMPONENT_ID, 0, aJCas);
                     mergedArguments.put(argHead, relation);
                 }
             }
@@ -96,8 +96,8 @@ public class ArgumentMerger extends AbstractLoggingAnnotator {
                     arg.setHead(argHead);
                     relation.setChild(arg);
 
-                    UimaAnnotationUtils.finishAnnotation(arg, SemaforAnnotator.class.getSimpleName(), 0, aJCas);
-                    UimaAnnotationUtils.finishTop(relation, SemaforAnnotator.class.getSimpleName(), 0, aJCas);
+                    UimaAnnotationUtils.finishAnnotation(arg, SemaforAnnotator.COMPONENT_ID, 0, aJCas);
+                    UimaAnnotationUtils.finishTop(relation, SemaforAnnotator.COMPONENT_ID, 0, aJCas);
 
                     mergedArguments.put(semaforArg.getKey(), relation);
                 }

@@ -198,13 +198,10 @@ public class ArgumentClozeTaskWriter extends AbstractLoggingAnnotator {
                     ca.dep = role;
                     ca.context = argumentContext;
 
-                    UimaConvenience.printProcessLog(aJCas);
-                    logger.info(String.format("Entity mention is %s, %d : %d",  ent.getCoveredText(),
-                            ent.getBegin(), ent.getEnd()));
-
                     ca.entityId = ent.getReferingEntity().getIndex();
                     ca.text = onlySpace(argText);
 
+                    // TODO: This will create negative start and end for implicit arguments?
                     ca.argStart = ent.getBegin() - sentence.getBegin();
                     ca.argEnd = ent.getEnd() - sentence.getBegin();
 

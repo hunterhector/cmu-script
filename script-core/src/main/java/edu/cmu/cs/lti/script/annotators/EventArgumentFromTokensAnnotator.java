@@ -19,7 +19,7 @@ import java.util.ArrayList;
  *
  * @author Zhengzhong Liu
  */
-public class MergedArgumentAnnotator extends AbstractLoggingAnnotator {
+public class EventArgumentFromTokensAnnotator extends AbstractLoggingAnnotator {
     @Override
     public void process(JCas aJCas) throws AnalysisEngineProcessException {
         for (EventMention mention : JCasUtil.select(aJCas, EventMention.class)) {

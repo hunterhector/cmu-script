@@ -9,7 +9,7 @@ import edu.cmu.cs.lti.emd.annotators.misc.TypeBasedMentionSelector;
 import edu.cmu.cs.lti.emd.annotators.postprocessors.MentionTypeSplitter;
 import edu.cmu.cs.lti.event_coref.annotators.EventCorefAnnotator;
 import edu.cmu.cs.lti.script.annotators.EventHeadWordAnnotator;
-import edu.cmu.cs.lti.script.annotators.MergedArgumentAnnotator;
+import edu.cmu.cs.lti.script.annotators.EventArgumentFromTokensAnnotator;
 import edu.cmu.cs.lti.learning.utils.ModelUtils;
 import edu.cmu.cs.lti.pipeline.BasicPipeline;
 import edu.cmu.cs.lti.uima.io.reader.CustomCollectionReaderFactory;
@@ -147,7 +147,7 @@ public class SubmissionPipeline {
             preAnnotators.add(headWordExtractor);
         } else {
             AnalysisEngineDescription argumentExtractor = AnalysisEngineFactory.createEngineDescription(
-                    MergedArgumentAnnotator.class
+                    EventArgumentFromTokensAnnotator.class
             );
             preAnnotators.add(headWordExtractor);
             preAnnotators.add(argumentExtractor);

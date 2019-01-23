@@ -5,9 +5,7 @@ import edu.cmu.cs.lti.annotators.StanfordCoreNlpAnnotator;
 import edu.cmu.cs.lti.collection_reader.JsonEventDataReader;
 import edu.cmu.cs.lti.pipeline.BasicPipeline;
 import edu.cmu.cs.lti.script.annotators.ArgumentMerger;
-import edu.cmu.cs.lti.script.annotators.MergedArgumentAnnotator;
 import edu.cmu.cs.lti.script.annotators.SemaforAnnotator;
-import edu.cmu.cs.lti.script.annotators.SingletonAnnotator;
 import edu.cmu.cs.lti.script.annotators.writer.ArgumentClozeTaskWriter;
 import edu.cmu.cs.lti.uima.annotator.AbstractAnnotator;
 import edu.cmu.cs.lti.uima.io.reader.PlainTextCollectionReader;
@@ -67,25 +65,20 @@ public class ImplicitFeatureExtractionPipeline {
                 AbstractAnnotator.MULTI_THREAD, true
         );
 
-        AnalysisEngineDescription singletonCreator =
-                AnalysisEngineFactory.createEngineDescription(SingletonAnnotator.class, des);
-
         AnalysisEngineDescription merger = AnalysisEngineFactory.createEngineDescription(ArgumentMerger.class, des);
 
-        AnalysisEngineDescription mover = AnalysisEngineFactory.createEngineDescription(
-                MergedArgumentAnnotator.class, des);
+
+        BasicPipeline pipeline = new BasicPipeline(reader, workingDir, "parsed", parser, fanse, semafor, merger);
+
+//        pipeline.run();
+
+        CollectionReaderDescription dataReader = pipeline.getOutput();
 
         AnalysisEngineDescription featureExtractor = AnalysisEngineFactory.createEngineDescription(
                 ArgumentClozeTaskWriter.class, des,
                 ArgumentClozeTaskWriter.PARAM_OUTPUT_FILE, new File(workingDir, "cloze.json")
         );
 
-        BasicPipeline pipeline = new BasicPipeline(reader, workingDir, "gold", parser, fanse, semafor, merger);
-
-//        pipeline.run();
-
-        CollectionReaderDescription dataReader = pipeline.getOutput();
-
-        new BasicPipeline(dataReader, workingDir, "events", goldAnnotator, mover, featureExtractor).run();
+        new BasicPipeline(dataReader, workingDir, "events", goldAnnotator, featureExtractor).run();
     }
 }
