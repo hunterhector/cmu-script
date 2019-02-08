@@ -19,6 +19,7 @@ import edu.cmu.cs.lti.uima.util.UimaNlpUtils;
 import gnu.trove.map.TObjectIntMap;
 import gnu.trove.map.hash.TObjectIntHashMap;
 import org.apache.commons.io.FileUtils;
+import org.apache.commons.lang3.tuple.Pair;
 import org.apache.uima.UIMAException;
 import org.apache.uima.UimaContext;
 import org.apache.uima.analysis_engine.AnalysisEngineDescription;
@@ -41,6 +42,10 @@ import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.OutputStreamWriter;
+import java.net.URISyntaxException;
+import java.net.URL;
+import java.nio.file.Files;
+import java.nio.file.Paths;
 import java.util.*;
 import java.util.zip.GZIPOutputStream;
 
@@ -74,6 +79,9 @@ public class ArgumentClozeTaskWriter extends AbstractLoggingAnnotator {
 
     private Gson gson = new Gson();
 
+    // This mapping is adopted fromthe Cheng and Erk EMNLP paper.
+    private Map<Pair<String, String>, Pair<String, String>> nomArgMapping;
+
     @Override
     public void initialize(UimaContext aContext) throws ResourceInitializationException {
         super.initialize(aContext);
@@ -82,6 +90,29 @@ public class ArgumentClozeTaskWriter extends AbstractLoggingAnnotator {
         } catch (IOException e) {
             throw new ResourceInitializationException(e);
         }
+
+        URL url = ClassLoader.getSystemResource("nombankArgMap.tsv");
+
+        try {
+            Files.lines(Paths.get(url.toURI())).forEach(
+                    line -> {
+                        if (!line.startsWith("#")) {
+                            String[] parts = line.split("\t");
+
+                            String nomForm = parts[0];
+                            String verbalForm = parts[1];
+                            String[] args = {"arg0", "arg1", "arg2", "arg3", "arg4"};
+
+                        }
+                    }
+            );
+        } catch (IOException | URISyntaxException e) {
+            e.printStackTrace();
+        }
+
+
+        nomArgMapping.put(Pair.of("bid", "arg0"), Pair.of("bid", "arg1"));
+
     }
 
 
@@ -195,7 +226,8 @@ public class ArgumentClozeTaskWriter extends AbstractLoggingAnnotator {
                     String argumentContext = getContext(lemmas, (StanfordCorenlpToken) argHead);
 
                     ca.feName = fe;
-                    ca.dep = role;
+//                    ca.dep = role;
+                    ca.argument_role = role;
                     ca.context = argumentContext;
 
                     ca.entityId = ent.getReferingEntity().getIndex();

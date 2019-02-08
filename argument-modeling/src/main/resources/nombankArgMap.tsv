@@ -1,0 +1,11 @@
+#nominal   verbal   arg0    arg1    arg2    arg3    arg4
+bid bid subj    prep_for    dobj    -   -
+sale    sell    subj    dobj    prep_to prep_for    prep
+loan    loan    subj    dobj    prep_to prep    prep_at
+cost    cost    -   subj    dobj    prep_to prep
+plan    plan    subj    dobj    prep_for    prep_for
+investor    invest  subj    dobj    prep_in -   -
+price   price   subj    dobj    prep_to prep_on -
+loss    lose    subj    dobj    prep_to prep_on -
+investment  invest  subj    dobj    prep_in -   -
+fund    fund    subj    dobj    prep    prep_on -
