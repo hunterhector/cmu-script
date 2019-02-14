@@ -40,7 +40,7 @@ public class TokenMentionModelRunner extends AbstractMentionModelRunner {
     public String trainSentLvType(Configuration config, CollectionReaderDescription trainingReader,
                                   CollectionReaderDescription testReader, String suffix, boolean usePaTraing,
                                   String lossType, String processOutputDir, String resultDir, File testGold,
-                                  boolean skipTrain, boolean skipTest)
+                                  int numWorkers, boolean skipTrain, boolean skipTest)
             throws UIMAException, IOException, ClassNotFoundException, NoSuchMethodException, InstantiationException,
             IllegalAccessException, InvocationTargetException {
         logger.info("Starting training sentence level mention type model ...");
@@ -107,7 +107,7 @@ public class TokenMentionModelRunner extends AbstractMentionModelRunner {
                     if (testReader != null) {
                         try {
                             testPlainMentionModel(config, testReader, model, suffix, runName, processOutputDir,
-                                    resultDir, testGold, skipTest);
+                                    resultDir, testGold, numWorkers, skipTest);
                         } catch (SAXException | InterruptedException | IOException | CpeDescriptorException |
                                 UIMAException e) {
                             e.printStackTrace();
@@ -134,7 +134,8 @@ public class TokenMentionModelRunner extends AbstractMentionModelRunner {
     public CollectionReaderDescription testPlainMentionModel(Configuration taskConfig,
                                                              CollectionReaderDescription reader, String typeModel,
                                                              String sliceSuffix, String runName, String outputDir,
-                                                             String resultDir, File gold, boolean skipTest)
+                                                             String resultDir, File gold, int numWorkers,
+                                                             boolean skipTest)
             throws SAXException, UIMAException, CpeDescriptorException, IOException, InterruptedException {
         return new ModelTester(mainConfig) {
             @Override
@@ -142,7 +143,7 @@ public class TokenMentionModelRunner extends AbstractMentionModelRunner {
                     reader, String mainDir, String baseDir) throws SAXException, UIMAException,
                     CpeDescriptorException, IOException {
                 return sentenceLevelMentionTagging(taskConfig, reader, typeModel,
-                        outputDir, baseDir, skipTest);
+                        outputDir, baseDir, numWorkers, skipTest);
             }
         }.run(taskConfig, reader, typeSystemDescription, sliceSuffix, runName, outputDir, resultDir, gold);
     }
@@ -150,8 +151,8 @@ public class TokenMentionModelRunner extends AbstractMentionModelRunner {
     public CollectionReaderDescription sentenceLevelMentionTagging(Configuration crfConfig,
                                                                    CollectionReaderDescription reader,
                                                                    String modelDir, String parentOutput,
-                                                                   String baseOutput, boolean skipTest)
-            throws UIMAException, IOException, CpeDescriptorException, SAXException {
+                                                                   String baseOutput, int numWorkers, boolean skipTest)
+            throws UIMAException {
         File outputFile = new File(parentOutput, baseOutput);
 
         if (skipTest && outputFile.exists()) {
@@ -169,8 +170,8 @@ public class TokenMentionModelRunner extends AbstractMentionModelRunner {
                     MentionTypeSplitter.class, typeSystemDescription
             );
 
-            return new BasicPipeline(reader, parentOutput, baseOutput, sentenceLevelTagger, mentionSplitter).run()
-                    .getOutput();
+            return new BasicPipeline(reader, parentOutput, baseOutput, numWorkers, sentenceLevelTagger,
+                    mentionSplitter).run().getOutput();
         }
     }
 
@@ -182,6 +183,6 @@ public class TokenMentionModelRunner extends AbstractMentionModelRunner {
                 TokenBasedMentionErrorAnalyzer.PARAM_MODEL_DIRECTORY, tokenModel
         );
         TokenBasedMentionErrorAnalyzer.setConfig(taskConfig);
-        new BasicPipeline(reader, analyzer).run();
+        new BasicPipeline(reader, 8, analyzer).run();
     }
 }

@@ -2,7 +2,6 @@ package edu.cmu.cs.lti.event_coref.pipeline;
 
 import edu.cmu.cs.lti.collection_reader.LDCXmlCollectionReader;
 import edu.cmu.cs.lti.io.JsonRichEventWriter;
-import edu.cmu.cs.lti.pipeline.BasicPipeline;
 import edu.cmu.cs.lti.script.annotators.FrameBasedEventDetector;
 import edu.cmu.cs.lti.script.annotators.VerbBasedEventDetector;
 import edu.cmu.cs.lti.uima.io.reader.PlainTextCollectionReader;
@@ -13,6 +12,7 @@ import org.apache.uima.analysis_engine.AnalysisEngineDescription;
 import org.apache.uima.collection.CollectionReaderDescription;
 import org.apache.uima.fit.factory.AnalysisEngineFactory;
 import org.apache.uima.fit.factory.CollectionReaderFactory;
+import org.apache.uima.fit.pipeline.SimplePipeline;
 import org.apache.uima.resource.ResourceInitializationException;
 import org.apache.uima.resource.metadata.TypeSystemDescription;
 import org.slf4j.Logger;
@@ -31,7 +31,7 @@ public class RunOnlyPipeline {
 
     public static void main(String argv[]) throws Exception {
         if (argv.length < 3) {
-            System.err.println("Args: [setting] [input] [output] [run name] ([simple event])");
+            System.err.println("Args: [setting] [input] [output] [run name] [num threads]");
         }
 
         String inputPath = argv[1];
@@ -41,6 +41,11 @@ public class RunOnlyPipeline {
         //"../data/project_data/cmu-script/mention/kbp/chinese/Chinese_Coled_Start_LDC2016E63"
 
         String runName = argv[3];
+
+        int numWorkers = 1;
+        if (argv.length > 4) {
+            numWorkers = Integer.parseInt(argv[4]);
+        }
 
         Configuration commonConfig = new Configuration("settings/common.properties");
         String typeSystemName = commonConfig.get("edu.cmu.cs.lti.event.typesystem");
@@ -62,7 +67,7 @@ public class RunOnlyPipeline {
                 kbpConfig);
 
         // Now prepare the real pipeline.
-        EventMentionPipeline pipeline = new EventMentionPipeline(typeSystemName, kbpConfig);
+        EventMentionPipeline pipeline = new EventMentionPipeline(typeSystemName, kbpConfig, numWorkers);
 
         boolean skipTestPrepare = kbpConfig.getBoolean("edu.cmu.cs.lti.test.skip.preprocess", false);
         pipeline.prepareData(kbpConfig, outputPath, skipTestPrepare, reader);
@@ -98,8 +103,7 @@ public class RunOnlyPipeline {
                 JsonRichEventWriter.PARAM_OUTPUT_DIR, FileUtils.joinPaths(outputPath, "rich", runName)
         );
 
-//        SimplePipeline.runPipeline(results, writer);
-        new BasicPipeline(results, writer).run();
+        SimplePipeline.runPipeline(results, writer);
     }
 
     private static CollectionReaderDescription ldcReader(TypeSystemDescription typeSystemDescription, String inputPath,

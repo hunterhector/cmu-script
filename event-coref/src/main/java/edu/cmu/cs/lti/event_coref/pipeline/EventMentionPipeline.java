@@ -74,6 +74,8 @@ public class EventMentionPipeline {
 
     final private String language;
 
+    final private int numWorkers;
+
     private boolean useCharOffset;
 
     private static final Logger logger = LoggerFactory.getLogger(EventMentionPipeline.class);
@@ -92,9 +94,10 @@ public class EventMentionPipeline {
      * @param modelConfigDir
      * @param processOutputDir
      */
-    private EventMentionPipeline(String typeSystemName, String language, boolean useCharOffset, String modelDir,
-                                 String modelOutDir, String trainingWorkingDir, String testingWorkingDir,
-                                 String devWorkingDir, String modelConfigDir, String processOutputDir) {
+    private EventMentionPipeline(String typeSystemName, String language, int numWorkers, boolean useCharOffset,
+                                 String modelDir, String modelOutDir, String trainingWorkingDir,
+                                 String testingWorkingDir, String devWorkingDir, String modelConfigDir,
+                                 String processOutputDir) {
         this.typeSystemDescription = TypeSystemDescriptionFactory.createTypeSystemDescription(typeSystemName);
         this.generalModelDir = modelDir;
         this.eventModelDir = modelOutDir;
@@ -104,6 +107,8 @@ public class EventMentionPipeline {
         this.trainingWorkingDir = trainingWorkingDir;
         this.testingWorkingDir = testingWorkingDir;
         this.devWorkingDir = devWorkingDir;
+
+        this.numWorkers = numWorkers;
 
         if (trainingWorkingDir != null) {
             logger.info(String.format("Training directory will be %s.", trainingWorkingDir));
@@ -133,8 +138,9 @@ public class EventMentionPipeline {
      * @param typeSystemName The type system to use.
      * @param config         Configuration file.
      */
-    public EventMentionPipeline(String typeSystemName, Configuration config) {
+    public EventMentionPipeline(String typeSystemName, Configuration config, int numWorkers) {
         this(typeSystemName, config.getOrElse("edu.cmu.cs.lti.language", "en"),
+                numWorkers,
                 config.getBoolean("edu.cmu.cs.lti.output.character.offset", true),
                 config.get("edu.cmu.cs.lti.model.dir"),
                 config.get("edu.cmu.cs.lti.model.event.dir"),
@@ -144,7 +150,8 @@ public class EventMentionPipeline {
                 // Experiment data are also put into their own experiemnt folders.
                 config.get("edu.cmu.cs.lti.model.config.dir"),
                 FileUtils.joinPaths(config.get("edu.cmu.cs.lti.process.base.dir"),
-                        config.get("edu.cmu.cs.lti.experiment.name")));
+                        config.get("edu.cmu.cs.lti.experiment.name"))
+        );
 
         if (config.getBoolean("edu.cmu.cs.lti.output.character.offset", true)) {
             logger.info("Evaluation mode is character based.");
@@ -256,8 +263,7 @@ public class EventMentionPipeline {
      * @throws IOException
      */
     public CollectionReaderDescription prepareData(Configuration taskConfig, String workingDirPath, boolean
-            skipIfExists, CollectionReaderDescription... inputReaders) throws
-            UIMAException, IOException, CpeDescriptorException, SAXException {
+            skipIfExists, CollectionReaderDescription... inputReaders) throws UIMAException {
         if (workingDirPath == null) {
             logger.info("Working directory not provided, not running");
             return null;
@@ -430,10 +436,10 @@ public class EventMentionPipeline {
         for (CollectionReaderDescription reader : inputReaders) {
             boolean robust = taskConfig.getBoolean("edu.cmu.cs.lti.robust", false);
             if (robust) {
-                return BasicPipeline.getRobust(reader, workingDirPath, paths.getPreprocessBase(), preprocessors)
-                        .run().getOutput();
+                return BasicPipeline.getRobust(reader, workingDirPath, paths.getPreprocessBase(), numWorkers,
+                        preprocessors).run().getOutput();
             } else {
-                return new BasicPipeline(reader, workingDirPath, paths.getPreprocessBase(), preprocessors)
+                return new BasicPipeline(reader, workingDirPath, paths.getPreprocessBase(), numWorkers, preprocessors)
                         .run().getOutput();
             }
         }
@@ -484,7 +490,7 @@ public class EventMentionPipeline {
         } else {
             AnalysisEngineDescription annotator = RunnerUtils.getGoldAnnotator(copyType, copyRealis, copyCluster,
                     copyRelation);
-            return new BasicPipeline(reader, mainDir, baseOutput, annotator).run().getOutput();
+            return new BasicPipeline(reader, mainDir, baseOutput, numWorkers, annotator).run().getOutput();
         }
         return CustomCollectionReaderFactory.createXmiReader(typeSystemDescription, mainDir, baseOutput);
     }
@@ -501,7 +507,7 @@ public class EventMentionPipeline {
         AnalysisEngineDescription mentionSplitter = AnalysisEngineFactory.createEngineDescription(
                 MentionTypeSplitter.class, typeSystemDescription
         );
-        return new BasicPipeline(reader, mainDir, baseOutput, mentionSplitter).run().getOutput();
+        return new BasicPipeline(reader, mainDir, baseOutput, numWorkers, mentionSplitter).run().getOutput();
     }
 
     public void computeStats() throws SAXException, UIMAException, CpeDescriptorException,
@@ -517,7 +523,7 @@ public class EventMentionPipeline {
                 ChineseMentionStats.class, typeSystemDescription,
                 ChineseMentionStats.PARAM_OUTPUT_PATH, new File(trainingWorkingDir, "stats"));
 
-        new BasicPipeline(trainingData, stats).run();
+        new BasicPipeline(trainingData, numWorkers, stats).run();
     }
 
     /**
@@ -545,7 +551,7 @@ public class EventMentionPipeline {
             List<AnalysisEngineDescription> annotators = new ArrayList<>();
             annotators.add(allGoldAnnotator);
             RunnerUtils.addMentionPostprocessors(annotators, typeSystemDescription, language);
-            new BasicPipeline(reader, workingDir, outputBase,
+            new BasicPipeline(reader, workingDir, outputBase, numWorkers,
                     annotators.toArray(new AnalysisEngineDescription[annotators.size()])).run();
         }
 
@@ -577,14 +583,13 @@ public class EventMentionPipeline {
         RealisModelRunner realisModelRunner = new RealisModelRunner(mainConfig, typeSystemDescription);
 
         CollectionReaderDescription vanillaMentions = tokenModel.sentenceLevelMentionTagging(tokenCrfConfig, testReader,
-                sentCrfModel, workingDir, FileUtils.joinPaths(annotatedOutput, "mention"), false);
+                sentCrfModel, workingDir, FileUtils.joinPaths(annotatedOutput, "mention"), numWorkers, false);
 
         CollectionReaderDescription moreMentions = new BasicPipeline(vanillaMentions, workingDir,
-                FileUtils.joinPaths(annotatedOutput, "additional_mentions"), engines).run().getOutput();
+                FileUtils.joinPaths(annotatedOutput, "additional_mentions"), numWorkers, engines).run().getOutput();
 
         CollectionReaderDescription mentionPost = postProcessMention(moreMentions, workingDir,
                 FileUtils.joinPaths(annotatedOutput, "mention_post"), false);
-
 
         CollectionReaderDescription realisOutput = realisModelRunner.realisAnnotation(realisConfig, mentionPost,
                 realisModelDir, workingDir, FileUtils.joinPaths(annotatedOutput, "realis"), false);
@@ -641,7 +646,7 @@ public class EventMentionPipeline {
         RealisModelRunner realisModelRunner = new RealisModelRunner(mainConfig, typeSystemDescription);
 
         CollectionReaderDescription mentionOutput = tokenModel.sentenceLevelMentionTagging(tokenCrfConfig, testReader,
-                sentCrfModel, workingDir, FileUtils.joinPaths(annotatedOutput, "mention"), skipType);
+                sentCrfModel, workingDir, FileUtils.joinPaths(annotatedOutput, "mention"), numWorkers, skipType);
 
         CollectionReaderDescription mentionPost = postProcessMention(mentionOutput, workingDir,
                 FileUtils.joinPaths(annotatedOutput, "mention_post"), skipType);
@@ -681,14 +686,14 @@ public class EventMentionPipeline {
 
         if (paths.preprocessExists(trainingWorkingDir)) {
             logger.info("Trying on training data.");
-            new BasicPipeline(trainReader, trainingWorkingDir, paths.getTrialBase(), ltpAnnotator).run();
+            new BasicPipeline(trainReader, trainingWorkingDir, paths.getTrialBase(), numWorkers, ltpAnnotator).run();
         } else {
             logger.info("Training preprocessed data not found, cannot try annotator");
         }
 
         if (paths.preprocessExists(testingWorkingDir)) {
             logger.info("Trying on test data.");
-            new BasicPipeline(trainReader, testingWorkingDir, paths.getTrialBase(), ltpAnnotator).run();
+            new BasicPipeline(trainReader, testingWorkingDir, paths.getTrialBase(), numWorkers, ltpAnnotator).run();
         } else {
             logger.info("Test preprocessed data not found, cannot try annotator");
         }
@@ -813,7 +818,7 @@ public class EventMentionPipeline {
      */
     private CollectionReaderDescription postProcessMention(CollectionReaderDescription mentionReader,
                                                            String parentOutput, String outputBase, boolean skip)
-            throws UIMAException, IOException, CpeDescriptorException, SAXException {
+            throws UIMAException {
         List<AnalysisEngineDescription> annotators = new ArrayList<>();
 
         RunnerUtils.addMentionPostprocessors(annotators, typeSystemDescription, language);
@@ -822,7 +827,7 @@ public class EventMentionPipeline {
             logger.info("Skipping mention post processing, using existing results.");
             return CustomCollectionReaderFactory.createXmiReader(typeSystemDescription, parentOutput, outputBase);
         } else {
-            return new BasicPipeline(mentionReader, parentOutput, outputBase,
+            return new BasicPipeline(mentionReader, parentOutput, outputBase, numWorkers,
                     annotators.toArray(new AnalysisEngineDescription[annotators.size()])).run().getOutput();
         }
     }
@@ -964,7 +969,7 @@ public class EventMentionPipeline {
         TokenMentionModelRunner tokenModel = new TokenMentionModelRunner(mainConfig, typeSystemDescription);
         // The vanilla crf model.
         String vanillaTypeModel = tokenModel.trainSentLvType(tokenCrfConfig, trainingData, noEvent, sliceSuffix,
-                false, "hamming", evalWorkingDir, resultDir, testGold, skipTypeTrain, skipTypeTest);
+                false, "hamming", evalWorkingDir, resultDir, testGold, numWorkers, skipTypeTrain, skipTypeTest);
 
 //        tokenMentionErrorAnalysis(tokenCrfConfig, testReader, vanillaTypeModel);
 
@@ -1103,7 +1108,8 @@ public class EventMentionPipeline {
 //         ################################################*/
 
         CollectionReaderDescription plainMentionOutput = tokenModel.testPlainMentionModel(tokenCrfConfig, noEvent,
-                vanillaTypeModel, sliceSuffix, "vanillaMention", evalWorkingDir, resultDir, testGold, skipTypeTest);
+                vanillaTypeModel, sliceSuffix, "vanillaMention", evalWorkingDir, resultDir, testGold, numWorkers,
+                skipTypeTest);
         // Post process mentions to add headwords and arguments.
         CollectionReaderDescription mentionWithHeadWord = postProcessMention(plainMentionOutput, evalWorkingDir,
                 paths.getMiddleOutputPath(sliceSuffix, "vanillaMention_post"), skipTypeTest);

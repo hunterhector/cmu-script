@@ -155,7 +155,7 @@ public class SubmissionPipeline {
     }
 
     private void writeResults(CollectionReaderDescription processedResultReader, String mainOutputDir, String systemId)
-            throws UIMAException, IOException, CpeDescriptorException, SAXException {
+            throws UIMAException {
         File tbfOutput = new File(mainOutputDir, systemId);
         logger.info("Writing results to " + tbfOutput);
 
