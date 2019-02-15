@@ -18,7 +18,7 @@ public class AfterLinkPipeline {
         Configuration config = new Configuration(argv[0]);
 
         // Now prepare the real pipeline.
-        EventMentionPipeline pipeline = new EventMentionPipeline(typeSystemName, config);
+        EventMentionPipeline pipeline = new EventMentionPipeline(typeSystemName, config, 8);
 
         pipeline.prepareData(config);
 

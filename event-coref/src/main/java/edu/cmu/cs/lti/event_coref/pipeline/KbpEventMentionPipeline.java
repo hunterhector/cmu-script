@@ -21,7 +21,7 @@ public class KbpEventMentionPipeline {
         Configuration kbpConfig = new Configuration(argv[0]);
 
         // Now prepare the real pipeline.
-        EventMentionPipeline pipeline = new EventMentionPipeline(typeSystemName, kbpConfig);
+        EventMentionPipeline pipeline = new EventMentionPipeline(typeSystemName, kbpConfig, 8);
 
         pipeline.prepareData(kbpConfig);
 

@@ -19,7 +19,7 @@ public class AceEventMentionPipeline {
         Configuration taskConfig = new Configuration(argv[0]);
 
         // Now prepare the real pipeline.
-        EventMentionPipeline pipeline = new EventMentionPipeline(typeSystemName, taskConfig);
+        EventMentionPipeline pipeline = new EventMentionPipeline(typeSystemName, taskConfig, 8);
 
         pipeline.prepareData(taskConfig);
 
