@@ -79,8 +79,9 @@ public class ArgumentClozeTaskWriter extends AbstractLoggingAnnotator {
 
     private Gson gson = new Gson();
 
-    // This mapping is adopted fromthe Cheng and Erk EMNLP paper.
-    private Map<Pair<String, String>, Pair<String, String>> nomArgMapping;
+    // This mapping is adopted from the Cheng and Erk EMNLP paper.
+    private Map<Pair<String, String>, Pair<String, String>> nomArg2VerbDep;
+    private Map<String, String> verbFormMap;
 
     @Override
     public void initialize(UimaContext aContext) throws ResourceInitializationException {
@@ -91,18 +92,37 @@ public class ArgumentClozeTaskWriter extends AbstractLoggingAnnotator {
             throw new ResourceInitializationException(e);
         }
 
-        URL url = ClassLoader.getSystemResource("nombankArgMap.tsv");
+        nomArg2VerbDep = new HashMap<>();
+        verbFormMap = new HashMap<>();
+
+        URL url = this.getClass().getResource("/nombankArgMap.tsv");
+        logger.info("Loaded resources at: " + url.getPath());
 
         try {
+            List<String> headers = new ArrayList<>();
+
             Files.lines(Paths.get(url.toURI())).forEach(
                     line -> {
-                        if (!line.startsWith("#")) {
+                        line = line.trim();
+                        if (line.startsWith("#")) {
+                            String[] parts = line.substring(1).split("\t");
+
+                            for (int i = 2; i < parts.length; i++) {
+                                headers.add(parts[i]);
+                            }
+                        } else if (headers.size() > 0) {
                             String[] parts = line.split("\t");
 
                             String nomForm = parts[0];
                             String verbalForm = parts[1];
-                            String[] args = {"arg0", "arg1", "arg2", "arg3", "arg4"};
 
+                            for (int i = 2; i < parts.length; i++) {
+                                String depName = parts[i];
+                                String argName = headers.get(i - 2);
+                                nomArg2VerbDep.put(Pair.of(nomForm, argName), Pair.of(verbalForm, depName));
+                            }
+
+                            verbFormMap.put(nomForm, verbalForm);
                         }
                     }
             );
@@ -110,8 +130,7 @@ public class ArgumentClozeTaskWriter extends AbstractLoggingAnnotator {
             e.printStackTrace();
         }
 
-
-        nomArgMapping.put(Pair.of("bid", "arg0"), Pair.of("bid", "arg1"));
+        logger.info(nomArg2VerbDep.toString());
 
     }
 
@@ -195,6 +214,13 @@ public class ArgumentClozeTaskWriter extends AbstractLoggingAnnotator {
                 ce.frame = frame;
                 ce.eventId = eventId++;
 
+
+                String predicateLemma = eventMention.getHeadWord().getLemma().toLowerCase();
+
+                if (verbFormMap.containsKey(predicateLemma)){
+                    ce.verbForm = verbFormMap.get(predicateLemma);
+                }
+
                 eid2Event.put(eventMention, ce.eventId);
 
                 FSList argsFS = eventMention.getArguments();
@@ -226,7 +252,13 @@ public class ArgumentClozeTaskWriter extends AbstractLoggingAnnotator {
                     String argumentContext = getContext(lemmas, (StanfordCorenlpToken) argHead);
 
                     ca.feName = fe;
-//                    ca.dep = role;
+
+                    Pair<String, String> nomArg = Pair.of(predicateLemma, role);
+                    if (nomArg2VerbDep.containsKey(nomArg)) {
+                        Pair<String, String> verbDep = nomArg2VerbDep.get(nomArg);
+                        ca.dep = verbDep.getValue();
+                    }
+
                     ca.argument_role = role;
                     ca.context = argumentContext;
 
