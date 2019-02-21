@@ -67,10 +67,8 @@ public class ImplicitFeatureExtractionPipeline {
 
         AnalysisEngineDescription merger = AnalysisEngineFactory.createEngineDescription(ArgumentMerger.class, des);
 
-
         BasicPipeline pipeline = new BasicPipeline(reader, workingDir, "parsed", parser, fanse, semafor, merger);
-
-//        pipeline.run();
+        pipeline.run();
 
         CollectionReaderDescription dataReader = pipeline.getOutput();
 
