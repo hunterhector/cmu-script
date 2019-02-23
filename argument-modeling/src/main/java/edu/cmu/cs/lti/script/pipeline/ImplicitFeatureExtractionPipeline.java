@@ -67,7 +67,7 @@ public class ImplicitFeatureExtractionPipeline {
 
         AnalysisEngineDescription merger = AnalysisEngineFactory.createEngineDescription(ArgumentMerger.class, des);
 
-        BasicPipeline pipeline = new BasicPipeline(reader, workingDir, "parsed", parser, fanse, semafor, merger);
+        BasicPipeline pipeline = new BasicPipeline(reader, workingDir, "parsed", 16, parser, fanse, semafor, merger);
         pipeline.run();
 
         CollectionReaderDescription dataReader = pipeline.getOutput();
@@ -77,6 +77,6 @@ public class ImplicitFeatureExtractionPipeline {
                 ArgumentClozeTaskWriter.PARAM_OUTPUT_FILE, new File(workingDir, "cloze.json")
         );
 
-        new BasicPipeline(dataReader, workingDir, "events", goldAnnotator, featureExtractor).run();
+        new BasicPipeline(dataReader, workingDir, "events", 16, goldAnnotator, featureExtractor).run();
     }
 }
