@@ -73,6 +73,10 @@ public class ArgumentClozeTaskWriter extends AbstractLoggingAnnotator {
     @ConfigurationParameter(name = PARAM_ADD_EVENT_COREF, defaultValue = "false")
     private boolean addEventCoref;
 
+    public static final String PARAM_USE_NOMBANK_DEP_MAP = "useNombankDepMap";
+    @ConfigurationParameter(name = PARAM_USE_NOMBANK_DEP_MAP, defaultValue = "true")
+    private boolean useNomBankDepMap;
+
     private OutputStreamWriter writer;
 
     private Gson gson = new Gson();
@@ -93,43 +97,41 @@ public class ArgumentClozeTaskWriter extends AbstractLoggingAnnotator {
         nomArg2VerbDep = new HashMap<>();
         verbFormMap = new HashMap<>();
 
-        URL url = this.getClass().getResource("/nombankArgMap.tsv");
-        logger.info("Loaded resources at: " + url.getPath());
+        if (useNomBankDepMap) {
+            logger.info("Loading nombank dependency map.");
+            URL url = this.getClass().getResource("/nombankArgMap.tsv");
+            try {
+                List<String> headers = new ArrayList<>();
 
-        try {
-            List<String> headers = new ArrayList<>();
+                Files.lines(Paths.get(url.toURI())).forEach(
+                        line -> {
+                            line = line.trim();
+                            if (line.startsWith("#")) {
+                                String[] parts = line.substring(1).split("\t");
 
-            Files.lines(Paths.get(url.toURI())).forEach(
-                    line -> {
-                        line = line.trim();
-                        if (line.startsWith("#")) {
-                            String[] parts = line.substring(1).split("\t");
+                                for (int i = 2; i < parts.length; i++) {
+                                    headers.add(parts[i]);
+                                }
+                            } else if (headers.size() > 0) {
+                                String[] parts = line.split("\t");
 
-                            for (int i = 2; i < parts.length; i++) {
-                                headers.add(parts[i]);
+                                String nomForm = parts[0];
+                                String verbalForm = parts[1];
+
+                                for (int i = 2; i < parts.length; i++) {
+                                    String depName = parts[i];
+                                    String argName = headers.get(i - 2);
+                                    nomArg2VerbDep.put(Pair.of(nomForm, argName), Pair.of(verbalForm, depName));
+                                }
+
+                                verbFormMap.put(nomForm, verbalForm);
                             }
-                        } else if (headers.size() > 0) {
-                            String[] parts = line.split("\t");
-
-                            String nomForm = parts[0];
-                            String verbalForm = parts[1];
-
-                            for (int i = 2; i < parts.length; i++) {
-                                String depName = parts[i];
-                                String argName = headers.get(i - 2);
-                                nomArg2VerbDep.put(Pair.of(nomForm, argName), Pair.of(verbalForm, depName));
-                            }
-
-                            verbFormMap.put(nomForm, verbalForm);
                         }
-                    }
-            );
-        } catch (IOException | URISyntaxException e) {
-            e.printStackTrace();
+                );
+            } catch (IOException | URISyntaxException e) {
+                e.printStackTrace();
+            }
         }
-
-        logger.info(nomArg2VerbDep.toString());
-
     }
 
 
@@ -251,10 +253,14 @@ public class ArgumentClozeTaskWriter extends AbstractLoggingAnnotator {
 
                     ca.feName = fe;
 
+//                    String dependencyPath = UimaNlpUtils.getDependencyPath(eventMention.getHeadWord(), argHead);
+
                     Pair<String, String> nomArg = Pair.of(predicateLemma, role);
                     if (nomArg2VerbDep.containsKey(nomArg)) {
                         Pair<String, String> verbDep = nomArg2VerbDep.get(nomArg);
                         ca.dep = verbDep.getValue();
+                    } else {
+                        ca.dep = "NA";
                     }
 
                     ca.argument_role = role;
