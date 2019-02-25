@@ -13,7 +13,7 @@ public class Cloze {
     public static class ClozeDoc {
         public String docid;
         public List<String> sentences;
-        public List<ClozeEvent> events;
+        public List<ClozeEventMention> events;
         public List<ClozeEntity> entities;
         public List<CorefCluster> eventCorefClusters;
     }
@@ -22,7 +22,6 @@ public class Cloze {
         public List<Integer> elementIds;
     }
 
-
     public static class ClozeEntity {
         public int entityId;
         public double[] entityFeatures;
@@ -30,7 +29,7 @@ public class Cloze {
         public String representEntityHead;
     }
 
-    public static class ClozeEvent {
+    public static class ClozeEventMention {
         public String predicate;
         public String verbForm;
         public String context;
@@ -39,6 +38,7 @@ public class Cloze {
         public int predicateEnd;
         public String frame;
         public List<ClozeArgument> arguments;
+        public String eventType;
 
         public int eventId;
 

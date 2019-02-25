@@ -5,7 +5,9 @@ import edu.cmu.cs.lti.annotators.StanfordCoreNlpAnnotator;
 import edu.cmu.cs.lti.collection_reader.JsonEventDataReader;
 import edu.cmu.cs.lti.pipeline.BasicPipeline;
 import edu.cmu.cs.lti.script.annotators.ArgumentMerger;
+import edu.cmu.cs.lti.script.annotators.FrameBasedEventDetector;
 import edu.cmu.cs.lti.script.annotators.SemaforAnnotator;
+import edu.cmu.cs.lti.script.annotators.VerbBasedEventDetector;
 import edu.cmu.cs.lti.script.annotators.writer.ArgumentClozeTaskWriter;
 import edu.cmu.cs.lti.uima.annotator.AbstractAnnotator;
 import edu.cmu.cs.lti.uima.io.reader.PlainTextCollectionReader;
@@ -50,11 +52,6 @@ public class ImplicitFeatureExtractionPipeline {
                 StanfordCoreNlpAnnotator.PARAM_LANGUAGE, "en"
         );
 
-        AnalysisEngineDescription goldAnnotator = AnalysisEngineFactory.createEngineDescription(
-                JsonEventDataReader.class, des,
-                JsonEventDataReader.PARAM_JSON_ANNO_DIR, annotateDir
-        );
-
         AnalysisEngineDescription semafor = AnalysisEngineFactory.createEngineDescription(
                 SemaforAnnotator.class, des,
                 SemaforAnnotator.SEMAFOR_MODEL_PATH, semaforModelDirectory);
@@ -68,15 +65,34 @@ public class ImplicitFeatureExtractionPipeline {
         AnalysisEngineDescription merger = AnalysisEngineFactory.createEngineDescription(ArgumentMerger.class, des);
 
         BasicPipeline pipeline = new BasicPipeline(reader, workingDir, "parsed", 16, parser, fanse, semafor, merger);
-        pipeline.run();
+//        pipeline.run();
 
+        // Create implicit argument test set.
         CollectionReaderDescription dataReader = pipeline.getOutput();
+
+        // Gold standard event annotators.
+        AnalysisEngineDescription goldAnnotator = AnalysisEngineFactory.createEngineDescription(
+                JsonEventDataReader.class, des,
+                JsonEventDataReader.PARAM_JSON_ANNO_DIR, annotateDir
+        );
+
+        // Non-gold event annotators.
+        AnalysisEngineDescription verbEvents = AnalysisEngineFactory.createEngineDescription(
+                VerbBasedEventDetector.class, des
+        );
+
+        AnalysisEngineDescription frameEvents = AnalysisEngineFactory.createEngineDescription(
+                FrameBasedEventDetector.class, des,
+                FrameBasedEventDetector.PARAM_FRAME_RELATION, "../resources/fndata-1.7/frRelation.xml",
+                FrameBasedEventDetector.PARAM_IGNORE_BARE_FRAME, true
+        );
 
         AnalysisEngineDescription featureExtractor = AnalysisEngineFactory.createEngineDescription(
                 ArgumentClozeTaskWriter.class, des,
                 ArgumentClozeTaskWriter.PARAM_OUTPUT_FILE, new File(workingDir, "cloze.json")
         );
 
-        new BasicPipeline(dataReader, workingDir, "events", 16, goldAnnotator, featureExtractor).run();
+        new BasicPipeline(dataReader, workingDir, "events", 16, goldAnnotator, verbEvents, frameEvents,
+                featureExtractor).run();
     }
 }

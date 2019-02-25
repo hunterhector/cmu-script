@@ -7,7 +7,7 @@ import edu.cmu.cs.lti.model.UimaConst;
 import edu.cmu.cs.lti.pipeline.BasicPipeline;
 import edu.cmu.cs.lti.script.Cloze.ClozeDoc;
 import edu.cmu.cs.lti.script.Cloze.ClozeEntity;
-import edu.cmu.cs.lti.script.Cloze.ClozeEvent;
+import edu.cmu.cs.lti.script.Cloze.ClozeEventMention;
 import edu.cmu.cs.lti.script.Cloze.CorefCluster;
 import edu.cmu.cs.lti.script.annotators.EnglishSrlArgumentExtractor;
 import edu.cmu.cs.lti.script.type.*;
@@ -26,7 +26,6 @@ import org.apache.uima.analysis_engine.AnalysisEngineDescription;
 import org.apache.uima.analysis_engine.AnalysisEngineProcessException;
 import org.apache.uima.cas.CAS;
 import org.apache.uima.collection.CollectionReaderDescription;
-import org.apache.uima.collection.metadata.CpeDescriptorException;
 import org.apache.uima.fit.descriptor.ConfigurationParameter;
 import org.apache.uima.fit.factory.AnalysisEngineFactory;
 import org.apache.uima.fit.factory.TypeSystemDescriptionFactory;
@@ -36,7 +35,6 @@ import org.apache.uima.jcas.JCas;
 import org.apache.uima.jcas.cas.FSList;
 import org.apache.uima.resource.ResourceInitializationException;
 import org.apache.uima.resource.metadata.TypeSystemDescription;
-import org.xml.sax.SAXException;
 
 import java.io.File;
 import java.io.FileOutputStream;
@@ -178,7 +176,7 @@ public class ArgumentClozeTaskWriter extends AbstractLoggingAnnotator {
         List<StanfordCorenlpSentence> sentences = new ArrayList<>(
                 JCasUtil.select(aJCas, StanfordCorenlpSentence.class));
 
-        ArrayListMultimap<EntityMention, ClozeEvent.ClozeArgument> argumentMap = ArrayListMultimap.create();
+        ArrayListMultimap<EntityMention, ClozeEventMention.ClozeArgument> argumentMap = ArrayListMultimap.create();
 
         TObjectIntMap<EventMention> eid2Event = new TObjectIntHashMap<>();
 
@@ -193,7 +191,7 @@ public class ArgumentClozeTaskWriter extends AbstractLoggingAnnotator {
                     eventMention.setHeadWord(UimaNlpUtils.findHeadFromStanfordAnnotation(eventMention));
                 }
 
-                ClozeEvent ce = new ClozeEvent();
+                ClozeEventMention ce = new ClozeEventMention();
                 ce.sentenceId = sentId;
 
                 List<Word> complements = new ArrayList<>();
@@ -212,12 +210,12 @@ public class ArgumentClozeTaskWriter extends AbstractLoggingAnnotator {
                 ce.predicateStart = eventMention.getBegin() - sentence.getBegin();
                 ce.predicateEnd = eventMention.getEnd() - sentence.getBegin();
                 ce.frame = frame;
+                ce.eventType = eventMention.getEventType();
                 ce.eventId = eventId++;
-
 
                 String predicateLemma = eventMention.getHeadWord().getLemma().toLowerCase();
 
-                if (verbFormMap.containsKey(predicateLemma)){
+                if (verbFormMap.containsKey(predicateLemma)) {
                     ce.verbForm = verbFormMap.get(predicateLemma);
                 }
 
@@ -231,9 +229,9 @@ public class ArgumentClozeTaskWriter extends AbstractLoggingAnnotator {
                     argLinks = new ArrayList<>();
                 }
 
-                List<ClozeEvent.ClozeArgument> clozeArguments = new ArrayList<>();
+                List<ClozeEventMention.ClozeArgument> clozeArguments = new ArrayList<>();
                 for (EventMentionArgumentLink argLink : argLinks) {
-                    ClozeEvent.ClozeArgument ca = new ClozeEvent.ClozeArgument();
+                    ClozeEventMention.ClozeArgument ca = new ClozeEventMention.ClozeArgument();
 
                     String role = argLink.getArgumentRole();
                     if (role == null) {
@@ -371,7 +369,7 @@ public class ArgumentClozeTaskWriter extends AbstractLoggingAnnotator {
         }
     }
 
-    public static void main(String[] args) throws UIMAException, IOException, CpeDescriptorException, SAXException {
+    public static void main(String[] args) throws UIMAException {
         String paramTypeSystemDescriptor = "TaskEventMentionDetectionTypeSystem";
 
         String workingDir = args[0];
