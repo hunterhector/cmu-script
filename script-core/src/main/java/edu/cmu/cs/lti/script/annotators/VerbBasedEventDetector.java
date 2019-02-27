@@ -30,8 +30,7 @@ public class VerbBasedEventDetector extends AbstractLoggingAnnotator {
     public void initialize(UimaContext aContext) throws ResourceInitializationException {
         super.initialize(aContext);
         String[] ignoredVerbs = new String[]{"become", "be", "do", "have", "seem", "go", "have", "keep", "argue",
-                "claim",
-                "say", "suggest", "tell"};
+                "claim", "say", "suggest", "tell"};
 
         ignoredHeadWords = new HashSet<>();
         Collections.addAll(ignoredHeadWords, ignoredVerbs);
@@ -39,14 +38,17 @@ public class VerbBasedEventDetector extends AbstractLoggingAnnotator {
 
     @Override
     public void process(JCas aJCas) throws AnalysisEngineProcessException {
-        if (!aJCas.getDocumentLanguage().equals("en")) {
+        String lang = aJCas.getDocumentLanguage();
+
+        // Can handle English. Will also consider unspecified as English.
+        if (!lang.equals("en") && !lang.equals("x-unspecified")) {
             return;
         }
 
         Map<Word, EntityMention> h2Entities = UimaNlpUtils.indexEntityMentions(aJCas);
         Table<Integer, Integer, EventMention> span2Events = UimaNlpUtils.indexEventMentions(aJCas);
 
-        int eventId = 0;
+        int eventId = span2Events.size();
         for (StanfordCorenlpToken token : JCasUtil.select(aJCas, StanfordCorenlpToken.class)) {
             if (!token.getPos().startsWith("V")) {
                 continue;
@@ -76,13 +78,11 @@ public class VerbBasedEventDetector extends AbstractLoggingAnnotator {
                 COMPONENT_ID);
     }
 
-    public static void createDependencyArgs(
+    static void createDependencyArgs(
             JCas aJCas, EventMention eventMention, List<EventMentionArgumentLink> argumentLinks,
-            Map<Word, EventMentionArgumentLink> head2Args, Map<Word, EntityMention> h2Entities, String COMPONENT_ID
-    ) {
+            Map<Word, EventMentionArgumentLink> head2Args, Map<Word, EntityMention> h2Entities, String COMPONENT_ID) {
         Word headToken = eventMention.getHeadWord();
         Map<String, Word> args = getArgs(headToken);
-
 
         for (Map.Entry<String, Word> arg : args.entrySet()) {
             String role = arg.getKey();
@@ -96,7 +96,8 @@ public class VerbBasedEventDetector extends AbstractLoggingAnnotator {
                         argWord.getEnd(), COMPONENT_ID);
                 argumentLinks.add(argumentLink);
             }
-            argumentLink.setArgumentRole(role);
+
+            argumentLink.setDependency(role);
         }
     }
 

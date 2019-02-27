@@ -49,7 +49,9 @@ import java.util.zip.GZIPOutputStream;
 
 
 /**
- * Given dependency parses and coreference chains, create argument
+ * Given dependency parses and coreference chains, create argument.
+ * <p>
+ * This works for Propbank Style stuff at this moment (Propbank and Nombank).
  * cloze tasks.
  * Date: 3/24/18
  * Time: 4:32 PM
@@ -108,10 +110,7 @@ public class ArgumentClozeTaskWriter extends AbstractLoggingAnnotator {
                             line = line.trim();
                             if (line.startsWith("#")) {
                                 String[] parts = line.substring(1).split("\t");
-
-                                for (int i = 2; i < parts.length; i++) {
-                                    headers.add(parts[i]);
-                                }
+                                headers.addAll(Arrays.asList(parts).subList(2, parts.length));
                             } else if (headers.size() > 0) {
                                 String[] parts = line.split("\t");
 
@@ -235,7 +234,7 @@ public class ArgumentClozeTaskWriter extends AbstractLoggingAnnotator {
                 for (EventMentionArgumentLink argLink : argLinks) {
                     ClozeEventMention.ClozeArgument ca = new ClozeEventMention.ClozeArgument();
 
-                    String role = argLink.getArgumentRole();
+                    String role = argLink.getPropbankRoleName();
                     if (role == null) {
                         role = "NA";
                     }
@@ -243,6 +242,7 @@ public class ArgumentClozeTaskWriter extends AbstractLoggingAnnotator {
                     if (fe == null) {
                         fe = "NA";
                     }
+
                     EntityMention ent = argLink.getArgument();
                     Word argHead = ent.getHead();
 
@@ -252,19 +252,25 @@ public class ArgumentClozeTaskWriter extends AbstractLoggingAnnotator {
                     String argumentContext = getContext(lemmas, (StanfordCorenlpToken) argHead);
 
                     ca.feName = fe;
-
-//                    String dependencyPath = UimaNlpUtils.getDependencyPath(eventMention.getHeadWord(), argHead);
-
-                    Pair<String, String> nomArg = Pair.of(predicateLemma, role);
-                    if (nomArg2VerbDep.containsKey(nomArg)) {
-                        Pair<String, String> verbDep = nomArg2VerbDep.get(nomArg);
-                        ca.dep = verbDep.getValue();
-                    } else {
-                        ca.dep = "NA";
-                    }
-
                     ca.argument_role = role;
                     ca.context = argumentContext;
+
+                    if (ce.eventType.equals("NOMBANK")) {
+                        Pair<String, String> nomArg = Pair.of(predicateLemma, role.replace("i_", ""));
+                        if (nomArg2VerbDep.containsKey(nomArg)) {
+                            Pair<String, String> verbDep = nomArg2VerbDep.get(nomArg);
+                            ca.dep = verbDep.getValue();
+                        } else {
+                            ca.dep = "NA";
+                        }
+                    } else if (ce.eventType.equals("PROPBANK")) {
+                        String dep = argLink.getDependency();
+                        if (dep != null) {
+                            ca.dep = dep.equals("iobj") ? "obj" : dep;
+                        } else {
+                            ca.dep = null;
+                        }
+                    }
 
                     ca.entityId = ent.getReferingEntity().getIndex();
                     ca.text = onlySpace(argText);
