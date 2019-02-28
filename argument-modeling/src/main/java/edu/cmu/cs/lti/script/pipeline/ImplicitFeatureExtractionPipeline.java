@@ -76,6 +76,7 @@ public class ImplicitFeatureExtractionPipeline {
                 JsonEventDataReader.PARAM_JSON_ANNO_DIR, annotateDir
         );
 
+
         // Non-gold event annotators.
         AnalysisEngineDescription verbEvents = AnalysisEngineFactory.createEngineDescription(
                 VerbBasedEventDetector.class, des
@@ -92,7 +93,8 @@ public class ImplicitFeatureExtractionPipeline {
                 ArgumentClozeTaskWriter.PARAM_OUTPUT_FILE, new File(workingDir, "cloze.json")
         );
 
-        new BasicPipeline(dataReader, workingDir, "events", 16, goldAnnotator, verbEvents, frameEvents,
-                featureExtractor).run();
+//        new BasicPipeline(dataReader, workingDir, "events", 16, goldAnnotator, verbEvents, frameEvents,
+//                featureExtractor).run();
+        new BasicPipeline(dataReader, workingDir, "gold", 16, goldAnnotator).run();
     }
 }

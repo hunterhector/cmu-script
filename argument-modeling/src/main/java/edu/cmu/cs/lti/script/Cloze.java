@@ -31,6 +31,7 @@ public class Cloze {
 
     public static class ClozeEventMention {
         public String predicate;
+        public String predicate_lemma;
         public String verbForm;
         public String context;
         public int sentenceId;

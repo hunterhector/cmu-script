@@ -86,6 +86,7 @@ public class ArgumentClozeTaskWriter extends AbstractLoggingAnnotator {
     // This mapping is adopted from the Cheng and Erk EMNLP paper.
     private Map<Pair<String, String>, Pair<String, String>> nomArg2VerbDep;
     private Map<String, String> verbFormMap;
+    private Map<String, String> nombankBaseFormMap;
 
     @Override
     public void initialize(UimaContext aContext) throws ResourceInitializationException {
@@ -131,6 +132,24 @@ public class ArgumentClozeTaskWriter extends AbstractLoggingAnnotator {
                 e.printStackTrace();
             }
         }
+
+        nombankBaseFormMap = new HashMap<>();
+        try {
+            // This file is used to convert noun predicates to their base form.
+            // https://nlp.cs.nyu.edu/meyers/nombank/nombank-specs-2007.pdf
+            Files.lines(Paths.get(this.getClass().getResource("/nombank-morph.dict.1.0").toURI())).forEach(
+                    line -> {
+                        String[] forms = line.trim().split(" ");
+                        for (int i = 1; i < forms.length; i++) {
+                            nombankBaseFormMap.put(forms[i], forms[0]);
+                        }
+                    }
+            );
+        } catch (IOException | URISyntaxException e) {
+            e.printStackTrace();
+        }
+
+
     }
 
 
@@ -197,8 +216,6 @@ public class ArgumentClozeTaskWriter extends AbstractLoggingAnnotator {
 
                 List<Word> complements = new ArrayList<>();
 
-                String predicate_text = UimaNlpUtils.getPredicate(eventMention.getHeadWord(), complements, false);
-
                 String frame = eventMention.getFrameName();
                 if (frame == null) {
                     frame = "NA";
@@ -206,7 +223,7 @@ public class ArgumentClozeTaskWriter extends AbstractLoggingAnnotator {
 
                 String predicate_context = getContext(lemmas, (StanfordCorenlpToken) eventMention.getHeadWord());
 
-                ce.predicate = predicate_text;
+                ce.predicate = UimaNlpUtils.getPredicate(eventMention.getHeadWord(), complements, false);
                 ce.context = predicate_context;
                 ce.predicateStart = eventMention.getBegin() - sentence.getBegin();
                 ce.predicateEnd = eventMention.getEnd() - sentence.getBegin();
@@ -214,10 +231,14 @@ public class ArgumentClozeTaskWriter extends AbstractLoggingAnnotator {
                 ce.eventType = eventMention.getEventType();
                 ce.eventId = eventId++;
 
-                String predicateLemma = eventMention.getHeadWord().getLemma().toLowerCase();
 
-                if (verbFormMap.containsKey(predicateLemma)) {
-                    ce.verbForm = verbFormMap.get(predicateLemma);
+                String predicateBase = eventMention.getHeadWord().getLemma().toLowerCase();
+                if (nombankBaseFormMap.containsKey(predicateBase)) {
+                    predicateBase = nombankBaseFormMap.get(predicateBase);
+                }
+
+                if (verbFormMap.containsKey(predicateBase)) {
+                    ce.verbForm = verbFormMap.get(predicateBase);
                 }
 
                 eid2Event.put(eventMention, ce.eventId);
@@ -256,17 +277,20 @@ public class ArgumentClozeTaskWriter extends AbstractLoggingAnnotator {
                     ca.context = argumentContext;
 
                     if (ce.eventType.equals("NOMBANK")) {
-                        Pair<String, String> nomArg = Pair.of(predicateLemma, role.replace("i_", ""));
+                        Pair<String, String> nomArg = Pair.of(predicateBase, role.replace("i_", ""));
                         if (nomArg2VerbDep.containsKey(nomArg)) {
                             Pair<String, String> verbDep = nomArg2VerbDep.get(nomArg);
                             ca.dep = verbDep.getValue();
                         } else {
-                            ca.dep = "NA";
+                            if (role.startsWith("i_")) {
+                                logger.info("Cannot for nom arg pair: " + nomArg.getLeft() + " " + role);
+                                ca.dep = "NA";
+                            }
                         }
-                    } else  {
+                    } else {
                         String dep = argLink.getDependency();
                         if (dep != null) {
-                            ca.dep = dep.equals("iobj") ? "obj" : dep;
+                            ca.dep = dep;
                         } else {
                             ca.dep = "NA";
 
