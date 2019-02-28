@@ -263,12 +263,13 @@ public class ArgumentClozeTaskWriter extends AbstractLoggingAnnotator {
                         } else {
                             ca.dep = "NA";
                         }
-                    } else if (ce.eventType.equals("PROPBANK")) {
+                    } else  {
                         String dep = argLink.getDependency();
                         if (dep != null) {
                             ca.dep = dep.equals("iobj") ? "obj" : dep;
                         } else {
-                            ca.dep = null;
+                            ca.dep = "NA";
+
                         }
                     }
 
