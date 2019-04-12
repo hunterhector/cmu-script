@@ -180,9 +180,8 @@ public class NytPreprocessPipeline {
 //        parse(typeSystemDescription, workingDir, ignoreFile);
         // Some files may failed during first parsing, we rerun to fix them.
 //        reparse(typeSystemDescription, workingDir);
-
 //        forceParse(typeSystemDescription, workingDir);
 
-//        tag(typeSystemDescription, workingDir, "parsed", "tagged", entityResultDir);
+        tag(typeSystemDescription, workingDir, "parsed", "tagged", entityResultDir);
     }
 }
