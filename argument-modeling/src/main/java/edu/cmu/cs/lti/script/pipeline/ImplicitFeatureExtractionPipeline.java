@@ -65,7 +65,7 @@ public class ImplicitFeatureExtractionPipeline {
         AnalysisEngineDescription merger = AnalysisEngineFactory.createEngineDescription(ArgumentMerger.class, des);
 
         BasicPipeline pipeline = new BasicPipeline(reader, workingDir, "parsed", 16, parser, fanse, semafor, merger);
-//        pipeline.run();
+        pipeline.run();
 
         // Create implicit argument test set.
         CollectionReaderDescription dataReader = pipeline.getOutput();
@@ -94,6 +94,5 @@ public class ImplicitFeatureExtractionPipeline {
 
         new BasicPipeline(dataReader, workingDir, "events", 16, goldAnnotator, verbEvents, frameEvents,
                 featureExtractor).run();
-//        new BasicPipeline(dataReader, workingDir, "gold", 16, goldAnnotator).run();
     }
 }
