@@ -2,6 +2,7 @@ package edu.cmu.cs.lti.script.annotators.writer;
 
 import com.google.common.collect.ArrayListMultimap;
 import com.google.gson.Gson;
+import edu.cmu.cs.lti.annotators.EventMentionRemover;
 import edu.cmu.cs.lti.annotators.GoldStandardEventMentionAnnotator;
 import edu.cmu.cs.lti.model.UimaConst;
 import edu.cmu.cs.lti.pipeline.BasicPipeline;
@@ -10,13 +11,15 @@ import edu.cmu.cs.lti.script.Cloze.ClozeEntity;
 import edu.cmu.cs.lti.script.Cloze.ClozeEventMention;
 import edu.cmu.cs.lti.script.Cloze.CorefCluster;
 import edu.cmu.cs.lti.script.annotators.EnglishSrlArgumentExtractor;
+import edu.cmu.cs.lti.script.annotators.FrameBasedEventDetector;
+import edu.cmu.cs.lti.script.annotators.VerbBasedEventDetector;
 import edu.cmu.cs.lti.script.type.*;
 import edu.cmu.cs.lti.script.utils.ImplicitFeaturesExtractor;
 import edu.cmu.cs.lti.uima.annotator.AbstractLoggingAnnotator;
 import edu.cmu.cs.lti.uima.io.reader.CustomCollectionReaderFactory;
+import edu.cmu.cs.lti.uima.util.UimaAnnotationUtils;
 import edu.cmu.cs.lti.uima.util.UimaConvenience;
 import edu.cmu.cs.lti.uima.util.UimaNlpUtils;
-import edu.cmu.cs.lti.utils.DebugUtils;
 import gnu.trove.map.TObjectIntMap;
 import gnu.trove.map.hash.TObjectIntHashMap;
 import org.apache.commons.io.FileUtils;
@@ -225,6 +228,7 @@ public class ArgumentClozeTaskWriter extends AbstractLoggingAnnotator {
                 String predicate_context = getContext(lemmas, (StanfordCorenlpToken) eventMention.getHeadWord());
 
                 ce.predicate = UimaNlpUtils.getPredicate(eventMention.getHeadWord(), complements, false);
+                ce.predicatePhrase = onlySpace(eventMention.getCoveredText());
                 ce.context = predicate_context;
                 ce.predicateStart = eventMention.getBegin() - sentence.getBegin();
                 ce.predicateEnd = eventMention.getEnd() - sentence.getBegin();
@@ -247,12 +251,13 @@ public class ArgumentClozeTaskWriter extends AbstractLoggingAnnotator {
                 FSList argsFS = eventMention.getArguments();
                 Collection<EventMentionArgumentLink> argLinks;
                 if (argsFS != null) {
-                    argLinks = FSCollectionFactory.create(argsFS, EventMentionArgumentLink.class);
+                    argLinks = new ArrayList<>(FSCollectionFactory.create(argsFS, EventMentionArgumentLink.class));
                 } else {
                     argLinks = new ArrayList<>();
                 }
 
                 List<ClozeEventMention.ClozeArgument> clozeArguments = new ArrayList<>();
+
                 for (EventMentionArgumentLink argLink : argLinks) {
                     ClozeEventMention.ClozeArgument ca = new ClozeEventMention.ClozeArgument();
 
@@ -268,14 +273,20 @@ public class ArgumentClozeTaskWriter extends AbstractLoggingAnnotator {
                     EntityMention ent = argLink.getArgument();
                     Word argHead = ent.getHead();
 
-                    String argText = ent.getHead().getLemma();
-                    argText = onlySpace(argText);
+                    String argHeadText = ent.getHead().getLemma();
+                    argHeadText = onlySpace(argHeadText);
 
                     String argumentContext = getContext(lemmas, (StanfordCorenlpToken) argHead);
 
                     ca.feName = fe;
                     ca.argument_role = role;
                     ca.context = argumentContext;
+
+                    String entType = ent.getEntityType();
+
+                    if (entType != null && ent.getComponentId().equals("StanfordCoreNlpAnnotator")) {
+                        ca.ner = entType;
+                    }
 
                     if (ce.eventType.equals("NOMBANK")) {
                         Pair<String, String> nomArg = Pair.of(predicateBase, role.replace("i_", ""));
@@ -299,15 +310,19 @@ public class ArgumentClozeTaskWriter extends AbstractLoggingAnnotator {
                     }
 
                     ca.entityId = ent.getReferingEntity().getIndex();
-                    ca.text = onlySpace(argText);
+                    ca.text = argHeadText;
+                    ca.argumentPhrase = onlySpace(ent.getCoveredText());
 
                     // TODO: This will create negative start and end for implicit arguments?
                     ca.argStart = ent.getBegin() - sentence.getBegin();
                     ca.argEnd = ent.getEnd() - sentence.getBegin();
 
-                    clozeArguments.add(ca);
+                    Map<String, String> argMeta = UimaAnnotationUtils.readMeta(argLink);
+                    ca.isImplicit = Boolean.valueOf(argMeta.get("implicit"));
+
 
                     argumentMap.put(ent, ca);
+                    clozeArguments.add(ca);
                 }
 
                 ce.arguments = clozeArguments;
@@ -420,25 +435,26 @@ public class ArgumentClozeTaskWriter extends AbstractLoggingAnnotator {
                 .createTypeSystemDescription(paramTypeSystemDescriptor);
 
         // Reader and extractors for unsupervised events.
-//        CollectionReaderDescription reader = CustomCollectionReaderFactory.createRecursiveGzippedXmiReader(
-//                typeSystemDescription, workingDir, inputBase
-//        );
-//        AnalysisEngineDescription remover = AnalysisEngineFactory.createEngineDescription(EventMentionRemover.class);
-//
-//        AnalysisEngineDescription verbEvents = AnalysisEngineFactory.createEngineDescription(
-//                VerbBasedEventDetector.class, typeSystemDescription
-//        );
-//
-//        AnalysisEngineDescription frameEvents = AnalysisEngineFactory.createEngineDescription(
-//                FrameBasedEventDetector.class, typeSystemDescription,
-//                FrameBasedEventDetector.PARAM_FRAME_RELATION, "../data/resources/fndata-1.7/frRelation.xml",
-//                FrameBasedEventDetector.PARAM_IGNORE_BARE_FRAME, true
-//        );
-
-        // Reader and extractors for existing mentions.
-        CollectionReaderDescription reader = CustomCollectionReaderFactory.createXmiReader(
+        // These processor will create cloze for existing processed corpus (such as the Nyt corpus.)
+        CollectionReaderDescription reader = CustomCollectionReaderFactory.createRecursiveGzippedXmiReader(
                 typeSystemDescription, workingDir, inputBase
         );
+        AnalysisEngineDescription remover = AnalysisEngineFactory.createEngineDescription(EventMentionRemover.class);
+
+        AnalysisEngineDescription verbEvents = AnalysisEngineFactory.createEngineDescription(
+                VerbBasedEventDetector.class, typeSystemDescription
+        );
+
+        AnalysisEngineDescription frameEvents = AnalysisEngineFactory.createEngineDescription(
+                FrameBasedEventDetector.class, typeSystemDescription,
+                FrameBasedEventDetector.PARAM_FRAME_RELATION, "../resources/fndata-1.7/frRelation.xml",
+                FrameBasedEventDetector.PARAM_IGNORE_BARE_FRAME, true
+        );
+
+//        // Reader and extractors for existing mentions.
+//        CollectionReaderDescription reader = CustomCollectionReaderFactory.createXmiReader(
+//                typeSystemDescription, workingDir, inputBase
+//        );
 
         AnalysisEngineDescription goldAnnotator = AnalysisEngineFactory.createEngineDescription(
                 GoldStandardEventMentionAnnotator.class, typeSystemDescription,
@@ -465,7 +481,7 @@ public class ArgumentClozeTaskWriter extends AbstractLoggingAnnotator {
 
 
         // Write only clozes.
-        new BasicPipeline(reader, false, true, 7, goldAnnotator, arguments, clozeExtractor).run();
-
+        new BasicPipeline(reader, false, true, 7, remover, verbEvents, frameEvents, goldAnnotator, arguments,
+                clozeExtractor).run();
     }
 }
