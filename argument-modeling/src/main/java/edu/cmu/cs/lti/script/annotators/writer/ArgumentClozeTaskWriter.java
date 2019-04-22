@@ -430,6 +430,20 @@ public class ArgumentClozeTaskWriter extends AbstractLoggingAnnotator {
         String inputBase = args[1];
         String outputFile = args[2];
 
+        boolean ignoreBareFrames = false;
+        boolean keepAllFrames = false;
+
+
+        if (args.length > 3) {
+            for (int i = 3; i < args.length; i++) {
+                if (args[i].equals("ignoreBare")) {
+                    ignoreBareFrames = true;
+                } else if (args[i].equals("allFrames")) {
+                    keepAllFrames = true;
+                }
+            }
+        }
+
         // Instantiate the analysis engine.
         TypeSystemDescription typeSystemDescription = TypeSystemDescriptionFactory
                 .createTypeSystemDescription(paramTypeSystemDescriptor);
@@ -448,7 +462,8 @@ public class ArgumentClozeTaskWriter extends AbstractLoggingAnnotator {
         AnalysisEngineDescription frameEvents = AnalysisEngineFactory.createEngineDescription(
                 FrameBasedEventDetector.class, typeSystemDescription,
                 FrameBasedEventDetector.PARAM_FRAME_RELATION, "../resources/fndata-1.7/frRelation.xml",
-                FrameBasedEventDetector.PARAM_IGNORE_BARE_FRAME, true
+                FrameBasedEventDetector.PARAM_IGNORE_BARE_FRAME, ignoreBareFrames,
+                FrameBasedEventDetector.PARAM_TAKE_ALL_FRAMES, keepAllFrames
         );
 
 //        // Reader and extractors for existing mentions.
