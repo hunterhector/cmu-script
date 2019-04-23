@@ -231,9 +231,7 @@ public class ArgumentMerger extends AbstractLoggingAnnotator {
             FSList childDependencies = fanseChild.getChildDependencyRelations();
 
             if (childDependencies != null) {
-                for (FanseDependencyRelation dep : JCasUtil.select(childDependencies, FanseDependencyRelation
-                        .class)) {
-
+                for (FanseDependencyRelation dep : JCasUtil.select(childDependencies, FanseDependencyRelation.class)) {
                     String depType = dep.getDependencyType();
                     FanseToken depChild = (FanseToken) dep.getChild();
 
