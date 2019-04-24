@@ -284,7 +284,7 @@ public class ArgumentClozeTaskWriter extends AbstractLoggingAnnotator {
 
                     String entType = ent.getEntityType();
 
-                    if (entType != null && ent.getComponentId().equals("StanfordCoreNlpAnnotator")) {
+                    if (entType != null && !entType.equals("ARG_ENT") && !entType.equals("Entity")) {
                         ca.ner = entType;
                     }
 
