@@ -70,7 +70,7 @@ public class VerbBasedEventDetector extends AbstractLoggingAnnotator {
 
             List<EventMentionArgumentLink> argumentLinks = new ArrayList<>(head2Args.values());
 
-            createDependencyArgs(aJCas, eventMention, argumentLinks, head2Args, h2Entities, COMPONENT_ID);
+            createArgsFromDependency(aJCas, eventMention, argumentLinks, head2Args, h2Entities, COMPONENT_ID);
             eventMention.setArguments(FSCollectionFactory.createFSList(aJCas, argumentLinks));
         }
 
@@ -78,7 +78,7 @@ public class VerbBasedEventDetector extends AbstractLoggingAnnotator {
                 COMPONENT_ID);
     }
 
-    static void createDependencyArgs(
+    static void createArgsFromDependency(
             JCas aJCas, EventMention eventMention, List<EventMentionArgumentLink> argumentLinks,
             Map<Word, EventMentionArgumentLink> head2Args, Map<Word, EntityMention> h2Entities, String COMPONENT_ID) {
         Word headToken = eventMention.getHeadWord();

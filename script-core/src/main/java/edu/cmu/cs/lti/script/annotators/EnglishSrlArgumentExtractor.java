@@ -5,13 +5,17 @@ import edu.cmu.cs.lti.script.type.*;
 import edu.cmu.cs.lti.uima.annotator.AbstractLoggingAnnotator;
 import edu.cmu.cs.lti.uima.util.TokenAlignmentHelper;
 import edu.cmu.cs.lti.uima.util.UimaNlpUtils;
+import edu.cmu.cs.lti.utils.DebugUtils;
+import org.apache.uima.UimaContext;
 import org.apache.uima.analysis_engine.AnalysisEngineProcessException;
 import org.apache.uima.fit.descriptor.ConfigurationParameter;
 import org.apache.uima.fit.util.FSCollectionFactory;
 import org.apache.uima.fit.util.JCasUtil;
 import org.apache.uima.jcas.JCas;
 import org.apache.uima.jcas.cas.FSList;
+import org.apache.uima.resource.ResourceInitializationException;
 import org.javatuples.Pair;
+import sun.security.ssl.Debug;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -37,6 +41,13 @@ public class EnglishSrlArgumentExtractor extends AbstractLoggingAnnotator {
     private boolean addDependency;
 
     private TokenAlignmentHelper helper = new TokenAlignmentHelper();
+
+    @Override
+    public void initialize(UimaContext aContext) throws ResourceInitializationException {
+        super.initialize(aContext);
+        logger.info(String.format("Extractor will add Fanse (%s), add Semafor (%s), add Dependency (%s)",
+                addFanse, addSemafor, addDependency));
+    }
 
     @Override
     public void process(JCas aJCas) throws AnalysisEngineProcessException {
@@ -132,8 +143,7 @@ public class EnglishSrlArgumentExtractor extends AbstractLoggingAnnotator {
             }
 
             if (addDependency) {
-                VerbBasedEventDetector.createDependencyArgs(aJCas, mention, argumentLinks, head2Args, h2Entities,
-                        COMPONENT_ID);
+                setArgumentDepType(mention, argumentLinks);
             }
 
             mention.setArguments(FSCollectionFactory.createFSList(aJCas, argumentLinks));
@@ -141,6 +151,17 @@ public class EnglishSrlArgumentExtractor extends AbstractLoggingAnnotator {
 
         UimaNlpUtils.fixEntityMentions(aJCas, new ArrayList<>(JCasUtil.select(aJCas, EntityMention.class)),
                 COMPONENT_ID);
+    }
+
+    private void setArgumentDepType(EventMention mention, List<EventMentionArgumentLink> argumentLinks){
+        Map<Word, String> eventDeps = UimaNlpUtils.getDepChildren(mention.getHeadWord());
+
+        for (EventMentionArgumentLink argumentLink : argumentLinks) {
+            Word argHead = argumentLink.getArgument().getHead();
+            if (eventDeps.containsKey(argHead)){
+                argumentLink.setDependency(eventDeps.get(argHead));
+            }
+        }
     }
 
     private Map<SemaforLabel, Pair<String, Map<String, SemaforLabel>>> getSemaforArguments(JCas aJCas) {

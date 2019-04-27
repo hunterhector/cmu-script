@@ -2,6 +2,7 @@ package edu.cmu.cs.lti.script.annotators.writer;
 
 import com.google.common.collect.ArrayListMultimap;
 import com.google.gson.Gson;
+import edu.cmu.cs.lti.annotators.EventMentionRemover;
 import edu.cmu.cs.lti.annotators.GoldStandardEventMentionAnnotator;
 import edu.cmu.cs.lti.model.UimaConst;
 import edu.cmu.cs.lti.pipeline.BasicPipeline;
@@ -10,6 +11,8 @@ import edu.cmu.cs.lti.script.Cloze.ClozeEntity;
 import edu.cmu.cs.lti.script.Cloze.ClozeEventMention;
 import edu.cmu.cs.lti.script.Cloze.CorefCluster;
 import edu.cmu.cs.lti.script.annotators.EnglishSrlArgumentExtractor;
+import edu.cmu.cs.lti.script.annotators.FrameBasedEventDetector;
+import edu.cmu.cs.lti.script.annotators.VerbBasedEventDetector;
 import edu.cmu.cs.lti.script.type.*;
 import edu.cmu.cs.lti.script.utils.ImplicitFeaturesExtractor;
 import edu.cmu.cs.lti.uima.annotator.AbstractLoggingAnnotator;
@@ -277,26 +280,22 @@ public class ArgumentClozeTaskWriter extends AbstractLoggingAnnotator {
                     ca.argument_role = role;
                     ca.context = argumentContext;
 
-                    if (ce.eventType.equals("NOMBANK")) {
-                        Pair<String, String> nomArg = Pair.of(predicateBase, role.replace("i_", ""));
-                        if (nomArg2VerbDep.containsKey(nomArg)) {
-                            Pair<String, String> verbDep = nomArg2VerbDep.get(nomArg);
-                            ca.dep = verbDep.getValue();
-                        } else {
-                            if (role.startsWith("i_")) {
-                                logger.info("Cannot for nom arg pair: " + nomArg.getLeft() + " " + role);
-                                ca.dep = "NA";
-                            }
-                        }
-                    } else {
-                        String dep = argLink.getDependency();
-                        if (dep != null) {
-                            ca.dep = dep;
-                        } else {
-                            ca.dep = "NA";
-
-                        }
-                    }
+                    // DO NOT write the dependency at this step, will do it in the Nombank processing module.
+//                    if (ce.eventType.equals("NOMBANK")) {
+//                        Pair<String, String> nomArg = Pair.of(predicateBase, role.replace("i_", ""));
+//                        if (nomArg2VerbDep.containsKey(nomArg)) {
+//                            Pair<String, String> verbDep = nomArg2VerbDep.get(nomArg);
+//                            ca.dep = verbDep.getValue();
+//                        } else {
+//                            if (role.startsWith("i_")) {
+//                                logger.info("Cannot for nom arg pair: " + nomArg.getLeft() + " " + role);
+//                                ca.dep = "NA";
+//                            }
+//                        }
+//                    } else {
+                    String dep = argLink.getDependency();
+                    ca.dep = dep == null ? "NA" : dep;
+//                    }
 
                     ca.entityId = ent.getReferingEntity().getIndex();
                     ca.text = onlySpace(argText);
@@ -420,25 +419,27 @@ public class ArgumentClozeTaskWriter extends AbstractLoggingAnnotator {
                 .createTypeSystemDescription(paramTypeSystemDescriptor);
 
         // Reader and extractors for unsupervised events.
-//        CollectionReaderDescription reader = CustomCollectionReaderFactory.createRecursiveGzippedXmiReader(
-//                typeSystemDescription, workingDir, inputBase
-//        );
-//        AnalysisEngineDescription remover = AnalysisEngineFactory.createEngineDescription(EventMentionRemover.class);
-//
-//        AnalysisEngineDescription verbEvents = AnalysisEngineFactory.createEngineDescription(
-//                VerbBasedEventDetector.class, typeSystemDescription
-//        );
-//
-//        AnalysisEngineDescription frameEvents = AnalysisEngineFactory.createEngineDescription(
-//                FrameBasedEventDetector.class, typeSystemDescription,
-//                FrameBasedEventDetector.PARAM_FRAME_RELATION, "../data/resources/fndata-1.7/frRelation.xml",
-//                FrameBasedEventDetector.PARAM_IGNORE_BARE_FRAME, true
-//        );
-
-        // Reader and extractors for existing mentions.
-        CollectionReaderDescription reader = CustomCollectionReaderFactory.createXmiReader(
+        CollectionReaderDescription reader = CustomCollectionReaderFactory.createRecursiveGzippedXmiReader(
                 typeSystemDescription, workingDir, inputBase
         );
+
+
+        AnalysisEngineDescription remover = AnalysisEngineFactory.createEngineDescription(EventMentionRemover.class);
+
+        AnalysisEngineDescription verbEvents = AnalysisEngineFactory.createEngineDescription(
+                VerbBasedEventDetector.class, typeSystemDescription
+        );
+
+        AnalysisEngineDescription frameEvents = AnalysisEngineFactory.createEngineDescription(
+                FrameBasedEventDetector.class, typeSystemDescription,
+                FrameBasedEventDetector.PARAM_FRAME_RELATION, "../../resources/fndata-1.7/frRelation.xml",
+                FrameBasedEventDetector.PARAM_IGNORE_BARE_FRAME, true
+        );
+
+        //        // Reader and extractors for existing mentions.
+//        CollectionReaderDescription reader = CustomCollectionReaderFactory.createXmiReader(
+//                typeSystemDescription, workingDir, inputBase
+//        );
 
         AnalysisEngineDescription goldAnnotator = AnalysisEngineFactory.createEngineDescription(
                 GoldStandardEventMentionAnnotator.class, typeSystemDescription,
@@ -465,7 +466,9 @@ public class ArgumentClozeTaskWriter extends AbstractLoggingAnnotator {
 
 
         // Write only clozes.
-        new BasicPipeline(reader, false, true, 7, goldAnnotator, arguments, clozeExtractor).run();
+//        new BasicPipeline(reader, false, true, 7, goldAnnotator, arguments, clozeExtractor).run();
+        new BasicPipeline(reader, false, true, 7, remover, verbEvents, frameEvents,
+                goldAnnotator, arguments, clozeExtractor).run();
 
     }
 }
