@@ -35,6 +35,13 @@ public class AutoClozeTrainCreationPipeline {
         String inputBase = args[2];
         String outputFile = args[3];
 
+        boolean takeAllFrames = false;
+        if (args.length > 4) {
+            if (args[4].equals("allFrames")) {
+                takeAllFrames = true;
+            }
+        }
+
         // Instantiate the analysis engine.
         TypeSystemDescription typeSystemDescription = TypeSystemDescriptionFactory
                 .createTypeSystemDescription(paramTypeSystemDescriptor);
@@ -54,7 +61,8 @@ public class AutoClozeTrainCreationPipeline {
         AnalysisEngineDescription frameEvents = AnalysisEngineFactory.createEngineDescription(
                 FrameBasedEventDetector.class, typeSystemDescription,
                 FrameBasedEventDetector.PARAM_FRAME_RELATION, new File(resourceDir, "fndata-1.7/frRelation.xml"),
-                FrameBasedEventDetector.PARAM_IGNORE_BARE_FRAME, true
+                FrameBasedEventDetector.PARAM_IGNORE_BARE_FRAME, true,
+                FrameBasedEventDetector.PARAM_TAKE_ALL_FRAMES, takeAllFrames
         );
 
         //        // Reader and extractors for existing mentions.

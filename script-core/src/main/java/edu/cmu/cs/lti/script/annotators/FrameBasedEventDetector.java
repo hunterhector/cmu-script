@@ -50,7 +50,7 @@ public class FrameBasedEventDetector extends AbstractLoggingAnnotator {
     @ConfigurationParameter(name = PARAM_IGNORE_BARE_FRAME, defaultValue = "false")
     private boolean ignoreBareFrame;
 
-    public static final String PARAM_TAKE_ALL_FRAMES = "taekAllFrame";
+    public static final String PARAM_TAKE_ALL_FRAMES = "takeAllFrame";
     @ConfigurationParameter(name = PARAM_TAKE_ALL_FRAMES, defaultValue = "false")
     private boolean takeAllFrame;
 
