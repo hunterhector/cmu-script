@@ -36,9 +36,10 @@ public class ImplicitFeatureExtractionPipeline {
     private static final Logger logger = LoggerFactory.getLogger(UimaNlpUtils.class);
 
     private static void full_run(String[] args) throws UIMAException {
-        String sourceTextDir = args[0];
-        String annotateDir = args[1];
-        String workingDir = args[2];
+        String resourceDir = args[0];
+        String sourceTextDir = args[1];
+        String annotateDir = args[2];
+        String workingDir = args[3];
 
         TypeSystemDescription des = TypeSystemDescriptionFactory.createTypeSystemDescription("TypeSystem");
 
@@ -92,7 +93,7 @@ public class ImplicitFeatureExtractionPipeline {
 
         AnalysisEngineDescription frameEvents = AnalysisEngineFactory.createEngineDescription(
                 FrameBasedEventDetector.class, des,
-                FrameBasedEventDetector.PARAM_FRAME_RELATION, "../resources/fndata-1.7/frRelation.xml",
+                FrameBasedEventDetector.PARAM_FRAME_RELATION, new File(resourceDir, "fndata-1.7/frRelation.xml"),
                 FrameBasedEventDetector.PARAM_IGNORE_BARE_FRAME, true
         );
 

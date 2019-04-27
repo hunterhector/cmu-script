@@ -2,43 +2,27 @@ package edu.cmu.cs.lti.script.annotators.writer;
 
 import com.google.common.collect.ArrayListMultimap;
 import com.google.gson.Gson;
-import edu.cmu.cs.lti.annotators.EventMentionRemover;
-import edu.cmu.cs.lti.annotators.GoldStandardEventMentionAnnotator;
-import edu.cmu.cs.lti.model.UimaConst;
-import edu.cmu.cs.lti.pipeline.BasicPipeline;
 import edu.cmu.cs.lti.script.Cloze.ClozeDoc;
 import edu.cmu.cs.lti.script.Cloze.ClozeEntity;
 import edu.cmu.cs.lti.script.Cloze.ClozeEventMention;
 import edu.cmu.cs.lti.script.Cloze.CorefCluster;
-import edu.cmu.cs.lti.script.annotators.EnglishSrlArgumentExtractor;
-import edu.cmu.cs.lti.script.annotators.FrameBasedEventDetector;
-import edu.cmu.cs.lti.script.annotators.VerbBasedEventDetector;
 import edu.cmu.cs.lti.script.type.*;
 import edu.cmu.cs.lti.script.utils.ImplicitFeaturesExtractor;
 import edu.cmu.cs.lti.uima.annotator.AbstractLoggingAnnotator;
-import edu.cmu.cs.lti.uima.io.reader.CustomCollectionReaderFactory;
 import edu.cmu.cs.lti.uima.util.UimaConvenience;
 import edu.cmu.cs.lti.uima.util.UimaNlpUtils;
-import edu.cmu.cs.lti.utils.DebugUtils;
 import gnu.trove.map.TObjectIntMap;
 import gnu.trove.map.hash.TObjectIntHashMap;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.tuple.Pair;
-import org.apache.uima.UIMAException;
 import org.apache.uima.UimaContext;
-import org.apache.uima.analysis_engine.AnalysisEngineDescription;
 import org.apache.uima.analysis_engine.AnalysisEngineProcessException;
-import org.apache.uima.cas.CAS;
-import org.apache.uima.collection.CollectionReaderDescription;
 import org.apache.uima.fit.descriptor.ConfigurationParameter;
-import org.apache.uima.fit.factory.AnalysisEngineFactory;
-import org.apache.uima.fit.factory.TypeSystemDescriptionFactory;
 import org.apache.uima.fit.util.FSCollectionFactory;
 import org.apache.uima.fit.util.JCasUtil;
 import org.apache.uima.jcas.JCas;
 import org.apache.uima.jcas.cas.FSList;
 import org.apache.uima.resource.ResourceInitializationException;
-import org.apache.uima.resource.metadata.TypeSystemDescription;
 
 import java.io.File;
 import java.io.FileOutputStream;
@@ -405,70 +389,5 @@ public class ArgumentClozeTaskWriter extends AbstractLoggingAnnotator {
             String framePart = parts[0];
             String argPart = parts[1];
         }
-    }
-
-    public static void main(String[] args) throws UIMAException {
-        String paramTypeSystemDescriptor = "TaskEventMentionDetectionTypeSystem";
-
-        String workingDir = args[0];
-        String inputBase = args[1];
-        String outputFile = args[2];
-
-        // Instantiate the analysis engine.
-        TypeSystemDescription typeSystemDescription = TypeSystemDescriptionFactory
-                .createTypeSystemDescription(paramTypeSystemDescriptor);
-
-        // Reader and extractors for unsupervised events.
-        CollectionReaderDescription reader = CustomCollectionReaderFactory.createRecursiveGzippedXmiReader(
-                typeSystemDescription, workingDir, inputBase
-        );
-
-
-        AnalysisEngineDescription remover = AnalysisEngineFactory.createEngineDescription(EventMentionRemover.class);
-
-        AnalysisEngineDescription verbEvents = AnalysisEngineFactory.createEngineDescription(
-                VerbBasedEventDetector.class, typeSystemDescription
-        );
-
-        AnalysisEngineDescription frameEvents = AnalysisEngineFactory.createEngineDescription(
-                FrameBasedEventDetector.class, typeSystemDescription,
-                FrameBasedEventDetector.PARAM_FRAME_RELATION, "../../resources/fndata-1.7/frRelation.xml",
-                FrameBasedEventDetector.PARAM_IGNORE_BARE_FRAME, true
-        );
-
-        //        // Reader and extractors for existing mentions.
-//        CollectionReaderDescription reader = CustomCollectionReaderFactory.createXmiReader(
-//                typeSystemDescription, workingDir, inputBase
-//        );
-
-        AnalysisEngineDescription goldAnnotator = AnalysisEngineFactory.createEngineDescription(
-                GoldStandardEventMentionAnnotator.class, typeSystemDescription,
-                GoldStandardEventMentionAnnotator.PARAM_TARGET_VIEWS,
-                new String[]{CAS.NAME_DEFAULT_SOFA, UimaConst.inputViewName},
-                GoldStandardEventMentionAnnotator.PARAM_COPY_MENTION_TYPE, true,
-                GoldStandardEventMentionAnnotator.PARAM_COPY_REALIS, true,
-                GoldStandardEventMentionAnnotator.PARAM_COPY_CLUSTER, true,
-                GoldStandardEventMentionAnnotator.PARAM_COPY_RELATIONS, true
-        );
-
-        AnalysisEngineDescription arguments = AnalysisEngineFactory.createEngineDescription(
-                EnglishSrlArgumentExtractor.class, typeSystemDescription,
-                EnglishSrlArgumentExtractor.PARAM_ADD_SEMAFOR, true,
-                EnglishSrlArgumentExtractor.PARAM_ADD_FANSE, false,
-                EnglishSrlArgumentExtractor.PARAM_ADD_DEPENDENCY, true
-        );
-
-        AnalysisEngineDescription clozeExtractor = AnalysisEngineFactory.createEngineDescription(
-                ArgumentClozeTaskWriter.class, typeSystemDescription,
-                ArgumentClozeTaskWriter.PARAM_OUTPUT_FILE, outputFile,
-                ArgumentClozeTaskWriter.PARAM_ADD_EVENT_COREF, true
-        );
-
-
-        // Write only clozes.
-//        new BasicPipeline(reader, false, true, 7, goldAnnotator, arguments, clozeExtractor).run();
-        new BasicPipeline(reader, false, true, 7, remover, verbEvents, frameEvents,
-                goldAnnotator, arguments, clozeExtractor).run();
-
     }
 }
