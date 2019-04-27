@@ -50,6 +50,10 @@ public class FrameBasedEventDetector extends AbstractLoggingAnnotator {
     @ConfigurationParameter(name = PARAM_IGNORE_BARE_FRAME, defaultValue = "false")
     private boolean ignoreBareFrame;
 
+    public static final String PARAM_TAKE_ALL_FRAMES = "taekAllFrame";
+    @ConfigurationParameter(name = PARAM_TAKE_ALL_FRAMES, defaultValue = "false")
+    private boolean takeAllFrame;
+
     private Set<String> ignoredHeadWords;
     private UimaFrameExtractor extractor;
 
@@ -61,20 +65,25 @@ public class FrameBasedEventDetector extends AbstractLoggingAnnotator {
                 "claim", "say", "suggest", "tell"};
 
         ignoredHeadWords = new HashSet<>();
-        Collections.addAll(ignoredHeadWords, ignoredVerbs);
+
+        if (!takeAllFrame) {
+            Collections.addAll(ignoredHeadWords, ignoredVerbs);
+        }
 
         try {
             FrameRelationReader frameReader = new FrameRelationReader(frameRelationFile.getPath());
             HashSet<String> targetFrames = new HashSet<>();
-            InputStream frameInputStream = getClass().getResourceAsStream("/event_evoking_frames.txt");
-            BufferedReader br = new BufferedReader(new InputStreamReader(frameInputStream));
-            String line;
-            while ((line = br.readLine()) != null) {
-                targetFrames.add(line.trim());
+            if (!takeAllFrame) {
+                InputStream frameInputStream = getClass().getResourceAsStream("/event_evoking_frames.txt");
+                BufferedReader br = new BufferedReader(new InputStreamReader(frameInputStream));
+                String line;
+                while ((line = br.readLine()) != null) {
+                    targetFrames.add(line.trim());
+                }
+                logger.info(String.format("Loaded %d event target frames.", targetFrames.size()));
+            } else {
+                logger.info("All frames will be output.");
             }
-
-            logger.info(String.format("Loaded %d event target frames.", targetFrames.size()));
-
             extractor = new UimaFrameExtractor(frameReader.getFeByName(), targetFrames, true);
         } catch (IOException | JDOMException e) {
             e.printStackTrace();

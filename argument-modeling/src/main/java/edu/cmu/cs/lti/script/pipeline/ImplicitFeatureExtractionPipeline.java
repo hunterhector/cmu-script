@@ -10,19 +10,20 @@ import edu.cmu.cs.lti.script.annotators.SemaforAnnotator;
 import edu.cmu.cs.lti.script.annotators.VerbBasedEventDetector;
 import edu.cmu.cs.lti.script.annotators.writer.ArgumentClozeTaskWriter;
 import edu.cmu.cs.lti.uima.annotator.AbstractAnnotator;
+import edu.cmu.cs.lti.uima.io.reader.CustomCollectionReaderFactory;
 import edu.cmu.cs.lti.uima.io.reader.PlainTextCollectionReader;
+import edu.cmu.cs.lti.uima.util.UimaNlpUtils;
 import org.apache.uima.UIMAException;
 import org.apache.uima.analysis_engine.AnalysisEngineDescription;
 import org.apache.uima.collection.CollectionReaderDescription;
-import org.apache.uima.collection.metadata.CpeDescriptorException;
 import org.apache.uima.fit.factory.AnalysisEngineFactory;
 import org.apache.uima.fit.factory.CollectionReaderFactory;
 import org.apache.uima.fit.factory.TypeSystemDescriptionFactory;
 import org.apache.uima.resource.metadata.TypeSystemDescription;
-import org.xml.sax.SAXException;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.File;
-import java.io.IOException;
 
 /**
  * Created with IntelliJ IDEA.
@@ -32,43 +33,51 @@ import java.io.IOException;
  * @author Zhengzhong Liu
  */
 public class ImplicitFeatureExtractionPipeline {
-    public static void main(String[] args) throws UIMAException, SAXException, CpeDescriptorException, IOException {
+    private static final Logger logger = LoggerFactory.getLogger(UimaNlpUtils.class);
+
+    private static void full_run(String[] args) throws UIMAException {
         String sourceTextDir = args[0];
         String annotateDir = args[1];
         String workingDir = args[2];
 
-        String semaforModelDirectory = "../models/semafor_malt_model_20121129";
-        String fanseModelDirectory = "../models/fanse_models";
-
         TypeSystemDescription des = TypeSystemDescriptionFactory.createTypeSystemDescription("TypeSystem");
 
-        CollectionReaderDescription reader = CollectionReaderFactory.createReaderDescription(
-                PlainTextCollectionReader.class,
-                PlainTextCollectionReader.PARAM_INPUTDIR, sourceTextDir,
-                PlainTextCollectionReader.PARAM_TEXT_SUFFIX, ".txt");
+        if (!new File(workingDir, "parsed").exists()) {
+            logger.info("Parsed directory not found, now parse it.");
 
-        AnalysisEngineDescription parser = AnalysisEngineFactory.createEngineDescription(
-                StanfordCoreNlpAnnotator.class, des,
-                StanfordCoreNlpAnnotator.PARAM_LANGUAGE, "en"
-        );
+            String semaforModelDirectory = "../models/semafor_malt_model_20121129";
+            String fanseModelDirectory = "../models/fanse_models";
 
-        AnalysisEngineDescription semafor = AnalysisEngineFactory.createEngineDescription(
-                SemaforAnnotator.class, des,
-                SemaforAnnotator.SEMAFOR_MODEL_PATH, semaforModelDirectory);
+            CollectionReaderDescription reader = CollectionReaderFactory.createReaderDescription(
+                    PlainTextCollectionReader.class,
+                    PlainTextCollectionReader.PARAM_INPUTDIR, sourceTextDir,
+                    PlainTextCollectionReader.PARAM_TEXT_SUFFIX, ".txt");
 
-        AnalysisEngineDescription fanse = AnalysisEngineFactory.createEngineDescription(
-                FanseAnnotator.class, des,
-                FanseAnnotator.PARAM_MODEL_BASE_DIR, fanseModelDirectory,
-                AbstractAnnotator.MULTI_THREAD, true
-        );
+            AnalysisEngineDescription parser = AnalysisEngineFactory.createEngineDescription(
+                    StanfordCoreNlpAnnotator.class, des,
+                    StanfordCoreNlpAnnotator.PARAM_LANGUAGE, "en"
+            );
 
-        AnalysisEngineDescription merger = AnalysisEngineFactory.createEngineDescription(ArgumentMerger.class, des);
+            AnalysisEngineDescription semafor = AnalysisEngineFactory.createEngineDescription(
+                    SemaforAnnotator.class, des,
+                    SemaforAnnotator.SEMAFOR_MODEL_PATH, semaforModelDirectory);
 
-        BasicPipeline pipeline = new BasicPipeline(reader, workingDir, "parsed", 16, parser, fanse, semafor, merger);
-//        pipeline.run();
+            AnalysisEngineDescription fanse = AnalysisEngineFactory.createEngineDescription(
+                    FanseAnnotator.class, des,
+                    FanseAnnotator.PARAM_MODEL_BASE_DIR, fanseModelDirectory,
+                    AbstractAnnotator.MULTI_THREAD, true
+            );
 
-        // Create implicit argument test set.
-        CollectionReaderDescription dataReader = pipeline.getOutput();
+            AnalysisEngineDescription merger = AnalysisEngineFactory.createEngineDescription(ArgumentMerger.class, des);
+            BasicPipeline pipeline = new BasicPipeline(reader, workingDir, "parsed", 16, parser, fanse, semafor,
+                    merger);
+            pipeline.run();
+        } else {
+            logger.info("Do not re-parse documents.");
+        }
+
+        CollectionReaderDescription parsedData = CustomCollectionReaderFactory.createRecursiveXmiReader(workingDir,
+                "parsed");
 
         // Gold standard event annotators.
         AnalysisEngineDescription goldAnnotator = AnalysisEngineFactory.createEngineDescription(
@@ -92,8 +101,33 @@ public class ImplicitFeatureExtractionPipeline {
                 ArgumentClozeTaskWriter.PARAM_OUTPUT_FILE, new File(workingDir, "cloze.json")
         );
 
-        new BasicPipeline(dataReader, workingDir, "events", 16, goldAnnotator, verbEvents, frameEvents,
-                featureExtractor).run();
-//        new BasicPipeline(dataReader, workingDir, "gold", 16, goldAnnotator).run();
+        new BasicPipeline(parsedData, workingDir, "events", 16, goldAnnotator,
+                verbEvents, frameEvents, featureExtractor).run();
+    }
+
+    private static void cloze_only(String[] args) throws UIMAException {
+        String workingDir = args[0];
+
+        TypeSystemDescription des = TypeSystemDescriptionFactory.createTypeSystemDescription("TypeSystem");
+
+        CollectionReaderDescription reader = CustomCollectionReaderFactory.createXmiReader(
+                des, workingDir, "events"
+        );
+
+        AnalysisEngineDescription featureExtractor = AnalysisEngineFactory.createEngineDescription(
+                ArgumentClozeTaskWriter.class, des,
+                ArgumentClozeTaskWriter.PARAM_OUTPUT_FILE, new File(workingDir, "cloze.json")
+        );
+
+        new BasicPipeline(reader, 16, featureExtractor).run();
+    }
+
+
+    public static void main(String[] args) throws UIMAException {
+        if (args.length == 3) {
+            full_run(args);
+        } else if (args.length == 1) {
+            cloze_only(args);
+        }
     }
 }

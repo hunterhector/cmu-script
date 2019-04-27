@@ -46,7 +46,8 @@ public class UimaFrameExtractor {
             }
 
             String frameName = frameStructure.getFrameName();
-            if (targetFrames.contains(frameName)) {
+            if (targetFrames.isEmpty() || targetFrames.contains(frameName)) {
+                // If target frame is empty then we are not doing any frame based filtering.
                 keepFrame = true;
             }
 
