@@ -9,6 +9,7 @@ import edu.cmu.cs.lti.script.Cloze.CorefCluster;
 import edu.cmu.cs.lti.script.type.*;
 import edu.cmu.cs.lti.script.utils.ImplicitFeaturesExtractor;
 import edu.cmu.cs.lti.uima.annotator.AbstractLoggingAnnotator;
+import edu.cmu.cs.lti.uima.util.UimaAnnotationUtils;
 import edu.cmu.cs.lti.uima.util.UimaConvenience;
 import edu.cmu.cs.lti.uima.util.UimaNlpUtils;
 import gnu.trove.map.TObjectIntMap;
@@ -212,6 +213,7 @@ public class ArgumentClozeTaskWriter extends AbstractLoggingAnnotator {
                 String predicate_context = getContext(lemmas, (StanfordCorenlpToken) eventMention.getHeadWord());
 
                 ce.predicate = UimaNlpUtils.getPredicate(eventMention.getHeadWord(), complements, false);
+                ce.predicatePhrase = onlySpace(eventMention.getCoveredText());
                 ce.context = predicate_context;
                 ce.predicateStart = eventMention.getBegin() - sentence.getBegin();
                 ce.predicateEnd = eventMention.getEnd() - sentence.getBegin();
@@ -258,6 +260,11 @@ public class ArgumentClozeTaskWriter extends AbstractLoggingAnnotator {
                     ca.propbank_role = role == null ? "NA" : role;
                     ca.context = argumentContext;
 
+                    String entType = ent.getEntityType();
+                    if (entType != null && !entType.equals("ARG_ENT") && !entType.equals("Entity")) {
+                        ca.ner = entType;
+                    }
+
                     // DO NOT write the dependency at this step, will do it in the Nombank processing module.
 //                    if (ce.eventType.equals("NOMBANK")) {
 //                        Pair<String, String> nomArg = Pair.of(predicateBase, role.replace("i_", ""));
@@ -277,13 +284,17 @@ public class ArgumentClozeTaskWriter extends AbstractLoggingAnnotator {
 
                     ca.entityId = ent.getReferingEntity().getIndex();
                     ca.text = onlySpace(argText);
+                    ca.argumentPhrase = onlySpace(ent.getCoveredText());
+
 
                     // TODO: This will create negative start and end for implicit arguments?
                     ca.argStart = ent.getBegin() - sentence.getBegin();
                     ca.argEnd = ent.getEnd() - sentence.getBegin();
 
-                    clozeArguments.add(ca);
+                    Map<String, String> argMeta = UimaAnnotationUtils.readMeta(argLink);
+                    ca.isImplicit = Boolean.valueOf(argMeta.get("implicit"));
 
+                    clozeArguments.add(ca);
                     argumentMap.put(ent, ca);
                 }
 
