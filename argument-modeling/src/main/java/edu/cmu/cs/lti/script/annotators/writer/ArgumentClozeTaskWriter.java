@@ -244,13 +244,7 @@ public class ArgumentClozeTaskWriter extends AbstractLoggingAnnotator {
                     ClozeEventMention.ClozeArgument ca = new ClozeEventMention.ClozeArgument();
 
                     String role = argLink.getPropbankRoleName();
-                    if (role == null) {
-                        role = "NA";
-                    }
                     String fe = argLink.getFrameElementName();
-                    if (fe == null) {
-                        fe = "NA";
-                    }
 
                     EntityMention ent = argLink.getArgument();
                     Word argHead = ent.getHead();
@@ -260,8 +254,8 @@ public class ArgumentClozeTaskWriter extends AbstractLoggingAnnotator {
 
                     String argumentContext = getContext(lemmas, (StanfordCorenlpToken) argHead);
 
-                    ca.feName = fe;
-                    ca.argument_role = role;
+                    ca.feName = fe == null ? "NA" : fe;
+                    ca.propbank_role = role == null ? "NA" : role;
                     ca.context = argumentContext;
 
                     // DO NOT write the dependency at this step, will do it in the Nombank processing module.

@@ -5,7 +5,6 @@ import edu.cmu.cs.lti.script.type.*;
 import edu.cmu.cs.lti.uima.annotator.AbstractLoggingAnnotator;
 import edu.cmu.cs.lti.uima.util.UimaAnnotationUtils;
 import edu.cmu.cs.lti.uima.util.UimaNlpUtils;
-import org.apache.commons.lang3.tuple.Pair;
 import org.apache.uima.UimaContext;
 import org.apache.uima.analysis_engine.AnalysisEngineProcessException;
 import org.apache.uima.fit.util.FSCollectionFactory;
@@ -78,15 +77,28 @@ public class VerbBasedEventDetector extends AbstractLoggingAnnotator {
                 COMPONENT_ID);
     }
 
+    /**
+     * @param aJCas         The JCas context.
+     * @param eventMention  The event mention to extract from.
+     * @param argumentLinks List of all arguments of this CAS, we are going to add new ones here.
+     * @param head2Args     The arguments from the event mention head.
+     * @param h2Entities    The headword to the entity mention list.
+     * @param COMPONENT_ID  The component id to be assigned to the new arguments.
+     */
     static void createArgsFromDependency(
             JCas aJCas, EventMention eventMention, List<EventMentionArgumentLink> argumentLinks,
             Map<Word, EventMentionArgumentLink> head2Args, Map<Word, EntityMention> h2Entities, String COMPONENT_ID) {
         Word headToken = eventMention.getHeadWord();
-        Map<String, Word> args = getArgs(headToken);
+        Map<String, Word> args = getDependents(headToken);
 
         for (Map.Entry<String, Word> arg : args.entrySet()) {
-            String role = arg.getKey();
+            String depType = arg.getKey();
             Word argWord = arg.getValue();
+            String inferredRole = takeDep(depType);
+
+            if (inferredRole == null) {
+                continue;
+            }
 
             EventMentionArgumentLink argumentLink;
             if (head2Args.containsKey(argWord)) {
@@ -97,51 +109,40 @@ public class VerbBasedEventDetector extends AbstractLoggingAnnotator {
                 argumentLinks.add(argumentLink);
             }
 
-            argumentLink.setDependency(role);
+            argumentLink.setDependency(depType);
+            if (argumentLink.getArgumentRole() == null) {
+                argumentLink.setArgumentRole(inferredRole);
+            }
         }
     }
 
-    private static Map<String, Word> getArgs(Word predicate) {
+    private static Map<String, Word> getDependents(Word predicate) {
         Map<String, Word> args = new HashMap<>();
         if (predicate.getChildDependencyRelations() != null) {
             for (StanfordDependencyRelation dep : FSCollectionFactory.create(predicate
                     .getChildDependencyRelations(), StanfordDependencyRelation.class)) {
-                Pair<String, Word> child = takeDep(dep);
-
-                if (child == null) {
-                    continue;
-                }
-
-                Word word = child.getRight();
-                String role = child.getLeft();
-                args.put(role, word);
+                args.put(dep.getDependencyType(), dep.getChild());
             }
         }
-
         return args;
     }
 
-    private static Pair<String, Word> takeDep(StanfordDependencyRelation dep) {
-        String depType = dep.getDependencyType();
-        Word depWord = dep.getChild();
-
+    private static String takeDep(String depType) {
         if (depType.equals("nsubj") || depType.contains("agent")) {
-            return Pair.of("subj", depWord);
+            return "subj";
         } else if (depType.equals("dobj") || depType.equals("nsubjpass")) {
-            return Pair.of("obj", depWord);
+            return "obj";
         } else if (depType.equals("iobj")) {
-            return Pair.of("iobj", depWord);
+            return "iobj";
         } else if (depType.startsWith("prep_")) {
-            return Pair.of(depType, depWord);
+            return depType;
         } else if (depType.startsWith("nmod:")) {
             if (depType.equals("nmod:tmod") || depType.equals("nmod:poss")) {
-                return Pair.of(depType, depWord);
+                return depType;
             } else {
-                String backoffDepType = depType.replace("nmod:", "prep_");
-                return Pair.of(backoffDepType, depWord);
+                return depType.replace("nmod:", "prep_");
             }
         }
-
         return null;
     }
 }

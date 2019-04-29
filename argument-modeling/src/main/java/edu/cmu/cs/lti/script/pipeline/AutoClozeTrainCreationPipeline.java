@@ -54,16 +54,17 @@ public class AutoClozeTrainCreationPipeline {
 
         AnalysisEngineDescription remover = AnalysisEngineFactory.createEngineDescription(EventMentionRemover.class);
 
-        AnalysisEngineDescription verbEvents = AnalysisEngineFactory.createEngineDescription(
-                VerbBasedEventDetector.class, typeSystemDescription
-        );
-
         AnalysisEngineDescription frameEvents = AnalysisEngineFactory.createEngineDescription(
                 FrameBasedEventDetector.class, typeSystemDescription,
                 FrameBasedEventDetector.PARAM_FRAME_RELATION, new File(resourceDir, "fndata-1.7/frRelation.xml"),
                 FrameBasedEventDetector.PARAM_IGNORE_BARE_FRAME, true,
                 FrameBasedEventDetector.PARAM_TAKE_ALL_FRAMES, takeAllFrames
         );
+
+        AnalysisEngineDescription verbEvents = AnalysisEngineFactory.createEngineDescription(
+                VerbBasedEventDetector.class, typeSystemDescription
+        );
+
 
         //        // Reader and extractors for existing mentions.
 //        CollectionReaderDescription reader = CustomCollectionReaderFactory.createXmiReader(
@@ -96,7 +97,7 @@ public class AutoClozeTrainCreationPipeline {
 
         // Write only clozes.
 //        new BasicPipeline(reader, false, true, 7, goldAnnotator, arguments, clozeExtractor).run();
-        new BasicPipeline(reader, false, true, 7, remover, verbEvents, frameEvents,
+        new BasicPipeline(reader, false, true, 7, remover, frameEvents, verbEvents,
                 goldAnnotator, arguments, clozeExtractor).run();
 
     }

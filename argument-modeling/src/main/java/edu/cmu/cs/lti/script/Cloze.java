@@ -46,7 +46,7 @@ public class Cloze {
         public static class ClozeArgument {
             public String feName;
             public String dep;
-            public String argument_role;
+            public String propbank_role;
             public String context;
             public String text;
             public String argumentPhrase;
