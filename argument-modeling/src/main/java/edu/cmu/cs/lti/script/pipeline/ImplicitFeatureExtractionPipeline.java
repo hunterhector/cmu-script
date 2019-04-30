@@ -83,7 +83,8 @@ public class ImplicitFeatureExtractionPipeline {
         // Gold standard event annotators.
         AnalysisEngineDescription goldAnnotator = AnalysisEngineFactory.createEngineDescription(
                 JsonEventDataReader.class, des,
-                JsonEventDataReader.PARAM_JSON_ANNO_DIR, annotateDir
+                JsonEventDataReader.PARAM_JSON_ANNO_DIR, annotateDir,
+                JsonEventDataReader.PARAM_CLEANUP_ENTITY, true
         );
 
         // Non-gold event annotators.
@@ -125,7 +126,7 @@ public class ImplicitFeatureExtractionPipeline {
 
 
     public static void main(String[] args) throws UIMAException {
-        if (args.length == 3) {
+        if (args.length == 4) {
             full_run(args);
         } else if (args.length == 1) {
             cloze_only(args);

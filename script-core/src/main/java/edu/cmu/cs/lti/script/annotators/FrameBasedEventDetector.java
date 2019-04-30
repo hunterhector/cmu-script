@@ -177,7 +177,7 @@ public class FrameBasedEventDetector extends AbstractLoggingAnnotator {
             eventMention.setArguments(FSCollectionFactory.createFSList(aJCas, argumentLinks));
         }
 
-        UimaNlpUtils.fixEntityMentions(aJCas, new ArrayList<>(JCasUtil.select(aJCas, EntityMention.class)),
+        UimaNlpUtils.cleanEntityMentionMetaData(aJCas, new ArrayList<>(JCasUtil.select(aJCas, EntityMention.class)),
                 COMPONENT_ID);
     }
 

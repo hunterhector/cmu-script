@@ -7,6 +7,7 @@ import edu.cmu.cs.lti.model.Span;
 import edu.cmu.cs.lti.script.type.*;
 import edu.cmu.cs.lti.uima.annotator.AbstractEntityMentionCreator;
 import edu.cmu.cs.lti.uima.util.UimaAnnotationUtils;
+import edu.cmu.cs.lti.utils.CollectionUtils;
 import gnu.trove.map.TObjectIntMap;
 import gnu.trove.map.hash.TObjectIntHashMap;
 import org.apache.commons.lang3.tuple.Pair;
@@ -35,7 +36,8 @@ public class SyntacticArgumentPropagateAnnotator extends AbstractEntityMentionCr
     //using span to communicate probably is the safest way when two types of tokens exists
     private ArrayListMultimap<Span, Pair<Span, String>> shareSubjVerbPairs;
 
-    //TODO: There is a couple of problems on sharing, 1) all stuff need to be shared at once 2) sharing conflicts should be used to correct old stuff 3)conj might help share more than only Arg0 and Arg1
+    //TODO: There is a couple of problems on sharing, 1) all stuff need to be shared at once 2) sharing conflicts
+    // should be used to correct old stuff 3)conj might help share more than only Arg0 and Arg1
 
     @Override
     public void process(JCas aJCas) throws AnalysisEngineProcessException {
@@ -55,7 +57,8 @@ public class SyntacticArgumentPropagateAnnotator extends AbstractEntityMentionCr
             Set<EventMentionArgumentLink> arg0s = new HashSet<>();
             Set<EventMentionArgumentLink> arg1s = new HashSet<>();
 
-            for (EventMentionArgumentLink link : FSCollectionFactory.create(evm.getArguments(), EventMentionArgumentLink.class)) {
+            for (EventMentionArgumentLink link : FSCollectionFactory.create(evm.getArguments(),
+                    EventMentionArgumentLink.class)) {
                 if (link.getArgumentRole().equals(PropBankTagSet.ARG0)) {
                     arg0s.add(link);
                 } else if (link.getArgumentRole().equals(PropBankTagSet.ARG1)) {
@@ -106,7 +109,8 @@ public class SyntacticArgumentPropagateAnnotator extends AbstractEntityMentionCr
                         EventMention emptyAgentMention = emptyAgentMentions.get(childSpan);
                         if (arg0s != null && arg0s.size() > 0) {
                             for (EntityMention arg0 : arg0s) {
-                                EventMentionArgumentLink newArgument = addNewArgument(aJCas, emptyAgentMention, arg0, PropBankTagSet.ARG0);
+                                EventMentionArgumentLink newArgument = addNewArgument(aJCas, emptyAgentMention, arg0,
+                                        PropBankTagSet.ARG0);
                                 eventHead2Arg0.put(childSpan, newArgument.getArgument());
                             }
                             emptyAgentMentions.remove(childSpan);
@@ -114,9 +118,12 @@ public class SyntacticArgumentPropagateAnnotator extends AbstractEntityMentionCr
                             Pair<Word, String> headSubjDepPair = getSubj(head);
                             if (headSubjDepPair != null) {
                                 Word headSubj = headSubjDepPair.getKey();
-                                EventMentionArgumentLink newArgument = addNewArgument(aJCas, emptyAgentMention, headSubj, PropBankTagSet.ARG0);
+                                EventMentionArgumentLink newArgument = addNewArgument(aJCas, emptyAgentMention,
+                                        headSubj, PropBankTagSet.ARG0);
                                 if (childDepPair.getValue().equals("vch")) {
-                                    System.out.println(String.format("Sharing agent [%s] from [%s] to [%s]", newArgument.getArgument().getCoveredText(), head.getCoveredText(), emptyAgentMention.getCoveredText()));
+                                    System.out.println(String.format("Sharing agent [%s] from [%s] to [%s]",
+                                            newArgument.getArgument().getCoveredText(), head.getCoveredText(),
+                                            emptyAgentMention.getCoveredText()));
                                     System.out.println(JCasUtil.selectCovering(Sentence.class, head).get(0).getCoveredText());
                                 }
                                 eventHead2Arg0.put(childSpan, newArgument.getArgument());
@@ -130,7 +137,8 @@ public class SyntacticArgumentPropagateAnnotator extends AbstractEntityMentionCr
                         if (arg1s != null && arg1s.size() > 0) {
                             EventMention emptyPatientMention = emptyPatientMentions.get(childSpan);
                             for (EntityMention arg1 : arg1s) {
-                                EventMentionArgumentLink newArgument = addNewArgument(aJCas, emptyPatientMention, arg1, PropBankTagSet.ARG1);
+                                EventMentionArgumentLink newArgument = addNewArgument(aJCas, emptyPatientMention,
+                                        arg1, PropBankTagSet.ARG1);
                                 eventHead2Arg1.put(childSpan, newArgument.getArgument());
                             }
                         }
@@ -168,27 +176,37 @@ public class SyntacticArgumentPropagateAnnotator extends AbstractEntityMentionCr
 
 
             if (agentShareeSpans.size() == conjVerbs.size() - 1 && agentSharerSpan != null) {
-//                Word agentSharer = JCasUtil.selectCovered(aJCas, Word.class, agentSharerSpan.getBegin(), agentSharerSpan.getEnd()).get(0);
+//                Word agentSharer = JCasUtil.selectCovered(aJCas, Word.class, agentSharerSpan.getBegin(),
+//                agentSharerSpan.getEnd()).get(0);
 
                 if (eventHead2Arg0.containsKey(agentSharerSpan))
                     for (EntityMention sharedArg0 : eventHead2Arg0.get(agentSharerSpan)) {
                         for (Span agentShareeSpan : agentShareeSpans) {
-                            addNewArgument(aJCas, emptyAgentMentions.get(agentShareeSpan), sharedArg0, PropBankTagSet.ARG0);
-//                            System.out.println(String.format("Sharing agent [%s] from [%s] to [%s]", sharedArg0.getCoveredText(), agentSharer.getCoveredText(), emptyAgentMentions.get(agentShareeSpan).getCoveredText()));
-//                            System.out.println(JCasUtil.selectCovering(Sentence.class, agentSharer).get(0).getCoveredText());
+                            addNewArgument(aJCas, emptyAgentMentions.get(agentShareeSpan), sharedArg0,
+                                    PropBankTagSet.ARG0);
+//                            System.out.println(String.format("Sharing agent [%s] from [%s] to [%s]", sharedArg0
+//                            .getCoveredText(), agentSharer.getCoveredText(), emptyAgentMentions.get
+//                            (agentShareeSpan).getCoveredText()));
+//                            System.out.println(JCasUtil.selectCovering(Sentence.class, agentSharer).get(0)
+//                            .getCoveredText());
                         }
                     }
             }
 
             if (patientShareeSpans.size() == conjVerbs.size() - 1 && patientSharerSpan != null) {
-//                Word patientSharer = JCasUtil.selectCovered(aJCas, Word.class, patientSharerSpan.getBegin(), patientSharerSpan.getEnd()).get(0);
+//                Word patientSharer = JCasUtil.selectCovered(aJCas, Word.class, patientSharerSpan.getBegin(),
+//                patientSharerSpan.getEnd()).get(0);
 
                 if (eventHead2Arg1.containsKey(patientSharerSpan))
                     for (EntityMention sharedArg1 : eventHead2Arg1.get(patientSharerSpan)) {
                         for (Span patientShareeSpan : patientShareeSpans) {
-                            addNewArgument(aJCas, emptyPatientMentions.get(patientShareeSpan), sharedArg1, PropBankTagSet.ARG1);
-//                            System.out.println(String.format("Sharing patient [%s] from [%s] to [%s]", sharedArg1.getCoveredText(), patientSharer.getCoveredText(), emptyPatientMentions.get(patientShareeSpan).getCoveredText()));
-//                            System.out.println(JCasUtil.selectCovering(Sentence.class, patientSharer).get(0).getCoveredText());
+                            addNewArgument(aJCas, emptyPatientMentions.get(patientShareeSpan), sharedArg1,
+                                    PropBankTagSet.ARG1);
+//                            System.out.println(String.format("Sharing patient [%s] from [%s] to [%s]", sharedArg1
+//                            .getCoveredText(), patientSharer.getCoveredText(), emptyPatientMentions.get
+//                            (patientShareeSpan).getCoveredText()));
+//                            System.out.println(JCasUtil.selectCovering(Sentence.class, patientSharer).get(0)
+//                            .getCoveredText());
                         }
                     }
             }
@@ -245,15 +263,8 @@ public class SyntacticArgumentPropagateAnnotator extends AbstractEntityMentionCr
                 posCounts.adjustOrPutValue(v.getPos(), 1, 1);
             }
             if (posCounts.size() != 1) {
-                int maxPosCount = -1;
-                String maxPos = null;
-                for (String keyPos : posCounts.keySet()) {
-                    int count = posCounts.get(keyPos);
-                    if (count > maxPosCount) {
-                        maxPosCount = count;
-                        maxPos = keyPos;
-                    }
-                }
+                List<String> maxPosList = CollectionUtils.findMaxCount(posCounts);
+                String maxPos = maxPosList.get(0);
 
                 List<Word> verbsToRemove = new ArrayList<>();
                 for (Word verb : conjVerbs) {
@@ -279,7 +290,8 @@ public class SyntacticArgumentPropagateAnnotator extends AbstractEntityMentionCr
             if (shareSubjDeps.contains(dep.getDependencyType())) {
                 Word head = dep.getHead();
                 Word child = dep.getChild();
-                shareSubjVerbPairs.put(UimaAnnotationUtils.toSpan(head), Pair.of(UimaAnnotationUtils.toSpan(child), dep.getDependencyType()));
+                shareSubjVerbPairs.put(UimaAnnotationUtils.toSpan(head), Pair.of(UimaAnnotationUtils.toSpan(child),
+                        dep.getDependencyType()));
             }
         }
 

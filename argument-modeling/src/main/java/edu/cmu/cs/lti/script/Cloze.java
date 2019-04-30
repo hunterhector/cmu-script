@@ -27,6 +27,7 @@ public class Cloze {
         public double[] entityFeatures;
         public String[] featureNames;
         public String representEntityHead;
+        public String entityType;
     }
 
     public static class ClozeEventMention {

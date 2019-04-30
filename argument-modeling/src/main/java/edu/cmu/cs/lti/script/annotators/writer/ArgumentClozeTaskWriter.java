@@ -332,6 +332,9 @@ public class ArgumentClozeTaskWriter extends AbstractLoggingAnnotator {
             clozeEntity.entityFeatures = featureArray;
             clozeEntity.featureNames = featureNameArray;
             clozeEntity.entityId = entity.getIndex();
+            if (entity.getEntityType() != null) {
+                clozeEntity.entityType = entity.getEntityType();
+            }
 
             clozeEntities.add(clozeEntity);
         }
