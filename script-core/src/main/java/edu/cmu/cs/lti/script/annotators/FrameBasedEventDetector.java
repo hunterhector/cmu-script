@@ -25,7 +25,6 @@ import org.apache.uima.fit.factory.TypeSystemDescriptionFactory;
 import org.apache.uima.fit.util.FSCollectionFactory;
 import org.apache.uima.fit.util.JCasUtil;
 import org.apache.uima.jcas.JCas;
-import org.apache.uima.jcas.cas.FSList;
 import org.apache.uima.resource.ResourceInitializationException;
 import org.apache.uima.resource.metadata.TypeSystemDescription;
 import org.jdom2.JDOMException;
@@ -99,6 +98,13 @@ public class FrameBasedEventDetector extends AbstractLoggingAnnotator {
         ArticleComponent article = JCasUtil.selectSingle(aJCas, Article.class);
 
         Map<Word, EntityMention> h2Entities = UimaNlpUtils.indexEntityMentions(aJCas);
+        Map<Word, EntityMention> entityWordMap = new HashMap<>();
+        for (EntityMention entityMention : JCasUtil.select(aJCas, EntityMention.class)) {
+            for (StanfordCorenlpToken token : JCasUtil.selectCovered(StanfordCorenlpToken.class, entityMention)) {
+                entityWordMap.put(token, entityMention);
+            }
+        }
+
         Table<Integer, Integer, EventMention> span2Events = UimaNlpUtils.indexEventMentions(aJCas);
 
         for (FrameStructure frameStructure : extractor.getTargetFrames(article)) {
@@ -142,15 +148,9 @@ public class FrameBasedEventDetector extends AbstractLoggingAnnotator {
                 String feName = frameElement.getName();
 
                 StanfordCorenlpToken argHead = UimaNlpUtils.findHeadFromStanfordAnnotation(frameElement);
-                String prep = null;
 
-                if (argHead.getPos().equals("IN")) {
-                    prep = "prep_" + argHead.getLemma();
-                    argHead = findPrepBy(predHead, prep);
-                }
-
-                if (argHead == null) {
-                    continue;
+                if (argHead.getPos().equals("TO") || argHead.getPos().equals("IN")) {
+                    argHead = UimaNlpUtils.findPrepTarget(predHead, argHead);
                 }
 
                 EventMentionArgumentLink argumentLink;
@@ -161,14 +161,24 @@ public class FrameBasedEventDetector extends AbstractLoggingAnnotator {
                             argHead.getEnd(), COMPONENT_ID);
                 }
 
-                String superFeName = superFeNames.get(i);
+                EntityMention argEntMention = argumentLink.getArgument();
+                if (argEntMention.getReferingEntity() == null) {
+                    if (entityWordMap.containsKey(argEntMention.getHead())) {
+                        EntityMention coveringMention = entityWordMap.get(argEntMention.getHead());
+                        if (UimaNlpUtils.compatibleMentions(argEntMention, coveringMention)) {
+                            UimaNlpUtils.addToEntityCluster(aJCas, coveringMention.getReferingEntity(),
+                                    Arrays.asList(argEntMention));
+                        }
+                    }
+                }
 
+                String superFeName = superFeNames.get(i);
                 argumentLink.setFrameElementName(feName);
                 argumentLink.setSuperFrameElementRoleName(superFeName);
 
-                if (prep != null) {
-                    argumentLink.setArgumentRole(prep);
-                }
+//                if (prep != null) {
+//                    argumentLink.setArgumentRole(prep);
+//                }
 
                 argumentLinks.add(argumentLink);
                 i++;
@@ -179,20 +189,6 @@ public class FrameBasedEventDetector extends AbstractLoggingAnnotator {
 
         UimaNlpUtils.cleanEntityMentionMetaData(aJCas, new ArrayList<>(JCasUtil.select(aJCas, EntityMention.class)),
                 COMPONENT_ID);
-    }
-
-    private StanfordCorenlpToken findPrepBy(StanfordCorenlpToken depHead, String depRel) {
-        FSList childFS = depHead.getChildDependencyRelations();
-        if (childFS != null) {
-            for (StanfordDependencyRelation dep : FSCollectionFactory.create(childFS,
-                    StanfordDependencyRelation.class)) {
-                if (dep.getDependencyType().equals(depRel)) {
-                    return (StanfordCorenlpToken) dep.getChild();
-                }
-            }
-        }
-
-        return null;
     }
 
     public static void main(String[] argv) throws UIMAException, SAXException, CpeDescriptorException, IOException {

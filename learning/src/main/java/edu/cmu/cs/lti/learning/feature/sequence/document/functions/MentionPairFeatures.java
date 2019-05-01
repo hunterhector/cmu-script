@@ -125,7 +125,7 @@ public class MentionPairFeatures extends SequenceFeatureWithFocus<StanfordCorenl
         if (shareArgumentFeature) {
             for (MentionKey sharedDepMention : sharedDepMentions) {
                 addToFeatures(globalFeatures, FeatureUtils.formatFeatureName("MentionPair_ShareDep_dobj",
-                                sharedDepMention.getCombinedType()), 1);
+                        sharedDepMention.getCombinedType()), 1);
 
 //                logger.info("Their object shared");
 //                logger.info(focusHead.getCoveredText());
@@ -135,7 +135,7 @@ public class MentionPairFeatures extends SequenceFeatureWithFocus<StanfordCorenl
 
             for (MentionKey corefDepMention : corefDepMentions) {
                 addToFeatures(globalFeatures, FeatureUtils.formatFeatureName("MentionPair_CorefOnDep_dobj",
-                                corefDepMention.getCombinedType()), 1);
+                        corefDepMention.getCombinedType()), 1);
 //                logger.info("Their object corefer");
 //                logger.info(focusHead.getCoveredText());
 //                logger.info(corefDepMention.getHeadWord().getCoveredText());
@@ -207,15 +207,15 @@ public class MentionPairFeatures extends SequenceFeatureWithFocus<StanfordCorenl
 
     private void findSharedDeps(StanfordCorenlpToken focusHead, List<MentionKey> knownStates, String sharedDep,
                                 List<MentionKey> shareDepMentions, List<MentionKey> corefDepMentions) {
-        StanfordCorenlpToken focusChild = findChildOfDep(focusHead, sharedDep);
+        StanfordCorenlpToken focusChild = (StanfordCorenlpToken) UimaNlpUtils.findChildOfDep(focusHead, sharedDep);
 
         for (MentionKey previousMention : knownStates) {
             if (previousMention.getCombinedType().equals(ClassAlphabet.noneOfTheAboveClass)) {
                 continue;
             }
 
-            StanfordCorenlpToken previousChild = findChildOfDep(
-                    (StanfordCorenlpToken) previousMention.getHeadWord(), sharedDep
+            StanfordCorenlpToken previousChild = (StanfordCorenlpToken) UimaNlpUtils.findChildOfDep(
+                    previousMention.getHeadWord(), sharedDep
             );
 
             if (previousChild != null && focusChild != null) {
@@ -280,18 +280,6 @@ public class MentionPairFeatures extends SequenceFeatureWithFocus<StanfordCorenl
         return sameSentMentions;
     }
 
-    private StanfordCorenlpToken findChildOfDep(StanfordCorenlpToken head, String dependency) {
-        FSList childrenFs = head.getChildDependencyRelations();
-        if (childrenFs != null) {
-            for (StanfordDependencyRelation dep :
-                    FSCollectionFactory.create(childrenFs, StanfordDependencyRelation.class)) {
-                if (dep.getDependencyType().equals(dependency)) {
-                    return (StanfordCorenlpToken) dep.getChild();
-                }
-            }
-        }
-        return null;
-    }
 
     private Map<StanfordCorenlpToken, String> getDependencyChildren(StanfordCorenlpToken head) {
         FSList childrenFs = head.getChildDependencyRelations();
