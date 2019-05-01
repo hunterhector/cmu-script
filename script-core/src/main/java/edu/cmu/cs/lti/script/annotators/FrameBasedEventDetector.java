@@ -1,5 +1,6 @@
 package edu.cmu.cs.lti.script.annotators;
 
+import com.google.common.collect.ArrayListMultimap;
 import com.google.common.collect.Table;
 import edu.cmu.cs.lti.frame.FrameRelationReader;
 import edu.cmu.cs.lti.frame.FrameStructure;
@@ -17,7 +18,6 @@ import org.apache.uima.UimaContext;
 import org.apache.uima.analysis_engine.AnalysisEngineDescription;
 import org.apache.uima.analysis_engine.AnalysisEngineProcessException;
 import org.apache.uima.collection.CollectionReaderDescription;
-import org.apache.uima.collection.metadata.CpeDescriptorException;
 import org.apache.uima.fit.descriptor.ConfigurationParameter;
 import org.apache.uima.fit.factory.AnalysisEngineFactory;
 import org.apache.uima.fit.factory.CollectionReaderFactory;
@@ -28,7 +28,6 @@ import org.apache.uima.jcas.JCas;
 import org.apache.uima.resource.ResourceInitializationException;
 import org.apache.uima.resource.metadata.TypeSystemDescription;
 import org.jdom2.JDOMException;
-import org.xml.sax.SAXException;
 
 import java.io.*;
 import java.util.*;
@@ -98,7 +97,7 @@ public class FrameBasedEventDetector extends AbstractLoggingAnnotator {
         ArticleComponent article = JCasUtil.selectSingle(aJCas, Article.class);
 
         Map<Word, EntityMention> h2Entities = UimaNlpUtils.indexEntityMentions(aJCas);
-        Map<Word, EntityMention> entityWordMap = new HashMap<>();
+        ArrayListMultimap<Word, EntityMention> entityWordMap = ArrayListMultimap.create();
         for (EntityMention entityMention : JCasUtil.select(aJCas, EntityMention.class)) {
             for (StanfordCorenlpToken token : JCasUtil.selectCovered(StanfordCorenlpToken.class, entityMention)) {
                 entityWordMap.put(token, entityMention);
@@ -162,12 +161,25 @@ public class FrameBasedEventDetector extends AbstractLoggingAnnotator {
                 }
 
                 EntityMention argEntMention = argumentLink.getArgument();
-                if (argEntMention.getReferingEntity() == null) {
+
+                Entity argEnt = argEntMention.getReferingEntity();
+
+                if (argEnt == null || argEnt.getEntityMentions().size() == 1) {
                     if (entityWordMap.containsKey(argEntMention.getHead())) {
-                        EntityMention coveringMention = entityWordMap.get(argEntMention.getHead());
-                        if (UimaNlpUtils.compatibleMentions(argEntMention, coveringMention)) {
-                            UimaNlpUtils.addToEntityCluster(aJCas, coveringMention.getReferingEntity(),
-                                    Arrays.asList(argEntMention));
+                        List<EntityMention> coveringMentions = entityWordMap.get(argEntMention.getHead());
+                        for (EntityMention coveringMention : coveringMentions) {
+                            if (coveringMention == argEntMention) {
+                                continue;
+                            }
+
+                            if (UimaNlpUtils.compatibleMentions(argEntMention, coveringMention)) {
+                                if (argEnt != null) {
+                                    argEnt.removeFromIndexes();
+                                }
+                                UimaNlpUtils.addToEntityCluster(aJCas, coveringMention.getReferingEntity(),
+                                        Arrays.asList(argEntMention));
+                                break;
+                            }
                         }
                     }
                 }
@@ -191,7 +203,7 @@ public class FrameBasedEventDetector extends AbstractLoggingAnnotator {
                 COMPONENT_ID);
     }
 
-    public static void main(String[] argv) throws UIMAException, SAXException, CpeDescriptorException, IOException {
+    public static void main(String[] argv) throws UIMAException {
         TypeSystemDescription typeSystemDescription = TypeSystemDescriptionFactory
                 .createTypeSystemDescription("TypeSystem");
         String workingDir = argv[0];
