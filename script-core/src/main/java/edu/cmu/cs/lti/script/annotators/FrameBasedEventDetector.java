@@ -202,7 +202,7 @@ public class FrameBasedEventDetector extends AbstractLoggingAnnotator {
         return null;
     }
 
-    public static void main(String[] argv) throws UIMAException, SAXException, CpeDescriptorException, IOException {
+    public static void main(String[] argv) throws UIMAException {
         TypeSystemDescription typeSystemDescription = TypeSystemDescriptionFactory
                 .createTypeSystemDescription("TypeSystem");
         String workingDir = argv[0];
