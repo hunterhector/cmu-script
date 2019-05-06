@@ -34,17 +34,16 @@ public class EnglishSrlArgumentExtractor extends AbstractLoggingAnnotator {
     @ConfigurationParameter(name = PARAM_ADD_SEMAFOR)
     private boolean addSemafor;
 
-    public static final String PARAM_ADD_DEPENDENCY = "addDependency";
-    @ConfigurationParameter(name = PARAM_ADD_DEPENDENCY)
-    private boolean addDependency;
+//    public static final String PARAM_ADD_DEPENDENCY = "addDependency";
+//    @ConfigurationParameter(name = PARAM_ADD_DEPENDENCY)
+//    private boolean addDependency;
 
     private TokenAlignmentHelper helper = new TokenAlignmentHelper();
 
     @Override
     public void initialize(UimaContext aContext) throws ResourceInitializationException {
         super.initialize(aContext);
-        logger.info(String.format("Extractor will add Fanse (%s), add Semafor (%s), add Dependency (%s)",
-                addFanse, addSemafor, addDependency));
+        logger.info(String.format("Extractor will add Fanse (%s), add Semafor (%s)", addFanse, addSemafor));
     }
 
     @Override
@@ -140,10 +139,6 @@ public class EnglishSrlArgumentExtractor extends AbstractLoggingAnnotator {
                 }
             }
 
-            if (addDependency) {
-                setArgumentDepType(mention, argumentLinks);
-            }
-
             mention.setArguments(FSCollectionFactory.createFSList(aJCas, argumentLinks));
         }
 
@@ -151,16 +146,16 @@ public class EnglishSrlArgumentExtractor extends AbstractLoggingAnnotator {
                 COMPONENT_ID);
     }
 
-    private void setArgumentDepType(EventMention mention, List<EventMentionArgumentLink> argumentLinks){
-        Map<Word, String> eventDeps = UimaNlpUtils.getDepChildren(mention.getHeadWord());
-
-        for (EventMentionArgumentLink argumentLink : argumentLinks) {
-            Word argHead = argumentLink.getArgument().getHead();
-            if (eventDeps.containsKey(argHead)){
-                argumentLink.setDependency(eventDeps.get(argHead));
-            }
-        }
-    }
+//    private void setArgumentDepType(EventMention mention, List<EventMentionArgumentLink> argumentLinks){
+//        Map<Word, String> eventDeps = UimaNlpUtils.getDepChildren(mention.getHeadWord());
+//
+//        for (EventMentionArgumentLink argumentLink : argumentLinks) {
+//            Word argHead = argumentLink.getArgument().getHead();
+//            if (eventDeps.containsKey(argHead)){
+//                argumentLink.setDependency(eventDeps.get(argHead));
+//            }
+//        }
+//    }
 
     private Map<SemaforLabel, Pair<String, Map<String, SemaforLabel>>> getSemaforArguments(JCas aJCas) {
         Map<SemaforLabel, Pair<String, Map<String, SemaforLabel>>> semaforArguments = new HashMap<>();

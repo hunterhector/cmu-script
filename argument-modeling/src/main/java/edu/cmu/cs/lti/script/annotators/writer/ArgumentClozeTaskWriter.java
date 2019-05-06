@@ -137,10 +137,18 @@ public class ArgumentClozeTaskWriter extends AbstractLoggingAnnotator {
         } catch (IOException | URISyntaxException e) {
             e.printStackTrace();
         }
-
-
     }
 
+    private void setArgumentDepType(EventMention mention, Collection<EventMentionArgumentLink> argumentLinks){
+        Map<Word, String> eventDeps = UimaNlpUtils.getDepChildren(mention.getHeadWord());
+
+        for (EventMentionArgumentLink argumentLink : argumentLinks) {
+            Word argHead = argumentLink.getArgument().getHead();
+            if (eventDeps.containsKey(argHead)){
+                argumentLink.setDependency(eventDeps.get(argHead));
+            }
+        }
+    }
 
     private void addCoref(JCas aJCas, ClozeDoc doc, TObjectIntMap<EventMention> eid2Event) {
         doc.eventCorefClusters = new ArrayList<>();
@@ -241,6 +249,9 @@ public class ArgumentClozeTaskWriter extends AbstractLoggingAnnotator {
                     argLinks = new ArrayList<>();
                 }
 
+                // Make sure we know the dependency types of the arguments.
+                setArgumentDepType(eventMention, argLinks);
+
                 List<ClozeEventMention.ClozeArgument> clozeArguments = new ArrayList<>();
                 for (EventMentionArgumentLink argLink : argLinks) {
                     ClozeEventMention.ClozeArgument ca = new ClozeEventMention.ClozeArgument();
@@ -265,19 +276,6 @@ public class ArgumentClozeTaskWriter extends AbstractLoggingAnnotator {
                         ca.ner = entType;
                     }
 
-                    // DO NOT write the dependency at this step, will do it in the Nombank processing module.
-//                    if (ce.eventType.equals("NOMBANK")) {
-//                        Pair<String, String> nomArg = Pair.of(predicateBase, role.replace("i_", ""));
-//                        if (nomArg2VerbDep.containsKey(nomArg)) {
-//                            Pair<String, String> verbDep = nomArg2VerbDep.get(nomArg);
-//                            ca.dep = verbDep.getValue();
-//                        } else {
-//                            if (role.startsWith("i_")) {
-//                                logger.info("Cannot for nom arg pair: " + nomArg.getLeft() + " " + role);
-//                                ca.dep = "NA";
-//                            }
-//                        }
-//                    } else {
                     String dep = argLink.getDependency();
                     ca.dep = dep == null ? "NA" : dep;
 //                    }
@@ -285,7 +283,6 @@ public class ArgumentClozeTaskWriter extends AbstractLoggingAnnotator {
                     ca.entityId = ent.getReferingEntity().getIndex();
                     ca.text = onlySpace(argText);
                     ca.argumentPhrase = onlySpace(ent.getCoveredText());
-
 
                     // TODO: This will create negative start and end for implicit arguments?
                     ca.argStart = ent.getBegin() - sentence.getBegin();
