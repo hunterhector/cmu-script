@@ -71,22 +71,22 @@ public class AutoClozeTrainCreationPipeline {
 //                typeSystemDescription, workingDir, inputBase
 //        );
 
-        AnalysisEngineDescription goldAnnotator = AnalysisEngineFactory.createEngineDescription(
-                GoldStandardEventMentionAnnotator.class, typeSystemDescription,
-                GoldStandardEventMentionAnnotator.PARAM_TARGET_VIEWS,
-                new String[]{CAS.NAME_DEFAULT_SOFA, UimaConst.inputViewName},
-                GoldStandardEventMentionAnnotator.PARAM_COPY_MENTION_TYPE, true,
-                GoldStandardEventMentionAnnotator.PARAM_COPY_REALIS, true,
-                GoldStandardEventMentionAnnotator.PARAM_COPY_CLUSTER, true,
-                GoldStandardEventMentionAnnotator.PARAM_COPY_RELATIONS, true
-        );
+//        AnalysisEngineDescription goldAnnotator = AnalysisEngineFactory.createEngineDescription(
+//                GoldStandardEventMentionAnnotator.class, typeSystemDescription,
+//                GoldStandardEventMentionAnnotator.PARAM_TARGET_VIEWS,
+//                new String[]{CAS.NAME_DEFAULT_SOFA, UimaConst.inputViewName},
+//                GoldStandardEventMentionAnnotator.PARAM_COPY_MENTION_TYPE, true,
+//                GoldStandardEventMentionAnnotator.PARAM_COPY_REALIS, true,
+//                GoldStandardEventMentionAnnotator.PARAM_COPY_CLUSTER, true,
+//                GoldStandardEventMentionAnnotator.PARAM_COPY_RELATIONS, true
+//        );
 
-        AnalysisEngineDescription arguments = AnalysisEngineFactory.createEngineDescription(
-                EnglishSrlArgumentExtractor.class, typeSystemDescription,
-                EnglishSrlArgumentExtractor.PARAM_ADD_SEMAFOR, true,
-                EnglishSrlArgumentExtractor.PARAM_ADD_FANSE, false,
-                EnglishSrlArgumentExtractor.PARAM_ADD_DEPENDENCY, true
-        );
+//        AnalysisEngineDescription arguments = AnalysisEngineFactory.createEngineDescription(
+//                EnglishSrlArgumentExtractor.class, typeSystemDescription,
+//                EnglishSrlArgumentExtractor.PARAM_ADD_SEMAFOR, true,
+//                EnglishSrlArgumentExtractor.PARAM_ADD_FANSE, false,
+//                EnglishSrlArgumentExtractor.PARAM_ADD_DEPENDENCY, true
+//        );
 
         AnalysisEngineDescription clozeExtractor = AnalysisEngineFactory.createEngineDescription(
                 ArgumentClozeTaskWriter.class, typeSystemDescription,
@@ -97,8 +97,7 @@ public class AutoClozeTrainCreationPipeline {
 
         // Write only clozes.
 //        new BasicPipeline(reader, false, true, 7, goldAnnotator, arguments, clozeExtractor).run();
-        new BasicPipeline(reader, false, true, 7, remover, frameEvents, verbEvents,
-                goldAnnotator, arguments, clozeExtractor).run();
+        new BasicPipeline(reader, false, true, 7, remover, frameEvents, verbEvents, clozeExtractor).run();
 
     }
 }
