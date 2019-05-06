@@ -134,6 +134,8 @@ public class FrameBasedEventDetector extends AbstractLoggingAnnotator {
                 UimaAnnotationUtils.finishAnnotation(eventMention, COMPONENT_ID, 0, aJCas);
             }
 
+            logger.info("Adding event mention from frame " + eventMention.getCoveredText());
+
             eventMention.setFrameName(frameName);
             eventMention.setHeadWord(predHead);
 
