@@ -146,7 +146,6 @@ public class FrameBasedEventDetector extends AbstractLoggingAnnotator {
             int i = 0;
             for (SemaforLabel frameElement : frameStructure.getFrameElements()) {
                 String feName = frameElement.getName();
-
                 StanfordCorenlpToken argHead = UimaNlpUtils.findHeadFromStanfordAnnotation(frameElement);
 
                 if (argHead.getPos().equals("TO") || argHead.getPos().equals("IN")) {
@@ -176,10 +175,6 @@ public class FrameBasedEventDetector extends AbstractLoggingAnnotator {
                 argumentLink.setFrameElementName(feName);
                 argumentLink.setSuperFrameElementRoleName(superFeName);
 
-//                if (prep != null) {
-//                    argumentLink.setArgumentRole(prep);
-//                }
-
                 argumentLinks.add(argumentLink);
                 i++;
             }
@@ -189,6 +184,10 @@ public class FrameBasedEventDetector extends AbstractLoggingAnnotator {
 
         UimaNlpUtils.cleanEntityMentionMetaData(aJCas, new ArrayList<>(JCasUtil.select(aJCas, EntityMention.class)),
                 COMPONENT_ID);
+    }
+
+    private StanfordCorenlpToken findSpanWithoutPrep(SemaforLabel frameElement){
+        return null;
     }
 
     public static void main(String[] argv) throws UIMAException, SAXException, CpeDescriptorException, IOException {
