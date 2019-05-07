@@ -77,6 +77,8 @@ public class ArgumentClozeTaskWriter extends AbstractLoggingAnnotator {
     private Map<String, String> verbFormMap;
     private Map<String, String> nombankBaseFormMap;
 
+    private int numImplicitSlots;
+
     @Override
     public void initialize(UimaContext aContext) throws ResourceInitializationException {
         super.initialize(aContext);
@@ -137,7 +139,11 @@ public class ArgumentClozeTaskWriter extends AbstractLoggingAnnotator {
         } catch (IOException | URISyntaxException e) {
             e.printStackTrace();
         }
+
+        numImplicitSlots = 0;
     }
+
+
 
     private void setArgumentDepType(EventMention mention, Collection<EventMentionArgumentLink> argumentLinks){
         Map<Word, String> eventDeps = UimaNlpUtils.getDepChildren(mention.getHeadWord());
@@ -290,6 +296,12 @@ public class ArgumentClozeTaskWriter extends AbstractLoggingAnnotator {
 
                     Map<String, String> argMeta = UimaAnnotationUtils.readMeta(argLink);
                     ca.isImplicit = Boolean.valueOf(argMeta.get("implicit"));
+                    ca.isIncorporated = Boolean.valueOf(argMeta.get("incorporated"));
+                    ca.isSucceeding = Boolean.valueOf(argMeta.get("succeeding"));
+
+                    if (ca.isImplicit){
+                        numImplicitSlots += 1;
+                    }
 
                     clozeArguments.add(ca);
                     argumentMap.put(ent, ca);
@@ -381,6 +393,7 @@ public class ArgumentClozeTaskWriter extends AbstractLoggingAnnotator {
     @Override
     public void collectionProcessComplete() throws AnalysisEngineProcessException {
         super.collectionProcessComplete();
+        logger.info("Number of implicit roles: " + numImplicitSlots);
         try {
             writer.close();
         } catch (IOException e) {
