@@ -2,8 +2,12 @@ package edu.cmu.cs.lti.io;
 
 import com.google.common.collect.ArrayListMultimap;
 import com.google.gson.Gson;
+import edu.cmu.cs.lti.emd.annotators.CrfMentionTypeAnnotator;
 import edu.cmu.cs.lti.model.Span;
 import edu.cmu.cs.lti.model.UimaConst;
+import edu.cmu.cs.lti.script.annotators.FrameBasedEventDetector;
+import edu.cmu.cs.lti.script.annotators.SemaforAnnotator;
+import edu.cmu.cs.lti.script.annotators.VerbBasedEventDetector;
 import edu.cmu.cs.lti.script.type.*;
 import edu.cmu.cs.lti.uima.annotator.AbstractLoggingAnnotator;
 import edu.cmu.cs.lti.uima.util.UimaConvenience;
@@ -45,11 +49,25 @@ public class JsonRichEventWriter extends AbstractLoggingAnnotator {
     private int objectIndex;
     private ArrayList<Word> allWords;
 
+    private Map<String, Double> confidenceScale;
+    private double defaultScale = 0.5;
+
     @Override
     public void initialize(UimaContext aContext) throws ResourceInitializationException {
         super.initialize(aContext);
         logger.info("Writing JSON Rich events to : " + outputDir);
         edu.cmu.cs.lti.utils.FileUtils.ensureDirectory(outputDir);
+
+        confidenceScale = new HashMap<>();
+        confidenceScale.put(
+                CrfMentionTypeAnnotator.class.getSimpleName(), 0.6
+        );
+        confidenceScale.put(
+                FrameBasedEventDetector.class.getSimpleName(), 0.64
+        );
+        confidenceScale.put(
+                VerbBasedEventDetector.class.getSimpleName(), 0.6
+        );
     }
 
     @Override
@@ -136,6 +154,8 @@ public class JsonRichEventWriter extends AbstractLoggingAnnotator {
         doc.docid = docid;
         doc.eventMentions = new ArrayList<>();
 
+        doc.text = aJCas.getDocumentText();
+
         Map<Span, JsonEventMention> evmMap = new HashMap<>();
         Map<Span, JsonEntityMention> jsonEntMap = new HashMap<>();
 
@@ -183,6 +203,21 @@ public class JsonRichEventWriter extends AbstractLoggingAnnotator {
             jsonEvm.type = mention.getEventType();
             jsonEvm.realis = mention.getRealisType();
             jsonEvm.component = mention.getComponentId();
+
+
+            double confidence =mention.getEventTypeConfidence();
+            if (confidence == 0){
+                confidence = 1;
+            }
+
+            if (confidenceScale.containsKey(mention.getComponentId())) {
+                confidence *= confidenceScale.get(mention.getComponentId());
+            }else{
+                confidence *= defaultScale;
+            }
+
+            jsonEvm.score = confidence;
+
             doc.eventMentions.add(jsonEvm);
 
             Word headword = mention.getHeadWord();
@@ -198,7 +233,6 @@ public class JsonRichEventWriter extends AbstractLoggingAnnotator {
             } else {
                 jsonEvm.frame = mention.getFrameName();
             }
-
 
             jsonEvm.headWord = new JsonWord(objectIndex++, headword);
             jsonEvm.arguments = new ArrayList<>();
@@ -320,6 +354,7 @@ public class JsonRichEventWriter extends AbstractLoggingAnnotator {
 
     class Document {
         String docid;
+        String text;
         List<JsonEventMention> eventMentions;
         List<JsonEntityMention> entityMentions;
         List<JsonRelation> relations;
@@ -369,6 +404,8 @@ public class JsonRichEventWriter extends AbstractLoggingAnnotator {
 
         String negationWord;
         String modalWord;
+
+        double score;
 
         JsonEventMention(int id, ComponentAnnotation anno) {
             super(id, anno, anno.getCoveredText());
