@@ -59,6 +59,8 @@ public class Cloze {
             public boolean isImplicit;
             public boolean isIncorporated;
             public boolean isSucceeding;
+
+            public String source;
         }
     }
 }

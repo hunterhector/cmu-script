@@ -2,6 +2,7 @@ package edu.cmu.cs.lti.script.annotators.writer;
 
 import com.google.common.collect.ArrayListMultimap;
 import com.google.gson.Gson;
+import edu.cmu.cs.lti.collection_reader.JsonEventDataReader;
 import edu.cmu.cs.lti.script.Cloze.ClozeDoc;
 import edu.cmu.cs.lti.script.Cloze.ClozeEntity;
 import edu.cmu.cs.lti.script.Cloze.ClozeEventMention;
@@ -77,7 +78,9 @@ public class ArgumentClozeTaskWriter extends AbstractLoggingAnnotator {
     private Map<String, String> verbFormMap;
     private Map<String, String> nombankBaseFormMap;
 
-    private int numImplicitSlots;
+//    private int numImplicitSlots;
+
+    private TObjectIntMap<String> counters;
 
     @Override
     public void initialize(UimaContext aContext) throws ResourceInitializationException {
@@ -90,6 +93,8 @@ public class ArgumentClozeTaskWriter extends AbstractLoggingAnnotator {
 
         nomArg2VerbDep = new HashMap<>();
         verbFormMap = new HashMap<>();
+
+        counters = new TObjectIntHashMap<>();
 
         if (useNomBankDepMap) {
             logger.info("Loading nombank dependency map.");
@@ -140,17 +145,16 @@ public class ArgumentClozeTaskWriter extends AbstractLoggingAnnotator {
             e.printStackTrace();
         }
 
-        numImplicitSlots = 0;
+//        numImplicitSlots = 0;
     }
 
 
-
-    private void setArgumentDepType(EventMention mention, Collection<EventMentionArgumentLink> argumentLinks){
+    private void setArgumentDepType(EventMention mention, Collection<EventMentionArgumentLink> argumentLinks) {
         Map<Word, String> eventDeps = UimaNlpUtils.getDepChildren(mention.getHeadWord());
 
         for (EventMentionArgumentLink argumentLink : argumentLinks) {
             Word argHead = argumentLink.getArgument().getHead();
-            if (eventDeps.containsKey(argHead)){
+            if (eventDeps.containsKey(argHead)) {
                 argumentLink.setDependency(eventDeps.get(argHead));
             }
         }
@@ -235,7 +239,6 @@ public class ArgumentClozeTaskWriter extends AbstractLoggingAnnotator {
                 ce.eventType = eventMention.getEventType();
                 ce.eventId = eventId++;
 
-
                 String predicateBase = eventMention.getHeadWord().getLemma().toLowerCase();
                 if (nombankBaseFormMap.containsKey(predicateBase)) {
                     predicateBase = nombankBaseFormMap.get(predicateBase);
@@ -299,8 +302,19 @@ public class ArgumentClozeTaskWriter extends AbstractLoggingAnnotator {
                     ca.isIncorporated = Boolean.valueOf(argMeta.get("incorporated"));
                     ca.isSucceeding = Boolean.valueOf(argMeta.get("succeeding"));
 
-                    if (ca.isImplicit){
-                        numImplicitSlots += 1;
+                    if (argLink.getComponentId().equals(JsonEventDataReader.propbank)) {
+                        ca.source = "propbank";
+                        counters.adjustOrPutValue("Arguments from Propbank", 1, 1);
+                    } else if (argLink.getComponentId().equals(JsonEventDataReader.nombank)) {
+                        ca.source = "nombank";
+                        counters.adjustOrPutValue("Arguments from Nombank", 1, 1);
+                    } else {
+                        ca.source = "automatic";
+                        counters.adjustOrPutValue("Arguments from parsers", 1, 1);
+                    }
+
+                    if (ca.isImplicit) {
+                        counters.adjustOrPutValue("Implicit Arguments", 1, 1);
                     }
 
                     clozeArguments.add(ca);
@@ -393,7 +407,13 @@ public class ArgumentClozeTaskWriter extends AbstractLoggingAnnotator {
     @Override
     public void collectionProcessComplete() throws AnalysisEngineProcessException {
         super.collectionProcessComplete();
-        logger.info("Number of implicit roles: " + numImplicitSlots);
+
+        logger.info("Statistics for the corpus:");
+        counters.forEachEntry((s, i) -> {
+            logger.info(String.format("%s : %d", s, i));
+            return true;
+        });
+
         try {
             writer.close();
         } catch (IOException e) {
