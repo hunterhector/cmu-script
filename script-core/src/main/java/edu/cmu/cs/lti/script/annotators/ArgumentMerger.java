@@ -3,8 +3,8 @@ package edu.cmu.cs.lti.script.annotators;
 import com.google.common.collect.ArrayListMultimap;
 import edu.cmu.cs.lti.annotators.FanseAnnotator;
 import edu.cmu.cs.lti.collection_reader.TbfEventDataReader;
-import edu.cmu.cs.lti.script.annotators.writers.TbfStyleEventWriter;
 import edu.cmu.cs.lti.model.Span;
+import edu.cmu.cs.lti.script.annotators.writers.TbfStyleEventWriter;
 import edu.cmu.cs.lti.script.model.SemaforConstants;
 import edu.cmu.cs.lti.script.type.*;
 import edu.cmu.cs.lti.uima.annotator.AbstractLoggingAnnotator;
@@ -15,6 +15,7 @@ import edu.cmu.cs.lti.uima.util.UimaConvenience;
 import edu.cmu.cs.lti.uima.util.UimaNlpUtils;
 import edu.cmu.cs.lti.utils.Configuration;
 import edu.cmu.cs.lti.utils.FileUtils;
+import org.apache.commons.lang3.tuple.Triple;
 import org.apache.uima.UIMAException;
 import org.apache.uima.analysis_engine.AnalysisEngineDescription;
 import org.apache.uima.analysis_engine.AnalysisEngineProcessException;
@@ -45,10 +46,10 @@ public class ArgumentMerger extends AbstractLoggingAnnotator {
     public void process(JCas aJCas) throws AnalysisEngineProcessException {
         helper.loadFanse2Stanford(aJCas);
 
-        Map<StanfordCorenlpToken, Pair<String, Map<StanfordCorenlpToken, Pair<String, Span>>>> semaforFrames =
+        Map<StanfordCorenlpToken, Pair<String, Map<StanfordCorenlpToken, Triple<String, Span, Double>>>> semaforFrames =
                 getSemaforArguments(aJCas);
-        Map<StanfordCorenlpToken, Pair<String, Map<StanfordCorenlpToken, Pair<String, Span>>>> fanseFrames =
-                getFanseArguments(aJCas);
+        Map<StanfordCorenlpToken, Pair<String, Map<StanfordCorenlpToken, Triple<String, Span, Double>>>> fanseFrames =
+                getFanseArgument(aJCas);
 
         ArrayListMultimap<StanfordCorenlpToken, SemanticRelation> argumentByChild = ArrayListMultimap.create();
         // Create argument for each token.
@@ -57,37 +58,44 @@ public class ArgumentMerger extends AbstractLoggingAnnotator {
 
             Map<StanfordCorenlpToken, SemanticRelation> mergedArguments = new HashMap<>();
 
-            Pair<String, Map<StanfordCorenlpToken, Pair<String, Span>>> semaforFrame = semaforFrames.get(token);
-            Pair<String, Map<StanfordCorenlpToken, Pair<String, Span>>> fanseFrame = fanseFrames.get(token);
+            Pair<String, Map<StanfordCorenlpToken, Triple<String, Span, Double>>> semaforFrame =
+                    semaforFrames.get(token);
+            Pair<String, Map<StanfordCorenlpToken, Triple<String, Span, Double>>> fanseFrame = fanseFrames.get(token);
 
             String fanseLexicalSense = null;
             if (fanseFrame != null) {
                 fanseLexicalSense = fanseFrame.getValue0();
                 token.setPropbankSense(fanseLexicalSense);
-                for (Map.Entry<StanfordCorenlpToken, Pair<String, Span>> fanseArg : fanseFrame.getValue1().entrySet()) {
+                for (Map.Entry<StanfordCorenlpToken, Triple<String, Span, Double>> fanseArg :
+                        fanseFrame.getValue1().entrySet()) {
                     StanfordCorenlpToken argHead = fanseArg.getKey();
-                    String argRoleName = fanseArg.getValue().getValue0();
-                    Span frameSpan = fanseArg.getValue().getValue1();
+                    String argRoleName = fanseArg.getValue().getLeft();
+                    Span frameSpan = fanseArg.getValue().getMiddle();
+                    double confidence = fanseArg.getValue().getRight();
 
                     SemanticRelation relation = new SemanticRelation(aJCas);
 
                     relation.setPropbankRoleName(argRoleName);
                     SemanticArgument arg = new SemanticArgument(aJCas, frameSpan.getBegin(), frameSpan.getEnd());
                     arg.setHead(argHead);
+
                     relation.setChild(arg);
                     UimaAnnotationUtils.finishAnnotation(arg, FanseAnnotator.COMPONENT_ID, 0, aJCas);
                     UimaAnnotationUtils.finishTop(relation, FanseAnnotator.COMPONENT_ID, 0, aJCas);
                     mergedArguments.put(argHead, relation);
+
+                    relation.setConfidence(confidence);
                 }
             }
 
             if (semaforFrame != null) {
                 String frameNetName = semaforFrame.getValue0();
-                for (Map.Entry<StanfordCorenlpToken, Pair<String, Span>> semaforArg : semaforFrame.getValue1()
+                for (Map.Entry<StanfordCorenlpToken, Triple<String, Span, Double>> semaforArg : semaforFrame.getValue1()
                         .entrySet()) {
                     StanfordCorenlpToken argHead = semaforArg.getKey();
-                    String feName = semaforArg.getValue().getValue0();
-                    Span frameSpan = semaforArg.getValue().getValue1();
+                    String feName = semaforArg.getValue().getLeft();
+                    Span frameSpan = semaforArg.getValue().getMiddle();
+                    double confidence = semaforArg.getValue().getRight();
                     SemanticRelation relation = mergedArguments.containsKey(argHead) ? mergedArguments.get(argHead) :
                             new SemanticRelation(aJCas);
 
@@ -95,6 +103,7 @@ public class ArgumentMerger extends AbstractLoggingAnnotator {
                     SemanticArgument arg = new SemanticArgument(aJCas, frameSpan.getBegin(), frameSpan.getEnd());
                     arg.setHead(argHead);
                     relation.setChild(arg);
+                    relation.setConfidence(confidence);
 
                     UimaAnnotationUtils.finishAnnotation(arg, SemaforAnnotator.COMPONENT_ID, 0, aJCas);
                     UimaAnnotationUtils.finishTop(relation, SemaforAnnotator.COMPONENT_ID, 0, aJCas);
@@ -117,21 +126,19 @@ public class ArgumentMerger extends AbstractLoggingAnnotator {
 
     }
 
-    private Map<StanfordCorenlpToken, Pair<String, Map<StanfordCorenlpToken, Pair<String, Span>>>>
+    private Map<StanfordCorenlpToken, Pair<String, Map<StanfordCorenlpToken, Triple<String, Span, Double>>>>
     getSemaforArguments(JCas aJCas) {
-
         Map<SemaforLabel, Collection<StanfordCorenlpToken>> labelCovered = JCasUtil.indexCovered(aJCas, SemaforLabel
                 .class, StanfordCorenlpToken.class);
         Map<SemaforLabel, Collection<StanfordCorenlpToken>> labelCovering = JCasUtil.indexCovering(aJCas,
                 SemaforLabel.class, StanfordCorenlpToken.class);
 
-        // Map<FrameHead, Pair<FrameName, Map<ArgumentHead, Pair<ArgumentName, ArgumentSpan>>>>
-        Map<StanfordCorenlpToken, Pair<String, Map<StanfordCorenlpToken, Pair<String, Span>>>> semaforFrames = new
-                HashMap<>();
+        Map<StanfordCorenlpToken, Pair<String, Map<StanfordCorenlpToken, Triple<String, Span, Double>>>> semaforFrames
+                = new HashMap<>();
 
         for (SemaforAnnotationSet annotationSet : JCasUtil.select(aJCas, SemaforAnnotationSet.class)) {
             SemaforLabel targetLabel = null;
-            Map<StanfordCorenlpToken, Pair<String, Span>> roleLabels = new HashMap<>();
+            Map<StanfordCorenlpToken, Triple<String, Span, Double>> roleLabels = new HashMap<>();
 
             for (SemaforLayer layer : JCasUtil.select(annotationSet.getLayers(), SemaforLayer.class)) {
                 String layerName = layer.getName();
@@ -143,12 +150,12 @@ public class ArgumentMerger extends AbstractLoggingAnnotator {
                     for (SemaforLabel label : JCasUtil.select(layer.getLabels(), SemaforLabel.class)) {
                         StanfordCorenlpToken argumentHead = UimaNlpUtils.findHeadFromStanfordAnnotation(label);
 
-//                        if (argumentHead == null){
-//                            System.out.println("Cannot find stanford token for " + label.get);
-//                        }
-
-                        roleLabels.put(argumentHead, Pair.with(label.getName(), Span.of(label.getBegin(), label
-                                .getEnd())));
+                        roleLabels.put(
+                                argumentHead,
+                                Triple.of(
+                                        label.getName(), Span.of(label.getBegin(), label.getEnd()), layer.getScore()
+                                )
+                        );
                     }
                 }
             }
@@ -180,17 +187,17 @@ public class ArgumentMerger extends AbstractLoggingAnnotator {
         return semaforFrames;
     }
 
-    private Map<StanfordCorenlpToken, Pair<String, Map<StanfordCorenlpToken, Pair<String, Span>>>> getFanseArguments
-            (JCas aJCas) {
+    private Map<StanfordCorenlpToken, Pair<String, Map<StanfordCorenlpToken, Triple<String, Span, Double>>>>
+    getFanseArgument(JCas aJCas) {
         // Map<FrameHead, Pair<FrameName, Map<ArgumentHead, Pair<ArgumentName, Span>>>
-        Map<StanfordCorenlpToken, Pair<String, Map<StanfordCorenlpToken, Pair<String, Span>>>> fanseFrames = new
-                HashMap<>();
+        Map<StanfordCorenlpToken, Pair<String, Map<StanfordCorenlpToken, Triple<String, Span, Double>>>> fanseFrames
+                = new HashMap<>();
 
         for (FanseToken token : JCasUtil.select(aJCas, FanseToken.class)) {
             StanfordCorenlpToken predicateHead = helper.getStanfordToken(token);
 
             if (predicateHead != null) {
-                Map<StanfordCorenlpToken, Pair<String, Span>> fanseFrame = new HashMap<>();
+                Map<StanfordCorenlpToken, Triple<String, Span, Double>> fanseFrame = new HashMap<>();
 
                 FSList semanticRelationsFS = token.getChildSemanticRelations();
                 if (semanticRelationsFS != null) {
@@ -202,8 +209,11 @@ public class ArgumentMerger extends AbstractLoggingAnnotator {
                         StanfordCorenlpToken argumentHead = realSpan.getValue0();
 
                         if (argumentHead != null) {
-                            fanseFrame.put(argumentHead, Pair.with(childRelation.getSemanticAnnotation(),
-                                    realSpan.getValue1()));
+                            fanseFrame.put(argumentHead, Triple.of(
+                                    childRelation.getSemanticAnnotation(),
+                                    realSpan.getValue1(),
+                                    childRelation.getConfidence()
+                            ));
                         }
                     }
                 }

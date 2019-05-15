@@ -198,10 +198,6 @@ public class FrameBasedEventDetector extends AbstractLoggingAnnotator {
                 COMPONENT_ID);
     }
 
-    private StanfordCorenlpToken findSpanWithoutPrep(SemaforLabel frameElement){
-        return null;
-    }
-
     public static void main(String[] argv) throws UIMAException {
         TypeSystemDescription typeSystemDescription = TypeSystemDescriptionFactory
                 .createTypeSystemDescription("TypeSystem");

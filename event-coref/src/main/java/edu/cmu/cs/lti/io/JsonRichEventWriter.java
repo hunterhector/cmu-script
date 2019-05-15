@@ -1,12 +1,10 @@
 package edu.cmu.cs.lti.io;
 
-import com.google.common.collect.ArrayListMultimap;
 import com.google.gson.Gson;
 import edu.cmu.cs.lti.emd.annotators.CrfMentionTypeAnnotator;
 import edu.cmu.cs.lti.model.Span;
 import edu.cmu.cs.lti.model.UimaConst;
 import edu.cmu.cs.lti.script.annotators.FrameBasedEventDetector;
-import edu.cmu.cs.lti.script.annotators.SemaforAnnotator;
 import edu.cmu.cs.lti.script.annotators.VerbBasedEventDetector;
 import edu.cmu.cs.lti.script.type.*;
 import edu.cmu.cs.lti.uima.annotator.AbstractLoggingAnnotator;
@@ -205,14 +203,14 @@ public class JsonRichEventWriter extends AbstractLoggingAnnotator {
             jsonEvm.component = mention.getComponentId();
 
 
-            double confidence =mention.getEventTypeConfidence();
-            if (confidence == 0){
+            double confidence = mention.getEventTypeConfidence();
+            if (confidence == 0) {
                 confidence = 1;
             }
 
             if (confidenceScale.containsKey(mention.getComponentId())) {
                 confidence *= confidenceScale.get(mention.getComponentId());
-            }else{
+            } else {
                 confidence *= defaultScale;
             }
 
@@ -248,34 +246,49 @@ public class JsonRichEventWriter extends AbstractLoggingAnnotator {
                 }
             }
 
-            for (Map.Entry<SemanticArgument, Collection<String>> argument : getArguments(headword).asMap()
-                    .entrySet()) {
-                SemanticArgument arg = argument.getKey();
+            FSList semanticRelationsFS = headword.getChildSemanticRelations();
+            if (semanticRelationsFS != null) {
+                for (SemanticRelation semanticRelation : FSCollectionFactory.create(semanticRelationsFS,
+                        SemanticRelation.class)) {
 
-                if (arg.getHead() == null) {
-                    logger.warn(String.format("Cannot find head word for argument mention [%s][%d:%d].", arg
-                            .getCoveredText(), arg.getBegin(), arg.getEnd()));
-                    continue;
+                    SemanticArgument arg = semanticRelation.getChild();
+
+                    if (arg.getHead() == null) {
+                        logger.warn(String.format("Cannot find head word for argument mention [%s][%d:%d].", arg
+                                .getCoveredText(), arg.getBegin(), arg.getEnd()));
+                        continue;
+                    }
+
+                    Span argHeadSpan = Span.of(arg.getHead().getBegin(), arg.getHead().getEnd());
+
+                    JsonEntityMention jsonEnt;
+                    if (jsonEntMap.containsKey(argHeadSpan)) {
+                        jsonEnt = jsonEntMap.get(argHeadSpan);
+                    } else {
+                        jsonEnt = createEntity(arg, arg.getHead(), getEntityFormFromHead(arg.getHead()));
+                        jsonEntMap.put(argHeadSpan, jsonEnt);
+                    }
+
+                    JsonArgument jsonArg = new JsonArgument();
+                    jsonArg.roles = new ArrayList<>();
+                    jsonArg.entityId = jsonEnt.id;
+                    jsonArg.eventId = jsonEvm.id;
+
+                    String pbName = semanticRelation.getPropbankRoleName();
+                    String fnName = semanticRelation.getFrameElementName();
+
+                    if (pbName != null) {
+                        jsonArg.roles.add("pb:" + pbName);
+                    }
+
+                    if (fnName != null) {
+                        jsonArg.roles.add("fn:" + fnName);
+                    }
+                    jsonArg.component = arg.getComponentId();
+                    jsonArg.score = semanticRelation.getConfidence();
+
+                    jsonEvm.arguments.add(jsonArg);
                 }
-
-                Span argHeadSpan = Span.of(arg.getHead().getBegin(), arg.getHead().getEnd());
-
-                JsonEntityMention jsonEnt;
-                if (jsonEntMap.containsKey(argHeadSpan)) {
-                    jsonEnt = jsonEntMap.get(argHeadSpan);
-                } else {
-                    jsonEnt = createEntity(arg, arg.getHead(), getEntityFormFromHead(arg.getHead()));
-                    jsonEntMap.put(argHeadSpan, jsonEnt);
-                }
-
-                JsonArgument jsonArg = new JsonArgument();
-                jsonArg.roles = new ArrayList<>();
-                jsonArg.entityId = jsonEnt.id;
-                jsonArg.eventId = jsonEvm.id;
-                jsonArg.roles.addAll(argument.getValue());
-                jsonArg.component = arg.getComponentId();
-
-                jsonEvm.arguments.add(jsonArg);
             }
 
 
@@ -324,31 +337,6 @@ public class JsonRichEventWriter extends AbstractLoggingAnnotator {
         doc.entityMentions.addAll(jsonEntMap.values());
 
         return doc;
-    }
-
-
-    private ArrayListMultimap<SemanticArgument, String> getArguments(Word headWord) {
-        FSList semanticRelationsFS = headWord.getChildSemanticRelations();
-        ArrayListMultimap<SemanticArgument, String> args = ArrayListMultimap.create();
-
-        if (semanticRelationsFS != null) {
-            for (SemanticRelation semanticRelation : FSCollectionFactory.create(semanticRelationsFS, SemanticRelation
-                    .class)) {
-                SemanticArgument argument = semanticRelation.getChild();
-
-                String pbName = semanticRelation.getPropbankRoleName();
-                String fnName = semanticRelation.getFrameElementName();
-
-                if (pbName != null) {
-                    args.put(argument, "pb:" + pbName);
-                }
-
-                if (fnName != null) {
-                    args.put(argument, "fn:" + fnName);
-                }
-            }
-        }
-        return args;
     }
 
 
@@ -447,6 +435,7 @@ public class JsonRichEventWriter extends AbstractLoggingAnnotator {
         int entityId;
         List<String> roles;
         String component;
+        double score;
     }
 
 
