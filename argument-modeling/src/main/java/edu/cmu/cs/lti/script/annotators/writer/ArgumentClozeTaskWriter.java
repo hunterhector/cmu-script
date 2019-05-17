@@ -287,7 +287,6 @@ public class ArgumentClozeTaskWriter extends AbstractLoggingAnnotator {
 
                     String dep = argLink.getDependency();
                     ca.dep = dep == null ? "NA" : dep;
-//                    }
 
                     ca.entityId = ent.getReferingEntity().getIndex();
                     ca.text = onlySpace(argText);
@@ -302,12 +301,13 @@ public class ArgumentClozeTaskWriter extends AbstractLoggingAnnotator {
                     ca.isIncorporated = Boolean.valueOf(argMeta.get("incorporated"));
                     ca.isSucceeding = Boolean.valueOf(argMeta.get("succeeding"));
 
-                    if (argLink.getComponentId().equals(JsonEventDataReader.propbank)) {
-                        ca.source = "propbank";
-                        counters.adjustOrPutValue("Arguments from Propbank", 1, 1);
-                    } else if (argLink.getComponentId().equals(JsonEventDataReader.nombank)) {
-                        ca.source = "nombank";
-                        counters.adjustOrPutValue("Arguments from Nombank", 1, 1);
+                    if (argLink.getComponentId().equals(JsonEventDataReader.class.getSimpleName())) {
+                        ca.source = "gold";
+                        if (eventMention.getEventType().equals("NOMBANK")) {
+                            counters.adjustOrPutValue("Arguments from NomBank", 1, 1);
+                        } else if (eventMention.getEventType().equals("PROPBANK")) {
+                            counters.adjustOrPutValue("Arguments from PropBank", 1, 1);
+                        }
                     } else {
                         ca.source = "automatic";
                         counters.adjustOrPutValue("Arguments from parsers", 1, 1);
