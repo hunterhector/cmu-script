@@ -34,6 +34,7 @@ public class Cloze {
         public String predicate;
         public String predicatePhrase;
         public String verbForm;
+        public String node;
         public String context;
         public int sentenceId;
         public int predicateStart;
@@ -53,6 +54,7 @@ public class Cloze {
             public String argumentPhrase;
             public String ner;
             public int entityId;
+            public String node;
 
             public int argStart;
             public int argEnd;

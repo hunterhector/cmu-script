@@ -238,6 +238,7 @@ public class ArgumentClozeTaskWriter extends AbstractLoggingAnnotator {
                 ce.frame = frame;
                 ce.eventType = eventMention.getEventType();
                 ce.eventId = eventId++;
+                ce.node = UimaAnnotationUtils.readMeta(eventMention).get("node");
 
                 String predicateBase = eventMention.getHeadWord().getLemma().toLowerCase();
                 if (nombankBaseFormMap.containsKey(predicateBase)) {
@@ -279,6 +280,7 @@ public class ArgumentClozeTaskWriter extends AbstractLoggingAnnotator {
                     ca.feName = fe == null ? "NA" : fe;
                     ca.propbank_role = role == null ? "NA" : role;
                     ca.context = argumentContext;
+                    ca.node = UimaAnnotationUtils.readMeta(argLink).get("node");
 
                     String entType = ent.getEntityType();
                     if (entType != null && !entType.equals("ARG_ENT") && !entType.equals("Entity")) {
