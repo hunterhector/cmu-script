@@ -40,6 +40,7 @@ public class ImplicitFeatureExtractionPipeline {
         String sourceTextDir = args[1];
         String annotateDir = args[2];
         String workingDir = args[3];
+        String corpusName = args[4];
 
         TypeSystemDescription des = TypeSystemDescriptionFactory.createTypeSystemDescription("TypeSystem");
 
@@ -49,6 +50,11 @@ public class ImplicitFeatureExtractionPipeline {
             String semaforModelDirectory = "../models/semafor_malt_model_20121129";
             String fanseModelDirectory = "../models/fanse_models";
 
+            boolean useWhiteSpaceTokenization = false;
+            if (corpusName.equals("nombank")) {
+                useWhiteSpaceTokenization = true;
+            }
+
             CollectionReaderDescription reader = CollectionReaderFactory.createReaderDescription(
                     PlainTextCollectionReader.class,
                     PlainTextCollectionReader.PARAM_INPUTDIR, sourceTextDir,
@@ -56,7 +62,9 @@ public class ImplicitFeatureExtractionPipeline {
 
             AnalysisEngineDescription parser = AnalysisEngineFactory.createEngineDescription(
                     StanfordCoreNlpAnnotator.class, des,
-                    StanfordCoreNlpAnnotator.PARAM_LANGUAGE, "en"
+                    StanfordCoreNlpAnnotator.PARAM_LANGUAGE, "en",
+                    StanfordCoreNlpAnnotator.PARAM_WHITESPACE_TOKENIZE, useWhiteSpaceTokenization,
+                    StanfordCoreNlpAnnotator.PARAM_STANFORD_DEP, true
             );
 
             AnalysisEngineDescription semafor = AnalysisEngineFactory.createEngineDescription(
@@ -126,7 +134,7 @@ public class ImplicitFeatureExtractionPipeline {
 
 
     public static void main(String[] args) throws UIMAException {
-        if (args.length == 4) {
+        if (args.length == 5) {
             full_run(args);
         } else if (args.length == 1) {
             cloze_only(args);

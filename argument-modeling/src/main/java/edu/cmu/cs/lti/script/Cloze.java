@@ -48,16 +48,19 @@ public class Cloze {
         public static class ClozeArgument {
             public String feName;
             public String dep;
-            public String propbank_role;
+            public String propbankRole;
             public String context;
             public String text;
             public String argumentPhrase;
             public String ner;
             public int entityId;
+            public int sentenceId;
             public String node;
 
             public int argStart;
             public int argEnd;
+            public int absArgStart;
+            public int absArgEnd;
             public boolean isImplicit;
             public boolean isIncorporated;
             public boolean isSucceeding;

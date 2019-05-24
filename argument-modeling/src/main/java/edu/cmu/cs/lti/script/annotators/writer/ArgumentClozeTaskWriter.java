@@ -16,7 +16,6 @@ import edu.cmu.cs.lti.uima.util.UimaNlpUtils;
 import gnu.trove.map.TObjectIntMap;
 import gnu.trove.map.hash.TObjectIntHashMap;
 import org.apache.commons.io.FileUtils;
-import org.apache.commons.lang3.tuple.Pair;
 import org.apache.uima.UimaContext;
 import org.apache.uima.analysis_engine.AnalysisEngineProcessException;
 import org.apache.uima.fit.descriptor.ConfigurationParameter;
@@ -73,12 +72,9 @@ public class ArgumentClozeTaskWriter extends AbstractLoggingAnnotator {
 
     private Gson gson = new Gson();
 
-    // This mapping is adopted from the Cheng and Erk EMNLP paper.
-    private Map<Pair<String, String>, Pair<String, String>> nomArg2VerbDep;
     private Map<String, String> verbFormMap;
     private Map<String, String> nombankBaseFormMap;
 
-//    private int numImplicitSlots;
 
     private TObjectIntMap<String> counters;
 
@@ -91,7 +87,6 @@ public class ArgumentClozeTaskWriter extends AbstractLoggingAnnotator {
             throw new ResourceInitializationException(e);
         }
 
-        nomArg2VerbDep = new HashMap<>();
         verbFormMap = new HashMap<>();
 
         counters = new TObjectIntHashMap<>();
@@ -117,7 +112,6 @@ public class ArgumentClozeTaskWriter extends AbstractLoggingAnnotator {
                                 for (int i = 2; i < parts.length; i++) {
                                     String depName = parts[i];
                                     String argName = headers.get(i - 2);
-                                    nomArg2VerbDep.put(Pair.of(nomForm, argName), Pair.of(verbalForm, depName));
                                 }
 
                                 verbFormMap.put(nomForm, verbalForm);
@@ -144,8 +138,6 @@ public class ArgumentClozeTaskWriter extends AbstractLoggingAnnotator {
         } catch (IOException | URISyntaxException e) {
             e.printStackTrace();
         }
-
-//        numImplicitSlots = 0;
     }
 
 
@@ -200,23 +192,35 @@ public class ArgumentClozeTaskWriter extends AbstractLoggingAnnotator {
             tIndex++;
         }
 
-        List<StanfordCorenlpSentence> sentences = new ArrayList<>(
-                JCasUtil.select(aJCas, StanfordCorenlpSentence.class));
+        List<StanfordCorenlpSentence> sentences = new ArrayList<>(JCasUtil.select(aJCas,
+                StanfordCorenlpSentence.class));
+
+        logger.info("============= Doc " + doc.docid + " ======================");
+
+        Map<EntityMention, StanfordCorenlpSentence> entitySentences = new HashMap<>();
+        for (int i = 0; i < sentences.size(); i++) {
+            StanfordCorenlpSentence sentence = sentences.get(i);
+            sentence.setIndex(i);
+            logger.info("Adding entities from sentence " + sentence.getCoveredText());
+            for (EntityMention entityMention : JCasUtil.selectCovered(EntityMention.class, sentence)) {
+                entitySentences.put(entityMention, sentence);
+                logger.info("  --- Entity: " + entityMention.getCoveredText());
+            }
+        }
 
         ArrayListMultimap<EntityMention, ClozeEventMention.ClozeArgument> argumentMap = ArrayListMultimap.create();
-
         TObjectIntMap<EventMention> eid2Event = new TObjectIntHashMap<>();
 
         int eventId = 0;
-        for (int sentId = 0; sentId < sentences.size(); sentId++) {
-            StanfordCorenlpSentence sentence = sentences.get(sentId);
-
+        for (StanfordCorenlpSentence sentence : sentences) {
+            int sentId = sentence.getIndex();
             doc.sentences.add(sentence.getCoveredText());
 
             for (EventMention eventMention : JCasUtil.selectCovered(EventMention.class, sentence)) {
                 if (eventMention.getHeadWord() == null) {
                     eventMention.setHeadWord(UimaNlpUtils.findHeadFromStanfordAnnotation(eventMention));
                 }
+
 
                 ClozeEventMention ce = new ClozeEventMention();
                 ce.sentenceId = sentId;
@@ -242,10 +246,12 @@ public class ArgumentClozeTaskWriter extends AbstractLoggingAnnotator {
 
                 String predicateBase = eventMention.getHeadWord().getLemma().toLowerCase();
                 if (nombankBaseFormMap.containsKey(predicateBase)) {
+                    // Convert variants to the base form, e.g. small-investor -> investor
                     predicateBase = nombankBaseFormMap.get(predicateBase);
                 }
 
                 if (verbFormMap.containsKey(predicateBase)) {
+                    // Nom form to vorb form, e.g. investor -> invest
                     ce.verbForm = verbFormMap.get(predicateBase);
                 }
 
@@ -278,9 +284,16 @@ public class ArgumentClozeTaskWriter extends AbstractLoggingAnnotator {
                     String argumentContext = getContext(lemmas, (StanfordCorenlpToken) argHead);
 
                     ca.feName = fe == null ? "NA" : fe;
-                    ca.propbank_role = role == null ? "NA" : role;
+                    ca.propbankRole = role == null ? "NA" : role;
                     ca.context = argumentContext;
                     ca.node = UimaAnnotationUtils.readMeta(argLink).get("node");
+
+                    if (!entitySentences.containsKey(ent)) {
+                        logger.info(String.format("No sentence found for in %s in doc %s", ent.getCoveredText(),
+                                UimaConvenience.getDocId(aJCas)));
+                    }
+
+                    ca.sentenceId = entitySentences.get(ent).getIndex();
 
                     String entType = ent.getEntityType();
                     if (entType != null && !entType.equals("ARG_ENT") && !entType.equals("Entity")) {
@@ -294,9 +307,11 @@ public class ArgumentClozeTaskWriter extends AbstractLoggingAnnotator {
                     ca.text = onlySpace(argText);
                     ca.argumentPhrase = onlySpace(ent.getCoveredText());
 
-                    // TODO: This will create negative start and end for implicit arguments?
                     ca.argStart = ent.getBegin() - sentence.getBegin();
                     ca.argEnd = ent.getEnd() - sentence.getBegin();
+
+                    ca.absArgStart = ent.getBegin();
+                    ca.absArgEnd = ent.getEnd();
 
                     Map<String, String> argMeta = UimaAnnotationUtils.readMeta(argLink);
                     ca.isImplicit = Boolean.valueOf(argMeta.get("implicit"));
@@ -328,6 +343,8 @@ public class ArgumentClozeTaskWriter extends AbstractLoggingAnnotator {
                 doc.events.add(ce);
             }
         }
+
+        logger.info(String.format("Added %d events", eventId));
 
         if (addEventCoref) {
             addCoref(aJCas, doc, eid2Event);
