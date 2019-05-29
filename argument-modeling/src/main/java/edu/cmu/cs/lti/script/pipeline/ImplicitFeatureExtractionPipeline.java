@@ -51,8 +51,10 @@ public class ImplicitFeatureExtractionPipeline {
             String fanseModelDirectory = "../models/fanse_models";
 
             boolean useWhiteSpaceTokenization = false;
+            boolean eolSentenceSplit = false;
             if (corpusName.equals("nombank")) {
                 useWhiteSpaceTokenization = true;
+                eolSentenceSplit = true;
             }
 
             CollectionReaderDescription reader = CollectionReaderFactory.createReaderDescription(
@@ -64,6 +66,7 @@ public class ImplicitFeatureExtractionPipeline {
                     StanfordCoreNlpAnnotator.class, des,
                     StanfordCoreNlpAnnotator.PARAM_LANGUAGE, "en",
                     StanfordCoreNlpAnnotator.PARAM_WHITESPACE_TOKENIZE, useWhiteSpaceTokenization,
+                    StanfordCoreNlpAnnotator.PARAM_EOL_SENTENCE_ONLY, eolSentenceSplit,
                     StanfordCoreNlpAnnotator.PARAM_STANFORD_DEP, true
             );
 
@@ -78,6 +81,7 @@ public class ImplicitFeatureExtractionPipeline {
             );
 
             AnalysisEngineDescription merger = AnalysisEngineFactory.createEngineDescription(ArgumentMerger.class, des);
+
             BasicPipeline pipeline = new BasicPipeline(reader, workingDir, "parsed", 16, parser, fanse, semafor,
                     merger);
             pipeline.run();
