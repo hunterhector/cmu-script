@@ -4,6 +4,7 @@ import com.google.common.collect.Table;
 import edu.cmu.cs.lti.script.type.*;
 import edu.cmu.cs.lti.uima.annotator.AbstractLoggingAnnotator;
 import edu.cmu.cs.lti.uima.util.UimaAnnotationUtils;
+import edu.cmu.cs.lti.uima.util.UimaConvenience;
 import edu.cmu.cs.lti.uima.util.UimaNlpUtils;
 import org.apache.uima.UimaContext;
 import org.apache.uima.analysis_engine.AnalysisEngineProcessException;
@@ -49,6 +50,10 @@ public class VerbBasedEventDetector extends AbstractLoggingAnnotator {
 
         int eventId = span2Events.size();
         for (StanfordCorenlpToken token : JCasUtil.select(aJCas, StanfordCorenlpToken.class)) {
+            if (token.getPos() == null)
+                logger.info(String.format("Cannot find pos for token %s [%d:%d] in %s", token.getCoveredText(),
+                        token.getBegin(), token.getEnd(), UimaConvenience.getArticleName(aJCas)));
+
             if (!token.getPos().startsWith("V")) {
                 continue;
             } else if (ignoredHeadWords.contains(token.getLemma().toLowerCase())) {

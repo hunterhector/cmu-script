@@ -195,16 +195,16 @@ public class ArgumentClozeTaskWriter extends AbstractLoggingAnnotator {
         List<StanfordCorenlpSentence> sentences = new ArrayList<>(JCasUtil.select(aJCas,
                 StanfordCorenlpSentence.class));
 
-        logger.info("============= Doc " + doc.docid + " ======================");
+//        logger.info("============= Doc " + doc.docid + " ======================");
 
         Map<EntityMention, StanfordCorenlpSentence> entitySentences = new HashMap<>();
         for (int i = 0; i < sentences.size(); i++) {
             StanfordCorenlpSentence sentence = sentences.get(i);
             sentence.setIndex(i);
-            logger.info("Adding entities from sentence " + sentence.getCoveredText());
+//            logger.info("Adding entities from sentence " + sentence.getCoveredText());
             for (EntityMention entityMention : JCasUtil.selectCovered(EntityMention.class, sentence)) {
                 entitySentences.put(entityMention, sentence);
-                logger.info("  --- Entity: " + entityMention.getCoveredText());
+//                logger.info("  --- Entity: " + entityMention.getCoveredText());
             }
         }
 

@@ -66,6 +66,7 @@ public class ImplicitFeatureExtractionPipeline {
                     StanfordCoreNlpAnnotator.class, des,
                     StanfordCoreNlpAnnotator.PARAM_LANGUAGE, "en",
                     StanfordCoreNlpAnnotator.PARAM_WHITESPACE_TOKENIZE, useWhiteSpaceTokenization,
+//                    StanfordCoreNlpAnnotator.PARAM_SPLIT_ONLY, true,
                     StanfordCoreNlpAnnotator.PARAM_EOL_SENTENCE_ONLY, eolSentenceSplit,
                     StanfordCoreNlpAnnotator.PARAM_STANFORD_DEP, true
             );
@@ -82,8 +83,10 @@ public class ImplicitFeatureExtractionPipeline {
 
             AnalysisEngineDescription merger = AnalysisEngineFactory.createEngineDescription(ArgumentMerger.class, des);
 
-            BasicPipeline pipeline = new BasicPipeline(reader, workingDir, "parsed", 16, parser, fanse, semafor,
-                    merger);
+            BasicPipeline pipeline = new BasicPipeline(reader, workingDir, "parsed", 16, parser);
+
+//            BasicPipeline pipeline = new BasicPipeline(reader, workingDir, "parsed", 16, parser, fanse, semafor,
+//                    merger);
             pipeline.run();
         } else {
             logger.info("Do not re-parse documents.");
