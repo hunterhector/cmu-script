@@ -344,8 +344,6 @@ public class ArgumentClozeTaskWriter extends AbstractLoggingAnnotator {
             }
         }
 
-        logger.info(String.format("Added %d events", eventId));
-
         if (addEventCoref) {
             addCoref(aJCas, doc, eid2Event);
         }
