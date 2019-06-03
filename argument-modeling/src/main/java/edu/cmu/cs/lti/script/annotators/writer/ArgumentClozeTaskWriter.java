@@ -237,8 +237,8 @@ public class ArgumentClozeTaskWriter extends AbstractLoggingAnnotator {
                 ce.predicate = UimaNlpUtils.getPredicate(eventMention.getHeadWord(), complements, false);
                 ce.predicatePhrase = onlySpace(eventMention.getCoveredText());
                 ce.context = predicate_context;
-                ce.predicateStart = eventMention.getBegin() - sentence.getBegin();
-                ce.predicateEnd = eventMention.getEnd() - sentence.getBegin();
+                ce.predicateStart = eventMention.getBegin();
+                ce.predicateEnd = eventMention.getEnd();
                 ce.frame = frame;
                 ce.eventType = eventMention.getEventType();
                 ce.eventId = eventId++;
@@ -307,11 +307,8 @@ public class ArgumentClozeTaskWriter extends AbstractLoggingAnnotator {
                     ca.text = onlySpace(argText);
                     ca.argumentPhrase = onlySpace(ent.getCoveredText());
 
-                    ca.argStart = ent.getBegin() - sentence.getBegin();
-                    ca.argEnd = ent.getEnd() - sentence.getBegin();
-
-                    ca.absArgStart = ent.getBegin();
-                    ca.absArgEnd = ent.getEnd();
+                    ca.argStart = ent.getBegin();
+                    ca.argEnd = ent.getEnd();
 
                     Map<String, String> argMeta = UimaAnnotationUtils.readMeta(argLink);
                     ca.isImplicit = Boolean.valueOf(argMeta.get("implicit"));

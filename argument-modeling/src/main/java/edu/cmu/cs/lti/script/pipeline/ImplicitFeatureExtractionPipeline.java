@@ -83,10 +83,10 @@ public class ImplicitFeatureExtractionPipeline {
 
             AnalysisEngineDescription merger = AnalysisEngineFactory.createEngineDescription(ArgumentMerger.class, des);
 
-            BasicPipeline pipeline = new BasicPipeline(reader, workingDir, "parsed", 16, parser);
+//            BasicPipeline pipeline = new BasicPipeline(reader, workingDir, "parsed", 16, parser);
 
-//            BasicPipeline pipeline = new BasicPipeline(reader, workingDir, "parsed", 16, parser, fanse, semafor,
-//                    merger);
+            BasicPipeline pipeline = new BasicPipeline(reader, workingDir, "parsed", 16, parser, fanse, semafor,
+                    merger);
             pipeline.run();
         } else {
             logger.info("Do not re-parse documents.");
