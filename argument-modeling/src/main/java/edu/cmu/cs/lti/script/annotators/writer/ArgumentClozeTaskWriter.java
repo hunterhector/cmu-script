@@ -3,6 +3,7 @@ package edu.cmu.cs.lti.script.annotators.writer;
 import com.google.common.collect.ArrayListMultimap;
 import com.google.gson.Gson;
 import edu.cmu.cs.lti.collection_reader.JsonEventDataReader;
+import edu.cmu.cs.lti.script.Cloze;
 import edu.cmu.cs.lti.script.Cloze.ClozeDoc;
 import edu.cmu.cs.lti.script.Cloze.ClozeEntity;
 import edu.cmu.cs.lti.script.Cloze.ClozeEventMention;
@@ -182,6 +183,7 @@ public class ArgumentClozeTaskWriter extends AbstractLoggingAnnotator {
         doc.events = new ArrayList<>();
         doc.docid = UimaConvenience.getArticleName(aJCas);
         doc.sentences = new ArrayList<>();
+        doc.text = aJCas.getDocumentText();
 
         Collection<StanfordCorenlpToken> allTokens = JCasUtil.select(aJCas, StanfordCorenlpToken.class);
         String[] lemmas = new String[allTokens.size()];
@@ -195,151 +197,169 @@ public class ArgumentClozeTaskWriter extends AbstractLoggingAnnotator {
         List<StanfordCorenlpSentence> sentences = new ArrayList<>(JCasUtil.select(aJCas,
                 StanfordCorenlpSentence.class));
 
-//        logger.info("============= Doc " + doc.docid + " ======================");
 
         Map<EntityMention, StanfordCorenlpSentence> entitySentences = new HashMap<>();
+        Map<EventMention, StanfordCorenlpSentence> eventSentences = new HashMap<>();
+
         for (int i = 0; i < sentences.size(); i++) {
             StanfordCorenlpSentence sentence = sentences.get(i);
             sentence.setIndex(i);
-//            logger.info("Adding entities from sentence " + sentence.getCoveredText());
             for (EntityMention entityMention : JCasUtil.selectCovered(EntityMention.class, sentence)) {
                 entitySentences.put(entityMention, sentence);
-//                logger.info("  --- Entity: " + entityMention.getCoveredText());
             }
+
+            for (EventMention eventMention : JCasUtil.selectCovered(EventMention.class, sentence)) {
+                eventSentences.put(eventMention, sentence);
+            }
+
+            Cloze.Span sentSpan = new Cloze.Span();
+            sentSpan.begin = sentence.getBegin();
+            sentSpan.end = sentence.getEnd();
+            doc.sentences.add(sentSpan);
         }
 
         ArrayListMultimap<EntityMention, ClozeEventMention.ClozeArgument> argumentMap = ArrayListMultimap.create();
         TObjectIntMap<EventMention> eid2Event = new TObjectIntHashMap<>();
 
         int eventId = 0;
-        for (StanfordCorenlpSentence sentence : sentences) {
-            int sentId = sentence.getIndex();
-            doc.sentences.add(sentence.getCoveredText());
-
-            for (EventMention eventMention : JCasUtil.selectCovered(EventMention.class, sentence)) {
-                if (eventMention.getHeadWord() == null) {
-                    eventMention.setHeadWord(UimaNlpUtils.findHeadFromStanfordAnnotation(eventMention));
-                }
-
-
-                ClozeEventMention ce = new ClozeEventMention();
-                ce.sentenceId = sentId;
-
-                List<Word> complements = new ArrayList<>();
-
-                String frame = eventMention.getFrameName();
-                if (frame == null) {
-                    frame = "NA";
-                }
-
-                String predicate_context = getContext(lemmas, (StanfordCorenlpToken) eventMention.getHeadWord());
-
-                ce.predicate = UimaNlpUtils.getPredicate(eventMention.getHeadWord(), complements, false);
-                ce.predicatePhrase = onlySpace(eventMention.getCoveredText());
-                ce.context = predicate_context;
-                ce.predicateStart = eventMention.getBegin();
-                ce.predicateEnd = eventMention.getEnd();
-                ce.frame = frame;
-                ce.eventType = eventMention.getEventType();
-                ce.eventId = eventId++;
-                ce.node = UimaAnnotationUtils.readMeta(eventMention).get("node");
-
-                String predicateBase = eventMention.getHeadWord().getLemma().toLowerCase();
-                if (nombankBaseFormMap.containsKey(predicateBase)) {
-                    // Convert variants to the base form, e.g. small-investor -> investor
-                    predicateBase = nombankBaseFormMap.get(predicateBase);
-                }
-
-                if (verbFormMap.containsKey(predicateBase)) {
-                    // Nom form to vorb form, e.g. investor -> invest
-                    ce.verbForm = verbFormMap.get(predicateBase);
-                }
-
-                eid2Event.put(eventMention, ce.eventId);
-
-                FSList argsFS = eventMention.getArguments();
-                Collection<EventMentionArgumentLink> argLinks;
-                if (argsFS != null) {
-                    argLinks = FSCollectionFactory.create(argsFS, EventMentionArgumentLink.class);
-                } else {
-                    argLinks = new ArrayList<>();
-                }
-
-                // Make sure we know the dependency types of the arguments.
-                setArgumentDepType(eventMention, argLinks);
-
-                List<ClozeEventMention.ClozeArgument> clozeArguments = new ArrayList<>();
-                for (EventMentionArgumentLink argLink : argLinks) {
-                    ClozeEventMention.ClozeArgument ca = new ClozeEventMention.ClozeArgument();
-
-                    String role = argLink.getPropbankRoleName();
-                    String fe = argLink.getFrameElementName();
-
-                    EntityMention ent = argLink.getArgument();
-                    Word argHead = ent.getHead();
-
-                    String argText = ent.getHead().getLemma();
-                    argText = onlySpace(argText);
-
-                    String argumentContext = getContext(lemmas, (StanfordCorenlpToken) argHead);
-
-                    ca.feName = fe == null ? "NA" : fe;
-                    ca.propbankRole = role == null ? "NA" : role;
-                    ca.context = argumentContext;
-                    ca.node = UimaAnnotationUtils.readMeta(argLink).get("node");
-
-                    if (!entitySentences.containsKey(ent)) {
-                        logger.info(String.format("No sentence found for in %s in doc %s", ent.getCoveredText(),
-                                UimaConvenience.getDocId(aJCas)));
-                    }
-
-                    ca.sentenceId = entitySentences.get(ent).getIndex();
-
-                    String entType = ent.getEntityType();
-                    if (entType != null && !entType.equals("ARG_ENT") && !entType.equals("Entity")) {
-                        ca.ner = entType;
-                    }
-
-                    String dep = argLink.getDependency();
-                    ca.dep = dep == null ? "NA" : dep;
-
-                    ca.entityId = ent.getReferingEntity().getIndex();
-                    ca.text = onlySpace(argText);
-                    ca.argumentPhrase = onlySpace(ent.getCoveredText());
-
-                    ca.argStart = ent.getBegin();
-                    ca.argEnd = ent.getEnd();
-
-                    Map<String, String> argMeta = UimaAnnotationUtils.readMeta(argLink);
-                    ca.isImplicit = Boolean.valueOf(argMeta.get("implicit"));
-                    ca.isIncorporated = Boolean.valueOf(argMeta.get("incorporated"));
-                    ca.isSucceeding = Boolean.valueOf(argMeta.get("succeeding"));
-
-                    if (argLink.getComponentId().equals(JsonEventDataReader.class.getSimpleName())) {
-                        ca.source = "gold";
-                        if (eventMention.getEventType().equals("NOMBANK")) {
-                            counters.adjustOrPutValue("Arguments from NomBank", 1, 1);
-                        } else if (eventMention.getEventType().equals("PROPBANK")) {
-                            counters.adjustOrPutValue("Arguments from PropBank", 1, 1);
-                        }
-                    } else {
-                        ca.source = "automatic";
-                        counters.adjustOrPutValue("Arguments from parsers", 1, 1);
-                    }
-
-                    if (ca.isImplicit) {
-                        counters.adjustOrPutValue("Implicit Arguments", 1, 1);
-                    }
-
-                    clozeArguments.add(ca);
-                    argumentMap.put(ent, ca);
-                }
-
-                ce.arguments = clozeArguments;
-
-                doc.events.add(ce);
+        for (EventMention eventMention : JCasUtil.select(aJCas, EventMention.class)) {
+            if (eventMention.getHeadWord() == null) {
+                eventMention.setHeadWord(UimaNlpUtils.findHeadFromStanfordAnnotation(eventMention));
             }
+
+            if (!eventSentences.containsKey(eventMention)) {
+                logger.info(String.format("No sentence found for in event %s in doc %s", eventMention.getCoveredText(),
+                        UimaConvenience.getDocId(aJCas)));
+            }
+
+            ClozeEventMention ce = new ClozeEventMention();
+            ce.sentenceId = eventSentences.get(eventMention).getIndex();
+
+            List<Word> complements = new ArrayList<>();
+            String frame = eventMention.getFrameName();
+            if (frame == null) {
+                frame = "NA";
+            }
+
+            String predicate_context = getContext(lemmas, (StanfordCorenlpToken) eventMention.getHeadWord());
+
+            ce.predicate = UimaNlpUtils.getPredicate(eventMention.getHeadWord(), complements, false);
+            ce.predicatePhrase = onlySpace(eventMention.getCoveredText());
+            ce.context = predicate_context;
+            ce.predicateStart = eventMention.getBegin();
+            ce.predicateEnd = eventMention.getEnd();
+            ce.frame = frame;
+            ce.eventType = eventMention.getEventType();
+            ce.eventId = eventId++;
+            ce.node = UimaAnnotationUtils.readMeta(eventMention).get("node");
+            ce.fromGC = Boolean.valueOf(UimaAnnotationUtils.readMeta(eventMention).get("from_gc"));
+
+            if (ce.fromGC) {
+                counters.adjustOrPutValue("GC predicates", 1, 1);
+            }
+
+            String predicateBase = eventMention.getHeadWord().getLemma().toLowerCase();
+            if (nombankBaseFormMap.containsKey(predicateBase)) {
+                // Convert variants to the base form, e.g. small-investor -> investor
+                predicateBase = nombankBaseFormMap.get(predicateBase);
+            }
+
+            if (verbFormMap.containsKey(predicateBase)) {
+                // Nom form to vorb form, e.g. investor -> invest
+                ce.verbForm = verbFormMap.get(predicateBase);
+            }
+
+            eid2Event.put(eventMention, ce.eventId);
+
+            FSList argsFS = eventMention.getArguments();
+            Collection<EventMentionArgumentLink> argLinks = argsFS == null ? new ArrayList<>() :
+                    FSCollectionFactory.create(argsFS, EventMentionArgumentLink.class);
+
+            // Make sure we know the dependency types of the arguments.
+            setArgumentDepType(eventMention, argLinks);
+
+            List<ClozeEventMention.ClozeArgument> clozeArguments = new ArrayList<>();
+
+            boolean hasImplicit = false;
+            for (EventMentionArgumentLink argLink : argLinks) {
+                ClozeEventMention.ClozeArgument ca = new ClozeEventMention.ClozeArgument();
+
+                String role = argLink.getPropbankRoleName();
+                String fe = argLink.getFrameElementName();
+
+                EntityMention ent = argLink.getArgument();
+                Word argHead = ent.getHead();
+
+                String argText = ent.getHead().getLemma();
+                argText = onlySpace(argText);
+
+                String argumentContext = getContext(lemmas, (StanfordCorenlpToken) argHead);
+
+                ca.feName = fe == null ? "NA" : fe;
+                ca.propbankRole = role == null ? "NA" : role;
+                ca.context = argumentContext;
+                ca.node = UimaAnnotationUtils.readMeta(argLink).get("node");
+
+                if (!entitySentences.containsKey(ent)) {
+                    logger.info(String.format("No sentence found for in entity %s in doc %s", ent.getCoveredText(),
+                            UimaConvenience.getDocId(aJCas)));
+                }
+
+                ca.sentenceId = entitySentences.get(ent).getIndex();
+
+                String entType = ent.getEntityType();
+                if (entType != null && !entType.equals("ARG_ENT") && !entType.equals("Entity")) {
+                    ca.ner = entType;
+                }
+
+                String dep = argLink.getDependency();
+                ca.dep = dep == null ? "NA" : dep;
+
+                ca.entityId = ent.getReferingEntity().getIndex();
+                ca.text = onlySpace(argText);
+                ca.argumentPhrase = onlySpace(ent.getCoveredText());
+
+                ca.argStart = ent.getBegin();
+                ca.argEnd = ent.getEnd();
+
+                Map<String, String> argMeta = UimaAnnotationUtils.readMeta(argLink);
+                ca.isImplicit = Boolean.valueOf(argMeta.get("implicit"));
+                ca.isIncorporated = Boolean.valueOf(argMeta.get("incorporated"));
+                ca.isSucceeding = Boolean.valueOf(argMeta.get("succeeding"));
+
+                if (argLink.getComponentId().equals(JsonEventDataReader.class.getSimpleName())) {
+                    ca.source = "gold";
+                    if (eventMention.getEventType().equals("NOMBANK")) {
+                        counters.adjustOrPutValue("Arguments from NomBank", 1, 1);
+                    } else if (eventMention.getEventType().equals("PROPBANK")) {
+                        counters.adjustOrPutValue("Arguments from PropBank", 1, 1);
+                    }
+                } else {
+                    ca.source = "automatic";
+                    counters.adjustOrPutValue("Arguments from parsers", 1, 1);
+                }
+
+                if (ca.isImplicit) {
+                    counters.adjustOrPutValue("Implicit Arguments", 1, 1);
+                    hasImplicit = true;
+                }
+
+                clozeArguments.add(ca);
+                argumentMap.put(ent, ca);
+            }
+
+            if (hasImplicit) {
+                String predText = eventMention.getHeadWord().getLemma().toLowerCase();
+                if (predText.equals("small-investor")) {
+                    predText = "investor";
+                }
+            }
+
+            ce.arguments = clozeArguments;
+
+            doc.events.add(ce);
         }
+//        }
 
         if (addEventCoref) {
             addCoref(aJCas, doc, eid2Event);

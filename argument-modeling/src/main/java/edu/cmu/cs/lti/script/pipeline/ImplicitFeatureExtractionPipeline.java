@@ -87,6 +87,7 @@ public class ImplicitFeatureExtractionPipeline {
 
             BasicPipeline pipeline = new BasicPipeline(reader, workingDir, "parsed", 16, parser, fanse, semafor,
                     merger);
+            pipeline.setProgressFreq(1000);
             pipeline.run();
         } else {
             logger.info("Do not re-parse documents.");

@@ -25,6 +25,7 @@ import org.apache.uima.fit.factory.TypeSystemDescriptionFactory;
 import org.apache.uima.fit.util.FSCollectionFactory;
 import org.apache.uima.fit.util.JCasUtil;
 import org.apache.uima.jcas.JCas;
+import org.apache.uima.jcas.cas.FSList;
 import org.apache.uima.resource.ResourceInitializationException;
 import org.apache.uima.resource.metadata.TypeSystemDescription;
 import org.jdom2.JDOMException;
@@ -138,10 +139,14 @@ public class FrameBasedEventDetector extends AbstractLoggingAnnotator {
             eventMention.setHeadWord(predHead);
 
             List<EventMentionArgumentLink> argumentLinks = new ArrayList<>();
+            FSList existingArgsFS = eventMention.getArguments();
+            if (existingArgsFS != null) {
+                argumentLinks.addAll(FSCollectionFactory.create(existingArgsFS, EventMentionArgumentLink.class));
+            }
+
             List<String> superFeNames = frameStructure.getSuperFeNames();
 
             Map<Word, EventMentionArgumentLink> head2Args = UimaNlpUtils.indexArgs(eventMention);
-
             int i = 0;
             for (SemaforLabel frameElement : frameStructure.getFrameElements()) {
                 String feName = frameElement.getName();
@@ -157,6 +162,7 @@ public class FrameBasedEventDetector extends AbstractLoggingAnnotator {
                 } else {
                     argumentLink = UimaNlpUtils.createArg(aJCas, h2Entities, eventMention, argHead.getBegin(),
                             argHead.getEnd(), COMPONENT_ID);
+                    argumentLinks.add(argumentLink);
                 }
 
                 EntityMention argEntMention = argumentLink.getArgument();
@@ -187,7 +193,6 @@ public class FrameBasedEventDetector extends AbstractLoggingAnnotator {
                 argumentLink.setFrameElementName(feName);
                 argumentLink.setSuperFrameElementRoleName(superFeName);
 
-                argumentLinks.add(argumentLink);
                 i++;
             }
 

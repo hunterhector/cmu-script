@@ -12,10 +12,16 @@ import java.util.List;
 public class Cloze {
     public static class ClozeDoc {
         public String docid;
-        public List<String> sentences;
+        public String text;
+        public List<Span> sentences;
         public List<ClozeEventMention> events;
         public List<ClozeEntity> entities;
         public List<CorefCluster> eventCorefClusters;
+    }
+
+    public static class Span {
+        public int begin;
+        public int end;
     }
 
     public static class CorefCluster {
@@ -42,6 +48,7 @@ public class Cloze {
         public String frame;
         public List<ClozeArgument> arguments;
         public String eventType;
+        public boolean fromGC;
 
         public int eventId;
 
