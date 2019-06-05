@@ -54,6 +54,10 @@ public class FrameBasedEventDetector extends AbstractLoggingAnnotator {
     @ConfigurationParameter(name = PARAM_TAKE_ALL_FRAMES, defaultValue = "false")
     private boolean takeAllFrame;
 
+    public static final String PARAM_IGNORE_PREP_ARG = "ignorePrepArg";
+    @ConfigurationParameter(name = PARAM_IGNORE_PREP_ARG, defaultValue = "false")
+    private boolean ignorePrepArg;
+
     private Set<String> ignoredHeadWords;
     private UimaFrameExtractor extractor;
 
@@ -155,6 +159,13 @@ public class FrameBasedEventDetector extends AbstractLoggingAnnotator {
 
                 if (argHead.getPos().equals("TO") || argHead.getPos().equals("IN")) {
                     argHead = UimaNlpUtils.findNonPrepHeadInRange(aJCas, predHead, argHead, frameElement);
+                    if (ignorePrepArg) {
+                        if (argHead.getPos().equals("TO") || argHead.getPos().equals("IN")) {
+                            logger.warn("Ignored frame arguments with a prepositional " +
+                                    "head: " + frameElement.getCoveredText());
+                            continue;
+                        }
+                    }
                 }
 
                 EventMentionArgumentLink argumentLink;

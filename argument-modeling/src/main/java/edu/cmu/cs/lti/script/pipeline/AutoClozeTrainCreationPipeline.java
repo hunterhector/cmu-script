@@ -54,7 +54,8 @@ public class AutoClozeTrainCreationPipeline {
                 FrameBasedEventDetector.class, typeSystemDescription,
                 FrameBasedEventDetector.PARAM_FRAME_RELATION, new File(resourceDir, "fndata-1.7/frRelation.xml"),
                 FrameBasedEventDetector.PARAM_IGNORE_BARE_FRAME, true,
-                FrameBasedEventDetector.PARAM_TAKE_ALL_FRAMES, takeAllFrames
+                FrameBasedEventDetector.PARAM_TAKE_ALL_FRAMES, takeAllFrames,
+                FrameBasedEventDetector.PARAM_IGNORE_PREP_ARG, true
         );
 
         AnalysisEngineDescription verbEvents = AnalysisEngineFactory.createEngineDescription(
