@@ -454,12 +454,4 @@ public class ArgumentClozeTaskWriter extends AbstractLoggingAnnotator {
             throw new AnalysisEngineProcessException(e);
         }
     }
-
-    private void loadFrameMaps() throws IOException {
-        for (String line : FileUtils.readLines(frameMappingFile)) {
-            String[] parts = line.split("\t");
-            String framePart = parts[0];
-            String argPart = parts[1];
-        }
-    }
 }

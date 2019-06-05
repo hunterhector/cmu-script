@@ -66,8 +66,6 @@ public class Cloze {
 
             public int argStart;
             public int argEnd;
-            public int absArgStart;
-            public int absArgEnd;
             public boolean isImplicit;
             public boolean isIncorporated;
             public boolean isSucceeding;
