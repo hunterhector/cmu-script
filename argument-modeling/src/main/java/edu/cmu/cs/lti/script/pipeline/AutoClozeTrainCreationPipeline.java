@@ -92,7 +92,6 @@ public class AutoClozeTrainCreationPipeline {
 
 
         // Write only clozes.
-//        new BasicPipeline(reader, false, true, 7, goldAnnotator, arguments, clozeExtractor).run();
         new BasicPipeline(reader, false, true, 7, remover, frameEvents, verbEvents, clozeExtractor).run();
 
     }

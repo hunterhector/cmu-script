@@ -13,6 +13,7 @@ import edu.cmu.cs.lti.uima.io.reader.GzippedXmiCollectionReader;
 import edu.cmu.cs.lti.uima.io.writer.StepBasedDirGzippedXmiWriter;
 import edu.cmu.cs.lti.uima.util.UimaAnnotationUtils;
 import edu.cmu.cs.lti.uima.util.UimaNlpUtils;
+import edu.cmu.cs.lti.utils.DebugUtils;
 import org.apache.uima.UIMAException;
 import org.apache.uima.UimaContext;
 import org.apache.uima.analysis_engine.AnalysisEngineDescription;
@@ -153,15 +154,15 @@ public class FrameBasedEventDetector extends AbstractLoggingAnnotator {
                 StanfordCorenlpToken argHead = UimaNlpUtils.findHeadFromStanfordAnnotation(frameElement);
 
                 if (argHead.getPos().equals("TO") || argHead.getPos().equals("IN")) {
-                    argHead = UimaNlpUtils.findPrepTarget(predHead, argHead);
+                    argHead = UimaNlpUtils.findNonPrepHeadInRange(aJCas, predHead, argHead, frameElement);
                 }
 
                 EventMentionArgumentLink argumentLink;
                 if (head2Args.containsKey(argHead)) {
                     argumentLink = head2Args.get(argHead);
                 } else {
-                    argumentLink = UimaNlpUtils.createArg(aJCas, h2Entities, eventMention, argHead.getBegin(),
-                            argHead.getEnd(), COMPONENT_ID);
+                    argumentLink = UimaNlpUtils.createArg(aJCas, h2Entities, eventMention, frameElement.getBegin(),
+                            frameElement.getEnd(), COMPONENT_ID);
                     argumentLinks.add(argumentLink);
                 }
 
@@ -192,8 +193,17 @@ public class FrameBasedEventDetector extends AbstractLoggingAnnotator {
                 String superFeName = superFeNames.get(i);
                 argumentLink.setFrameElementName(feName);
                 argumentLink.setSuperFrameElementRoleName(superFeName);
-
                 i++;
+            }
+
+            for (EventMentionArgumentLink argumentLink : argumentLinks) {
+                String argText = argumentLink.getArgument().getCoveredText();
+                logger.info(argText);
+                if (argText.contains("with") || argText.contains("by")) {
+                    logger.info("Argument is " + argumentLink.getArgument().getCoveredText());
+                    logger.info("Head is " + argumentLink.getArgument().getHead().getCoveredText());
+                    DebugUtils.pause();
+                }
             }
 
             eventMention.setArguments(FSCollectionFactory.createFSList(aJCas, argumentLinks));
