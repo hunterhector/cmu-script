@@ -195,15 +195,15 @@ public class FrameBasedEventDetector extends AbstractLoggingAnnotator {
                 i++;
             }
 
-            for (EventMentionArgumentLink argumentLink : argumentLinks) {
-                String argText = argumentLink.getArgument().getCoveredText();
+//            for (EventMentionArgumentLink argumentLink : argumentLinks) {
+//                String argText = argumentLink.getArgument().getCoveredText();
 //                logger.info(argText);
 //                if (argText.contains("with") || argText.contains("by")) {
 //                    logger.info("Argument is " + argumentLink.getArgument().getCoveredText());
 //                    logger.info("Head is " + argumentLink.getArgument().getHead().getCoveredText());
 //                    DebugUtils.pause();
 //                }
-            }
+//            }
 
             eventMention.setArguments(FSCollectionFactory.createFSList(aJCas, argumentLinks));
         }
