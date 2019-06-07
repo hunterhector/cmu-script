@@ -13,7 +13,6 @@ import edu.cmu.cs.lti.uima.io.reader.GzippedXmiCollectionReader;
 import edu.cmu.cs.lti.uima.io.writer.StepBasedDirGzippedXmiWriter;
 import edu.cmu.cs.lti.uima.util.UimaAnnotationUtils;
 import edu.cmu.cs.lti.uima.util.UimaNlpUtils;
-import edu.cmu.cs.lti.utils.DebugUtils;
 import org.apache.uima.UIMAException;
 import org.apache.uima.UimaContext;
 import org.apache.uima.analysis_engine.AnalysisEngineDescription;
@@ -207,15 +206,15 @@ public class FrameBasedEventDetector extends AbstractLoggingAnnotator {
                 i++;
             }
 
-            for (EventMentionArgumentLink argumentLink : argumentLinks) {
-                String argText = argumentLink.getArgument().getCoveredText();
-                logger.info(argText);
-                if (argText.contains("with") || argText.contains("by")) {
-                    logger.info("Argument is " + argumentLink.getArgument().getCoveredText());
-                    logger.info("Head is " + argumentLink.getArgument().getHead().getCoveredText());
-                    DebugUtils.pause();
-                }
-            }
+//            for (EventMentionArgumentLink argumentLink : argumentLinks) {
+//                String argText = argumentLink.getArgument().getCoveredText();
+//                logger.info(argText);
+//                if (argText.contains("with") || argText.contains("by")) {
+//                    logger.info("Argument is " + argumentLink.getArgument().getCoveredText());
+//                    logger.info("Head is " + argumentLink.getArgument().getHead().getCoveredText());
+//                    DebugUtils.pause();
+//                }
+//            }
 
             eventMention.setArguments(FSCollectionFactory.createFSList(aJCas, argumentLinks));
         }
