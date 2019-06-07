@@ -13,6 +13,7 @@ import edu.cmu.cs.lti.uima.io.reader.GzippedXmiCollectionReader;
 import edu.cmu.cs.lti.uima.io.writer.StepBasedDirGzippedXmiWriter;
 import edu.cmu.cs.lti.uima.util.UimaAnnotationUtils;
 import edu.cmu.cs.lti.uima.util.UimaNlpUtils;
+import edu.cmu.cs.lti.utils.DebugUtils;
 import org.apache.uima.UIMAException;
 import org.apache.uima.UimaContext;
 import org.apache.uima.analysis_engine.AnalysisEngineDescription;
@@ -155,24 +156,34 @@ public class FrameBasedEventDetector extends AbstractLoggingAnnotator {
             for (SemaforLabel frameElement : frameStructure.getFrameElements()) {
                 String feName = frameElement.getName();
                 StanfordCorenlpToken argHead = UimaNlpUtils.findHeadFromStanfordAnnotation(frameElement);
+                int argBegin = frameElement.getBegin();
+                int argEnd = frameElement.getEnd();
 
                 if (argHead.getPos().equals("TO") || argHead.getPos().equals("IN")) {
                     argHead = UimaNlpUtils.findNonPrepHeadInRange(aJCas, predHead, argHead, frameElement);
                     if (ignorePrepArg) {
                         if (argHead.getPos().equals("TO") || argHead.getPos().equals("IN")) {
-                            logger.warn("Ignored frame arguments with a prepositional " +
-                                    "head: " + frameElement.getCoveredText());
                             continue;
                         }
                     }
                 }
 
+                if (argHead.getPos().equals("WDT") || argHead.getPos().equals("WP") || argHead.getPos().equals("WP$")) {
+                    argHead = (StanfordCorenlpToken) UimaNlpUtils.findWhTarget(argHead);
+                    if (argHead == null) {
+                        continue;
+                    }
+
+                    argBegin = argHead.getBegin();
+                    argEnd = argHead.getEnd();
+                }
+
+
                 EventMentionArgumentLink argumentLink;
                 if (head2Args.containsKey(argHead)) {
                     argumentLink = head2Args.get(argHead);
                 } else {
-                    argumentLink = UimaNlpUtils.createArg(aJCas, h2Entities, eventMention, frameElement.getBegin(),
-                            frameElement.getEnd(), COMPONENT_ID);
+                    argumentLink = UimaNlpUtils.createArg(aJCas, h2Entities, eventMention, argBegin, argEnd, COMPONENT_ID);
                     argumentLinks.add(argumentLink);
                 }
 
