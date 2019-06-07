@@ -105,6 +105,14 @@ public class VerbBasedEventDetector extends AbstractLoggingAnnotator {
                 continue;
             }
 
+            if (UimaNlpUtils.isWhWord(argWord)) {
+                argWord = UimaNlpUtils.findWhTarget(argWord);
+
+                if (argWord == null) {
+                    continue;
+                }
+            }
+
             EventMentionArgumentLink argumentLink;
             if (head2Args.containsKey(argWord)) {
                 argumentLink = head2Args.get(argWord);

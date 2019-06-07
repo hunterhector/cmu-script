@@ -159,17 +159,18 @@ public class FrameBasedEventDetector extends AbstractLoggingAnnotator {
                 int argBegin = frameElement.getBegin();
                 int argEnd = frameElement.getEnd();
 
-                if (argHead.getPos().equals("TO") || argHead.getPos().equals("IN")) {
+                if (UimaNlpUtils.isPrepWord(argHead)) {
                     argHead = UimaNlpUtils.findNonPrepHeadInRange(aJCas, predHead, argHead, frameElement);
                     if (ignorePrepArg) {
-                        if (argHead.getPos().equals("TO") || argHead.getPos().equals("IN")) {
+                        if (UimaNlpUtils.isPrepWord(argHead)) {
                             continue;
                         }
                     }
                 }
 
-                if (argHead.getPos().equals("WDT") || argHead.getPos().equals("WP") || argHead.getPos().equals("WP$")) {
+                if (UimaNlpUtils.isWhWord(argHead)) {
                     argHead = (StanfordCorenlpToken) UimaNlpUtils.findWhTarget(argHead);
+
                     if (argHead == null) {
                         continue;
                     }
@@ -188,7 +189,6 @@ public class FrameBasedEventDetector extends AbstractLoggingAnnotator {
                 }
 
                 EntityMention argEntMention = argumentLink.getArgument();
-
                 Entity argEnt = argEntMention.getReferingEntity();
 
                 if (argEnt == null || argEnt.getEntityMentions().size() == 1) {
@@ -216,16 +216,6 @@ public class FrameBasedEventDetector extends AbstractLoggingAnnotator {
                 argumentLink.setSuperFrameElementRoleName(superFeName);
                 i++;
             }
-
-//            for (EventMentionArgumentLink argumentLink : argumentLinks) {
-//                String argText = argumentLink.getArgument().getCoveredText();
-//                logger.info(argText);
-//                if (argText.contains("with") || argText.contains("by")) {
-//                    logger.info("Argument is " + argumentLink.getArgument().getCoveredText());
-//                    logger.info("Head is " + argumentLink.getArgument().getHead().getCoveredText());
-//                    DebugUtils.pause();
-//                }
-//            }
 
             eventMention.setArguments(FSCollectionFactory.createFSList(aJCas, argumentLinks));
         }
