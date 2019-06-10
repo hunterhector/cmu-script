@@ -49,7 +49,7 @@ public class PotentialEventSufaceStats extends AbstractPlainTextAggregator {
 
         text.append("\n");
         text.append("##Type Text Count\n");
-        for (Pair<String, Integer> tCount : getCountSortedMap(eventTypes, 2)) {
+        for (Pair<String, Integer> tCount : getCountSortedMap(predictedTypePair, 2)) {
             text.append(tCount.getKey()).append("\t").append(tCount.getValue()).append("\n");
         }
 
