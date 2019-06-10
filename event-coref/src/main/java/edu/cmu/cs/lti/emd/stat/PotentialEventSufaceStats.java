@@ -34,21 +34,21 @@ public class PotentialEventSufaceStats extends AbstractPlainTextAggregator {
 
     @Override
     public String getAggregatedTextToPrint() {
-        StringBuilder text = new StringBuilder("##Verb Counts");
+        StringBuilder text = new StringBuilder("##Verb Counts\n");
 
         for (Pair<String, Integer> verbCount : getCountSortedMap(allVerbs, 2)) {
             text.append(verbCount.getKey()).append("\t").append(verbCount.getValue()).append("\n");
         }
 
         text.append("\n");
-        text.append("##Event Type Count");
+        text.append("##Event Type Count\n");
 
         for (Pair<String, Integer> eventCount : getCountSortedMap(eventTypes, 2)) {
             text.append(eventCount.getKey()).append("\t").append(eventCount.getValue()).append("\n");
         }
 
         text.append("\n");
-        text.append("##Type Text Count");
+        text.append("##Type Text Count\n");
         for (Pair<String, Integer> tCount : getCountSortedMap(eventTypes, 2)) {
             text.append(tCount.getKey()).append("\t").append(tCount.getValue()).append("\n");
         }
