@@ -1,6 +1,7 @@
 package edu.cmu.cs.lti.event_coref.pipeline;
 
 import edu.cmu.cs.lti.collection_reader.LDCXmlCollectionReader;
+import edu.cmu.cs.lti.emd.stat.PotentialEventSufaceStats;
 import edu.cmu.cs.lti.io.JsonRichEventWriter;
 import edu.cmu.cs.lti.script.annotators.FrameBasedEventDetector;
 import edu.cmu.cs.lti.script.annotators.VerbBasedEventDetector;
@@ -103,7 +104,13 @@ public class RunOnlyPipeline {
                 JsonRichEventWriter.PARAM_OUTPUT_DIR, FileUtils.joinPaths(outputPath, "rich", runName)
         );
 
-        SimplePipeline.runPipeline(results, writer);
+        AnalysisEngineDescription stats = AnalysisEngineFactory.createEngineDescription(
+                PotentialEventSufaceStats.class, typeSystemDescription,
+                PotentialEventSufaceStats.PARAM_OUTPUT_FILE_PATH, FileUtils.joinPaths(outputPath, "stats",
+                        runName + "_surface_stats.txt")
+        );
+
+        SimplePipeline.runPipeline(results, writer, stats);
     }
 
     private static CollectionReaderDescription ldcReader(TypeSystemDescription typeSystemDescription, String inputPath,
