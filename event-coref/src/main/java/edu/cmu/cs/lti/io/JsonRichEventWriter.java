@@ -296,40 +296,54 @@ public class JsonRichEventWriter extends AbstractLoggingAnnotator {
             evmMap.put(evmSpan, jsonEvm);
         }
 
-        doc.relations = new ArrayList<>();
+        doc.clusters = new ArrayList<>();
         for (Event event : JCasUtil.select(aJCas, Event.class)) {
             if (event.getEventMentions().size() > 1) {
-                JsonRelation rel = new JsonRelation();
-                rel.relationType = "event_coreference";
-                rel.arguments = new ArrayList<>();
+                JsonCluster cluster = new JsonCluster();
+                cluster.clusterType = "event_coreference";
+                cluster.arguments = new ArrayList<>();
 
+                boolean isFirst = true;
                 for (EventMention evm : FSCollectionFactory.create(event.getEventMentions(), EventMention.class)) {
                     Span evmSpan = Span.of(evm.getBegin(), evm.getEnd());
                     JsonEventMention jsonEvm = evmMap.get(evmSpan);
-                    rel.arguments.add(jsonEvm.id);
+                    cluster.arguments.add(jsonEvm.id);
+
+                    if (isFirst){
+                        cluster.representative = jsonEvm.id;
+                    }
+
+                    isFirst = false;
                 }
-                doc.relations.add(rel);
+                doc.clusters.add(cluster);
             }
         }
 
         for (Entity entity : JCasUtil.select(aJCas, Entity.class)) {
+            EntityMention represent = entity.getRepresentativeMention();
+
             if (entity.getEntityMentions().size() > 1) {
-                JsonRelation rel = new JsonRelation();
-                rel.relationType = "entity_coreference";
-                rel.arguments = new ArrayList<>();
+                JsonCluster cluster = new JsonCluster();
+                cluster.clusterType = "entity_coreference";
+                cluster.arguments = new ArrayList<>();
 
                 for (EntityMention ent : FSCollectionFactory.create(entity.getEntityMentions(), EntityMention.class)) {
                     Word head = ent.getHead();
                     Span headSpan = Span.of(head.getBegin(), head.getEnd());
                     if (jsonEntMap.containsKey(headSpan)) {
                         JsonEntityMention jsonEnt = jsonEntMap.get(headSpan);
-                        rel.arguments.add(jsonEnt.id);
+                        cluster.arguments.add(jsonEnt.id);
+
+                        if (ent == represent){
+                            cluster.representative = jsonEnt.id;
+                        }
                     } else {
                         logger.warn(String.format("Entity mention [%s] : [%s] not found at [%s]",
                                 ent.getCoveredText(), headSpan, docid));
                     }
+
                 }
-                doc.relations.add(rel);
+                doc.clusters.add(cluster);
             }
         }
 
@@ -345,7 +359,7 @@ public class JsonRichEventWriter extends AbstractLoggingAnnotator {
         String text;
         List<JsonEventMention> eventMentions;
         List<JsonEntityMention> entityMentions;
-        List<JsonRelation> relations;
+        List<JsonCluster> clusters;
     }
 
     class DiscourseObject {
@@ -425,9 +439,10 @@ public class JsonRichEventWriter extends AbstractLoggingAnnotator {
         }
     }
 
-    class JsonRelation {
+    class JsonCluster {
         List<Integer> arguments;
-        String relationType;
+        String clusterType;
+        int representative;
     }
 
     class JsonArgument {
