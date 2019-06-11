@@ -3,6 +3,7 @@ package edu.cmu.cs.lti.event_coref.pipeline;
 import edu.cmu.cs.lti.collection_reader.LDCXmlCollectionReader;
 import edu.cmu.cs.lti.emd.stat.PotentialEventSufaceStats;
 import edu.cmu.cs.lti.io.JsonRichEventWriter;
+import edu.cmu.cs.lti.script.annotators.EnglishSrlArgumentExtractor;
 import edu.cmu.cs.lti.script.annotators.FrameBasedEventDetector;
 import edu.cmu.cs.lti.script.annotators.VerbBasedEventDetector;
 import edu.cmu.cs.lti.uima.io.reader.PlainTextCollectionReader;
@@ -19,6 +20,7 @@ import org.apache.uima.resource.metadata.TypeSystemDescription;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.uimafit.factory.TypeSystemDescriptionFactory;
+import se.lth.cs.srl.languages.English;
 
 /**
  * Created with IntelliJ IDEA.
@@ -90,8 +92,14 @@ public class RunOnlyPipeline {
                     VerbBasedEventDetector.class, typeSystemDescription
             );
 
+            AnalysisEngineDescription allArgs = AnalysisEngineFactory.createEngineDescription(
+                    EnglishSrlArgumentExtractor.class, typeSystemDescription,
+                    EnglishSrlArgumentExtractor.PARAM_ADD_FANSE, true,
+                    EnglishSrlArgumentExtractor.PARAM_ADD_SEMAFOR, true
+            );
+
             AnalysisEngineDescription[] engines = new AnalysisEngineDescription[]{
-                    frameEvents, verbEvents
+                    frameEvents, verbEvents, allArgs
             };
 
             results = pipeline.runWithExtractors(kbpConfig, outputPath, engines, "SimpleEvents");

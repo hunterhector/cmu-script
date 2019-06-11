@@ -1,5 +1,6 @@
 package edu.cmu.cs.lti.script.annotators;
 
+import edu.cmu.cs.lti.annotators.FanseAnnotator;
 import edu.cmu.cs.lti.script.model.SemaforConstants;
 import edu.cmu.cs.lti.script.type.*;
 import edu.cmu.cs.lti.uima.annotator.AbstractLoggingAnnotator;
@@ -105,16 +106,26 @@ public class EnglishSrlArgumentExtractor extends AbstractLoggingAnnotator {
                         StanfordCorenlpToken argumentHead = helper.getStanfordToken(fanseChild);
 
                         if (argumentHead != null) {
+                            if (UimaNlpUtils.isPrepWord(argumentHead)) {
+                                StanfordCorenlpToken prepTarget = UimaNlpUtils.findPrepTarget(headWord, argumentHead);
+                                if (prepTarget != null) {
+                                    argumentHead = prepTarget;
+                                }
+                            }
+
                             EventMentionArgumentLink argumentLink;
 
                             if (head2Args.containsKey(argumentHead)) {
                                 argumentLink = head2Args.get(argumentHead);
                             } else {
                                 argumentLink = UimaNlpUtils.createArg(aJCas, h2Entities, mention,
-                                        argumentHead.getBegin(), argumentHead.getEnd(), COMPONENT_ID);
+                                        argumentHead.getBegin(), argumentHead.getEnd(), FanseAnnotator.COMPONENT_ID);
                                 argumentLinks.add(argumentLink);
                             }
-                            argumentLink.setPropbankRoleName(childRelation.getSemanticAnnotation());
+
+                            if (argumentLink.getPropbankRoleName() == null) {
+                                argumentLink.setPropbankRoleName(childRelation.getSemanticAnnotation());
+                            }
                         }
                     }
                 }
@@ -132,10 +143,14 @@ public class EnglishSrlArgumentExtractor extends AbstractLoggingAnnotator {
                         argumentLink = head2Args.get(headToken);
                     } else {
                         argumentLink = UimaNlpUtils.createArg(aJCas, h2Entities, mention,
-                                argumentAnnotation.getBegin(), argumentAnnotation.getEnd(), COMPONENT_ID);
+                                argumentAnnotation.getBegin(), argumentAnnotation.getEnd(),
+                                SemaforAnnotator.COMPONENT_ID);
                         argumentLinks.add(argumentLink);
                     }
-                    argumentLink.setFrameElementName(semaforRoleName);
+
+                    if (argumentLink.getFrameElementName() == null) {
+                        argumentLink.setFrameElementName(semaforRoleName);
+                    }
                 }
             }
 
