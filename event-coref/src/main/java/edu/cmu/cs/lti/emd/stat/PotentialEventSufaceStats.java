@@ -23,26 +23,35 @@ public class PotentialEventSufaceStats extends AbstractPlainTextAggregator {
     private TObjectIntMap<String> allVerbs;
     private TObjectIntMap<String> eventTypes;
     private TObjectIntHashMap<String> predictedTypePair;
+    private TObjectIntHashMap<String> unmarkedVerbs;
 
     @Override
     public void initialize(UimaContext context) throws ResourceInitializationException {
         super.initialize(context);
         allVerbs = new TObjectIntHashMap<>();
+        unmarkedVerbs = new TObjectIntHashMap<>();
         eventTypes = new TObjectIntHashMap<>();
         predictedTypePair = new TObjectIntHashMap<>();
     }
 
     @Override
     public String getAggregatedTextToPrint() {
-        StringBuilder text = new StringBuilder("##Verb Counts\n");
+        StringBuilder text = new StringBuilder("Event and Verb Statistics.");
 
+        text.append("\n");
+        text.append("##Verb Counts\n");
         for (Pair<String, Integer> verbCount : getCountSortedMap(allVerbs, 2)) {
             text.append(verbCount.getKey()).append("\t").append(verbCount.getValue()).append("\n");
         }
 
         text.append("\n");
-        text.append("##Event Type Count\n");
+        text.append("##Verbs not annotated\n");
+        for (Pair<String, Integer> nonEventVerbCount : getCountSortedMap(unmarkedVerbs, 2)) {
+            text.append(nonEventVerbCount.getKey()).append("\t").append(nonEventVerbCount.getValue()).append("\n");
+        }
 
+        text.append("\n");
+        text.append("##Event Type Count\n");
         for (Pair<String, Integer> eventCount : getCountSortedMap(eventTypes, 2)) {
             text.append(eventCount.getKey()).append("\t").append(eventCount.getValue()).append("\n");
         }
@@ -58,22 +67,15 @@ public class PotentialEventSufaceStats extends AbstractPlainTextAggregator {
 
     private List<Pair<String, Integer>> getCountSortedMap(TObjectIntMap<String> inputMap, int threshold) {
         List<Pair<String, Integer>> collection = new ArrayList<>();
-        inputMap.forEachEntry(new TObjectIntProcedure<String>() {
-            @Override
-            public boolean execute(String s, int i) {
-                if (i >= threshold) {
-                    collection.add(Pair.of(s, i));
-                }
-                return true;
+        inputMap.forEachEntry((s, i) -> {
+            if (i >= threshold) {
+                collection.add(Pair.of(s, i));
             }
+            return true;
         });
 
-        collection.sort(new Comparator<Pair<String, Integer>>() {
-            @Override
-            public int compare(Pair<String, Integer> o1, Pair<String, Integer> o2) {
-                return o2.getValue().compareTo(o1.getValue());
-            }
-        });
+        // Sort in inverse order.
+        collection.sort((o1, o2) -> o2.getValue().compareTo(o1.getValue()));
 
         return collection;
     }

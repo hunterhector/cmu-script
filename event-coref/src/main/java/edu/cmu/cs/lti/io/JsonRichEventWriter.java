@@ -149,7 +149,9 @@ public class JsonRichEventWriter extends AbstractLoggingAnnotator {
         }
     }
 
-    private String getEventMentionJustification(JCas aJCas, EventMention mention) {
+    private List<Integer> getEventMentionJustification(EventMention mention) {
+        List<Integer> just_span = new ArrayList<>();
+
         int jus_begin = mention.getBegin();
         int jus_end = mention.getEnd();
         FSList argsFs = mention.getArguments();
@@ -167,14 +169,21 @@ public class JsonRichEventWriter extends AbstractLoggingAnnotator {
             }
         }
 
-        return aJCas.getDocumentText().substring(jus_begin, jus_end);
+        just_span.add(jus_begin);
+        just_span.add(jus_end);
+
+        return just_span;
     }
 
-    private String getArumengJustification(JCas aJCas, EventMention mention, EntityMention argument) {
+    private List<Integer> getArumengJustification(EventMention mention, EntityMention argument) {
         int jus_begin = Math.min(mention.getBegin(), argument.getBegin());
         int jus_end = Math.max(mention.getEnd(), argument.getEnd());
 
-        return aJCas.getDocumentText().substring(jus_begin, jus_end);
+        List<Integer> jus = new ArrayList<>();
+        jus.add(jus_begin);
+        jus.add(jus_end);
+
+        return jus;
     }
 
     private Document buildJson(JCas aJCas) {
@@ -266,7 +275,9 @@ public class JsonRichEventWriter extends AbstractLoggingAnnotator {
             jsonEvm.headWord = new JsonWord(objectIndex++, headword);
             jsonEvm.arguments = new ArrayList<>();
             jsonEvm.headLemma = headword.getLemma();
-            jsonEvm.justification = getEventMentionJustification(aJCas, mention);
+            List<Integer> evmJus = getEventMentionJustification(mention);
+            jsonEvm.justification = aJCas.getDocumentText().substring(evmJus.get(0), evmJus.get(1));
+            jsonEvm.justificationSpan = evmJus;
 
             Map<String, Word> evmModifier = findTokenModifier(headword);
             if (evmModifier != null) {
@@ -299,7 +310,10 @@ public class JsonRichEventWriter extends AbstractLoggingAnnotator {
                     jsonArg.roles = new ArrayList<>();
                     jsonArg.entityId = jsonEnt.id;
                     jsonArg.eventId = jsonEvm.id;
-                    jsonArg.justification = getArumengJustification(aJCas, mention, arg);
+
+                    List<Integer> argJus = getArumengJustification(mention, arg);
+                    jsonArg.justification = aJCas.getDocumentText().substring(argJus.get(0), argJus.get(1));
+                    jsonArg.justificationSpan = argJus;
 
                     String pbName = argumentLink.getPropbankRoleName();
                     String fnName = argumentLink.getFrameElementName();
@@ -437,6 +451,7 @@ public class JsonRichEventWriter extends AbstractLoggingAnnotator {
         double score;
 
         String justification;
+        List<Integer> justificationSpan;
 
         JsonEventMention(int id, ComponentAnnotation anno) {
             super(id, anno, anno.getCoveredText());
@@ -482,6 +497,7 @@ public class JsonRichEventWriter extends AbstractLoggingAnnotator {
         double score;
 
         String justification;
+        List<Integer> justificationSpan;
     }
 
 
