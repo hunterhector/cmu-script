@@ -108,10 +108,6 @@ public class JsonRichEventWriter extends AbstractLoggingAnnotator {
             }
         }
 
-//        logger.info("Entity is " + anno.getCoveredText());
-//        logger.info("Entity form is " + entityForm);
-//        DebugUtils.pause();
-
         return jsonEnt;
     }
 
@@ -149,7 +145,7 @@ public class JsonRichEventWriter extends AbstractLoggingAnnotator {
         }
     }
 
-    private List<Integer> getEventMentionJustification(EventMention mention) {
+    private List<Integer> getEventMentionExtent(EventMention mention) {
         List<Integer> just_span = new ArrayList<>();
 
         int jus_begin = mention.getBegin();
@@ -275,9 +271,9 @@ public class JsonRichEventWriter extends AbstractLoggingAnnotator {
             jsonEvm.headWord = new JsonWord(objectIndex++, headword);
             jsonEvm.arguments = new ArrayList<>();
             jsonEvm.headLemma = headword.getLemma();
-            List<Integer> evmJus = getEventMentionJustification(mention);
-            jsonEvm.justification = aJCas.getDocumentText().substring(evmJus.get(0), evmJus.get(1));
-            jsonEvm.justificationSpan = evmJus;
+            List<Integer> evmExtent = getEventMentionExtent(mention);
+            jsonEvm.extentText = aJCas.getDocumentText().substring(evmExtent.get(0), evmExtent.get(1));
+            jsonEvm.extentSpan = evmExtent;
 
             Map<String, Word> evmModifier = findTokenModifier(headword);
             if (evmModifier != null) {
@@ -450,8 +446,8 @@ public class JsonRichEventWriter extends AbstractLoggingAnnotator {
 
         double score;
 
-        String justification;
-        List<Integer> justificationSpan;
+        String extentText;
+        List<Integer> extentSpan;
 
         JsonEventMention(int id, ComponentAnnotation anno) {
             super(id, anno, anno.getCoveredText());
