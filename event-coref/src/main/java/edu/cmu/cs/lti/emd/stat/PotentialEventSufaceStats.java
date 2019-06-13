@@ -14,9 +14,7 @@ import org.apache.uima.fit.util.JCasUtil;
 import org.apache.uima.jcas.JCas;
 import org.apache.uima.resource.ResourceInitializationException;
 
-import java.util.ArrayList;
-import java.util.Comparator;
-import java.util.List;
+import java.util.*;
 
 public class PotentialEventSufaceStats extends AbstractPlainTextAggregator {
 
@@ -82,16 +80,25 @@ public class PotentialEventSufaceStats extends AbstractPlainTextAggregator {
 
     @Override
     public void process(JCas aJCas) throws AnalysisEngineProcessException {
-        for (StanfordCorenlpToken token : JCasUtil.select(aJCas, StanfordCorenlpToken.class)) {
-            if (token.getPos().startsWith("V")) {
-                allVerbs.adjustOrPutValue(token.getLemma().toLowerCase(), 1, 1);
-            }
-        }
-
+        Set<StanfordCorenlpToken> markedTokens = new HashSet<>();
         for (EventMention evm : JCasUtil.select(aJCas, EventMention.class)) {
             eventTypes.adjustOrPutValue(evm.getEventType(), 1, 1);
             predictedTypePair.adjustOrPutValue(evm.getEventType() + "_" +
                     UimaNlpUtils.getLemmatizedAnnotation(evm).toLowerCase(), 1, 1);
+
+            if (!evm.getEventType().equals("Verbal")) {
+                markedTokens.add((StanfordCorenlpToken) evm.getHeadWord());
+            }
+        }
+
+        for (StanfordCorenlpToken token : JCasUtil.select(aJCas, StanfordCorenlpToken.class)) {
+            if (token.getPos().startsWith("V")) {
+                allVerbs.adjustOrPutValue(token.getLemma().toLowerCase(), 1, 1);
+
+                if (!markedTokens.contains(token)) {
+                    unmarkedVerbs.adjustOrPutValue(token.getLemma().toLowerCase(), 1, 1);
+                }
+            }
         }
     }
 
