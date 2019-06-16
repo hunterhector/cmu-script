@@ -16,7 +16,7 @@ import java.util.ArrayList;
 /**
  * After arguments being annotated to tokens (such as ArgumentMerger), we move them to the event mentions for further
  * processing.
- *
+ * @deprecated Will not use this to combine arguments.
  * @author Zhengzhong Liu
  */
 public class EventArgumentFromTokensAnnotator extends AbstractLoggingAnnotator {
