@@ -74,6 +74,10 @@ public class FrameBasedEventDetector extends AbstractLoggingAnnotator {
             Collections.addAll(ignoredHeadWords, ignoredVerbs);
         }
 
+        if (ignoreBareFrame) {
+            logger.info("Frames without arguments will be ignored.");
+        }
+
         try {
             FrameRelationReader frameReader = new FrameRelationReader(frameRelationFile.getPath());
             HashSet<String> targetFrames = new HashSet<>();
@@ -138,6 +142,8 @@ public class FrameBasedEventDetector extends AbstractLoggingAnnotator {
                 eventMention = new EventMention(aJCas, predicate.getBegin(), predicate.getEnd());
                 eventMention.setEventType(frameName);
                 UimaAnnotationUtils.finishAnnotation(eventMention, COMPONENT_ID, 0, aJCas);
+
+                logger.info(String.format("Creating new event [%s] with frame [%s]", eventMention.getCoveredText(), frameName));
             }
 
             eventMention.setFrameName(frameName);

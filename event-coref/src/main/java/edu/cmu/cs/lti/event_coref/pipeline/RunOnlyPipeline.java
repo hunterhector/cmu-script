@@ -84,8 +84,8 @@ public class RunOnlyPipeline {
 
             AnalysisEngineDescription frameEvents = AnalysisEngineFactory.createEngineDescription(
                     FrameBasedEventDetector.class, typeSystemDescription,
-                    FrameBasedEventDetector.PARAM_FRAME_RELATION, frPath,
-                    FrameBasedEventDetector.PARAM_IGNORE_BARE_FRAME, true
+                    FrameBasedEventDetector.PARAM_FRAME_RELATION, frPath
+//                    FrameBasedEventDetector.PARAM_IGNORE_BARE_FRAME, true
             );
 
             AnalysisEngineDescription verbEvents = AnalysisEngineFactory.createEngineDescription(
