@@ -1,10 +1,13 @@
 package edu.cmu.cs.lti.script.annotators;
 
 import edu.cmu.cs.lti.annotators.FanseAnnotator;
+import edu.cmu.cs.lti.annotators.AllenNLPJsonAnnotator;
 import edu.cmu.cs.lti.script.model.SemaforConstants;
 import edu.cmu.cs.lti.script.type.*;
 import edu.cmu.cs.lti.uima.annotator.AbstractLoggingAnnotator;
 import edu.cmu.cs.lti.uima.util.TokenAlignmentHelper;
+import edu.cmu.cs.lti.uima.util.UimaAnnotationUtils;
+import edu.cmu.cs.lti.uima.util.UimaConvenience;
 import edu.cmu.cs.lti.uima.util.UimaNlpUtils;
 import org.apache.uima.UimaContext;
 import org.apache.uima.analysis_engine.AnalysisEngineProcessException;
@@ -32,12 +35,12 @@ public class EnglishSrlArgumentExtractor extends AbstractLoggingAnnotator {
     private boolean addFanse;
 
     public static final String PARAM_ADD_SEMAFOR = "addSemafor";
-    @ConfigurationParameter(name = PARAM_ADD_SEMAFOR)
+    @ConfigurationParameter(name = PARAM_ADD_SEMAFOR, defaultValue = "true")
     private boolean addSemafor;
 
-//    public static final String PARAM_ADD_DEPENDENCY = "addDependency";
-//    @ConfigurationParameter(name = PARAM_ADD_DEPENDENCY)
-//    private boolean addDependency;
+    public static final String PARAM_ADD_ALLEN = "addAllen";
+    @ConfigurationParameter(name = PARAM_ADD_ALLEN, defaultValue = "true")
+    private boolean addAllen;
 
     private TokenAlignmentHelper helper = new TokenAlignmentHelper();
 
@@ -90,6 +93,38 @@ public class EnglishSrlArgumentExtractor extends AbstractLoggingAnnotator {
                         String roleName = aSemaforArgument.getKey();
                         if (argumentHead != null) {
                             semafordHeadWord2Role.put(argumentHead, roleName);
+                        }
+                    }
+                }
+            }
+
+            if (addAllen) {
+                FSList headArgsFS = headWord.getChildSemanticRelations();
+
+                if (headArgsFS != null) {
+                    for (SemanticRelation relation : FSCollectionFactory.create(headArgsFS, SemanticRelation.class)) {
+                        if (relation.getComponentId().equals(AllenNLPJsonAnnotator.ALLENNLP_COMPONENT)) {
+                            EventMentionArgumentLink argumentLink = new EventMentionArgumentLink((aJCas));
+                            SemanticArgument argument = relation.getChild();
+                            EntityMention argumentEntityMention = UimaNlpUtils.createArgMention(aJCas, argument
+                                    .getBegin(), argument.getEnd(), argument.getComponentId());
+                            argumentLink.setArgument(argumentEntityMention);
+
+                            if (argument.getHead() == null){
+                                logger.info("What?");
+                            }
+
+                            if (relation.getPropbankRoleName() != null) {
+                                argumentLink.setPropbankRoleName(relation.getPropbankRoleName());
+                            }
+
+                            if (relation.getFrameElementName() != null) {
+                                argumentLink.setFrameElementName(relation.getFrameElementName());
+                            }
+
+                            mention.setArguments(UimaConvenience.appendFSList(aJCas, mention.getArguments(), argumentLink,
+                                    EventMentionArgumentLink.class));
+                            UimaAnnotationUtils.finishTop(argumentLink, relation.getComponentId(), 0, aJCas);
                         }
                     }
                 }
@@ -161,16 +196,6 @@ public class EnglishSrlArgumentExtractor extends AbstractLoggingAnnotator {
                 COMPONENT_ID);
     }
 
-//    private void setArgumentDepType(EventMention mention, List<EventMentionArgumentLink> argumentLinks){
-//        Map<Word, String> eventDeps = UimaNlpUtils.getDepChildren(mention.getHeadWord());
-//
-//        for (EventMentionArgumentLink argumentLink : argumentLinks) {
-//            Word argHead = argumentLink.getArgument().getHead();
-//            if (eventDeps.containsKey(argHead)){
-//                argumentLink.setDependency(eventDeps.get(argHead));
-//            }
-//        }
-//    }
 
     private Map<SemaforLabel, Pair<String, Map<String, SemaforLabel>>> getSemaforArguments(JCas aJCas) {
         Map<SemaforLabel, Pair<String, Map<String, SemaforLabel>>> semaforArguments = new HashMap<>();

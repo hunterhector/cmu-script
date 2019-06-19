@@ -2,16 +2,15 @@ package edu.cmu.cs.lti.event_coref.pipeline;
 
 import edu.cmu.cs.lti.collection_reader.TbfEventDataReader;
 import edu.cmu.cs.lti.emd.annotators.MultiModelMentionTypeAnnotator;
-import edu.cmu.cs.lti.script.annotators.writers.TbfStyleEventWriter;
 import edu.cmu.cs.lti.emd.annotators.classification.AllActualRealisAnnotator;
 import edu.cmu.cs.lti.emd.annotators.classification.RealisTypeAnnotator;
 import edu.cmu.cs.lti.emd.annotators.misc.TypeBasedMentionSelector;
 import edu.cmu.cs.lti.emd.annotators.postprocessors.MentionTypeSplitter;
 import edu.cmu.cs.lti.event_coref.annotators.EventCorefAnnotator;
-import edu.cmu.cs.lti.script.annotators.EventHeadWordAnnotator;
-import edu.cmu.cs.lti.script.annotators.EventArgumentFromTokensAnnotator;
+import edu.cmu.cs.lti.learning.runners.RunnerUtils;
 import edu.cmu.cs.lti.learning.utils.ModelUtils;
 import edu.cmu.cs.lti.pipeline.BasicPipeline;
+import edu.cmu.cs.lti.script.annotators.writers.TbfStyleEventWriter;
 import edu.cmu.cs.lti.uima.io.reader.CustomCollectionReaderFactory;
 import edu.cmu.cs.lti.utils.Configuration;
 import edu.cmu.cs.lti.utils.ExperimentUtils;
@@ -20,7 +19,6 @@ import org.apache.uima.analysis_engine.AnalysisEngineDescription;
 import org.apache.uima.collection.CollectionReaderDescription;
 import org.apache.uima.collection.metadata.CpeDescriptorException;
 import org.apache.uima.fit.factory.AnalysisEngineFactory;
-import org.apache.uima.resource.ResourceInitializationException;
 import org.apache.uima.resource.metadata.TypeSystemDescription;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -118,8 +116,7 @@ public class SubmissionPipeline {
 
 
     private CollectionReaderDescription corefResolution(Configuration modelConfig, CollectionReaderDescription reader,
-                                                        String mainOutputDir)
-            throws UIMAException, IOException, CpeDescriptorException, SAXException {
+                                                        String mainOutputDir) throws UIMAException {
         String modelDir = ModelUtils.getTestModelFile(mainModelDir, modelConfig);
 
         AnalysisEngineDescription corefAnnotator = AnalysisEngineFactory.createEngineDescription(
@@ -130,28 +127,11 @@ public class SubmissionPipeline {
         EventCorefAnnotator.setConfig(modelConfig);
 
         List<AnalysisEngineDescription> annotators = new ArrayList<>();
-        addCorefPreprocessors(annotators);
+        RunnerUtils.addMentionPostprocessors(annotators, typeSystemDescription, language);
         annotators.add(corefAnnotator);
 
         return new BasicPipeline(reader, mainOutputDir, "coref", annotators.toArray(new
                 AnalysisEngineDescription[annotators.size()])).getOutput();
-    }
-
-    private void addCorefPreprocessors(List<AnalysisEngineDescription> preAnnotators) throws
-            ResourceInitializationException {
-        AnalysisEngineDescription headWordExtractor = AnalysisEngineFactory.createEngineDescription(
-                EventHeadWordAnnotator.class, typeSystemDescription
-        );
-
-        if (language.equals("zh")) {
-            preAnnotators.add(headWordExtractor);
-        } else {
-            AnalysisEngineDescription argumentExtractor = AnalysisEngineFactory.createEngineDescription(
-                    EventArgumentFromTokensAnnotator.class
-            );
-            preAnnotators.add(headWordExtractor);
-            preAnnotators.add(argumentExtractor);
-        }
     }
 
     private void writeResults(CollectionReaderDescription processedResultReader, String mainOutputDir, String systemId)

@@ -2,12 +2,12 @@ package edu.cmu.cs.lti.learning.runners;
 
 import edu.cmu.cs.lti.annotators.GoldStandardEventMentionAnnotator;
 import edu.cmu.cs.lti.collection_reader.TbfEventDataReader;
-import edu.cmu.cs.lti.script.annotators.writers.TbfStyleEventWriter;
 import edu.cmu.cs.lti.event_coref.annotators.misc.GoldRemover;
-import edu.cmu.cs.lti.script.annotators.EventArgumentFromTokensAnnotator;
-import edu.cmu.cs.lti.script.annotators.EventHeadWordAnnotator;
 import edu.cmu.cs.lti.model.UimaConst;
 import edu.cmu.cs.lti.pipeline.BasicPipeline;
+import edu.cmu.cs.lti.script.annotators.EnglishSrlArgumentExtractor;
+import edu.cmu.cs.lti.script.annotators.EventHeadWordAnnotator;
+import edu.cmu.cs.lti.script.annotators.writers.TbfStyleEventWriter;
 import edu.cmu.cs.lti.uima.io.writer.DocumentTextWriter;
 import org.apache.uima.UIMAException;
 import org.apache.uima.analysis_engine.AnalysisEngineDescription;
@@ -62,9 +62,17 @@ public class RunnerUtils {
         if (language.equals("zh")) {
             annotators.add(headWordExtractor);
         } else {
+//            AnalysisEngineDescription argumentExtractor = AnalysisEngineFactory.createEngineDescription(
+//                    EventArgumentFromTokensAnnotator.class, typeSystemDescription
+//            );
+
             AnalysisEngineDescription argumentExtractor = AnalysisEngineFactory.createEngineDescription(
-                    EventArgumentFromTokensAnnotator.class, typeSystemDescription
+                    EnglishSrlArgumentExtractor.class, typeSystemDescription,
+                    EnglishSrlArgumentExtractor.PARAM_ADD_FANSE, true,
+                    EnglishSrlArgumentExtractor.PARAM_ADD_SEMAFOR, true,
+                    EnglishSrlArgumentExtractor.PARAM_ADD_ALLEN, true
             );
+
             annotators.add(headWordExtractor);
             annotators.add(argumentExtractor);
         }

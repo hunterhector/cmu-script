@@ -362,9 +362,9 @@ public class EventMentionPipeline {
                     break;
                 case "allennlp":
                     processor = AnalysisEngineFactory.createEngineDescription(
-                            JsonPropBankAnnotator.class, typeSystemDescription,
-                            JsonPropBankAnnotator.PARAM_INPUT_COMPONENT_NAME, "allennlp",
-                            JsonPropBankAnnotator.PARAM_JSON_SRL_INPUT_DIR,
+                            AllenNLPJsonAnnotator.class, typeSystemDescription,
+                            AllenNLPJsonAnnotator.PARAM_INPUT_COMPONENT_NAME, "allennlp",
+                            AllenNLPJsonAnnotator.PARAM_JSON_SRL_INPUT_DIR,
                             FileUtils.joinPaths(workingDirPath, "allen_srl")
                     );
                     break;

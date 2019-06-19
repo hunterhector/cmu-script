@@ -208,8 +208,8 @@ public class JsonRichEventWriter extends AbstractLoggingAnnotator {
             Word head = mention.getHead();
 
             if (head == null) {
-                logger.warn(String.format("Cannot find head word for entity mention [%s][%d:%d].", mention
-                        .getCoveredText(), mention.getBegin(), mention.getEnd()));
+                logger.warn(String.format("Cannot find head word for entity mention [%s][%d:%d] (%s).", mention
+                        .getCoveredText(), mention.getBegin(), mention.getEnd(), mention.getComponentId()));
                 continue;
             }
 
@@ -292,7 +292,20 @@ public class JsonRichEventWriter extends AbstractLoggingAnnotator {
                         EventMentionArgumentLink.class)) {
                     EntityMention arg = argumentLink.getArgument();
 
-                    Span argHeadSpan = Span.of(arg.getHead().getBegin(), arg.getHead().getEnd());
+                    Span argHeadSpan;
+                    if (arg.getHead() == null){
+                        int wordsUnder = JCasUtil.selectCovered(StanfordCorenlpToken.class, arg).size();
+                        logger.warn(String.format("Cannot find head for argument: %s [%d:%d] at document %s, " +
+                                "it covers %d words.", arg.getCoveredText(), arg.getBegin(), arg.getEnd(),
+                                UimaConvenience.getArticleName(aJCas), wordsUnder));
+
+                        //                        // Cannot find head, use the full span.
+//                        argHeadSpan = Span.of(arg.getBegin(), arg.getEnd());
+
+                        continue;
+                    }else {
+                        argHeadSpan = Span.of(arg.getHead().getBegin(), arg.getHead().getEnd());
+                    }
 
                     JsonEntityMention jsonEnt;
                     if (jsonEntMap.containsKey(argHeadSpan)) {
