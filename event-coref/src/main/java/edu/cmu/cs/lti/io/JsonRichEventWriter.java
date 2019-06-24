@@ -320,6 +320,12 @@ public class JsonRichEventWriter extends AbstractLoggingAnnotator {
                     jsonArg.entityId = jsonEnt.id;
                     jsonArg.eventId = jsonEvm.id;
 
+                    if (argumentLink.getDependency() != null) {
+                        jsonArg.dependency = argumentLink.getDependency();
+                    }else{
+                        jsonArg.dependency = "NA";
+                    }
+
                     List<Integer> argJus = getArumengJustification(mention, arg);
                     jsonArg.justification = aJCas.getDocumentText().substring(argJus.get(0), argJus.get(1));
                     jsonArg.justificationSpan = argJus;
@@ -502,6 +508,7 @@ public class JsonRichEventWriter extends AbstractLoggingAnnotator {
         int eventId;
         int entityId;
         List<String> roles;
+        String dependency;
         String component;
         double score;
 
