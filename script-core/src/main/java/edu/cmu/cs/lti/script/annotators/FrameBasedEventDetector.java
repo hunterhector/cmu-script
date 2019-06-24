@@ -13,7 +13,6 @@ import edu.cmu.cs.lti.uima.io.reader.GzippedXmiCollectionReader;
 import edu.cmu.cs.lti.uima.io.writer.StepBasedDirGzippedXmiWriter;
 import edu.cmu.cs.lti.uima.util.UimaAnnotationUtils;
 import edu.cmu.cs.lti.uima.util.UimaNlpUtils;
-import edu.cmu.cs.lti.utils.DebugUtils;
 import org.apache.uima.UIMAException;
 import org.apache.uima.UimaContext;
 import org.apache.uima.analysis_engine.AnalysisEngineDescription;
@@ -142,8 +141,7 @@ public class FrameBasedEventDetector extends AbstractLoggingAnnotator {
                 eventMention = new EventMention(aJCas, predicate.getBegin(), predicate.getEnd());
                 eventMention.setEventType(frameName);
                 UimaAnnotationUtils.finishAnnotation(eventMention, COMPONENT_ID, 0, aJCas);
-
-                logger.info(String.format("Creating new event [%s] with frame [%s]", eventMention.getCoveredText(), frameName));
+//                logger.info(String.format("Creating new event [%s] with frame [%s]", eventMention.getCoveredText(), frameName));
             }
 
             eventMention.setFrameName(frameName);
