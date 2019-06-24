@@ -140,7 +140,7 @@ public class VerbBasedEventDetector extends AbstractLoggingAnnotator {
         return args;
     }
 
-    private static String takeDep(String depType) {
+    public static String takeDep(String depType) {
         if (depType.equals("nsubj") || depType.contains("agent")) {
             return "subj";
         } else if (depType.equals("dobj") || depType.equals("nsubjpass")) {

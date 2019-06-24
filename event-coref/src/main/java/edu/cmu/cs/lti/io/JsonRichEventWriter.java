@@ -1,13 +1,16 @@
 package edu.cmu.cs.lti.io;
 
 import com.google.gson.Gson;
+import edu.cmu.cs.lti.annotators.ArgFromRelativeClause;
 import edu.cmu.cs.lti.annotators.FanseAnnotator;
+import edu.cmu.cs.lti.annotators.SupportArgumentFinder;
 import edu.cmu.cs.lti.emd.annotators.CrfMentionTypeAnnotator;
 import edu.cmu.cs.lti.model.Span;
 import edu.cmu.cs.lti.model.UimaConst;
 import edu.cmu.cs.lti.script.annotators.FrameBasedEventDetector;
 import edu.cmu.cs.lti.script.annotators.VerbBasedEventDetector;
 import edu.cmu.cs.lti.script.type.*;
+import edu.cmu.cs.lti.uima.annotator.AbstractAnnotator;
 import edu.cmu.cs.lti.uima.annotator.AbstractLoggingAnnotator;
 import edu.cmu.cs.lti.uima.util.UimaConvenience;
 import edu.cmu.cs.lti.utils.DispatchReader;
@@ -340,7 +343,17 @@ public class JsonRichEventWriter extends AbstractLoggingAnnotator {
                     if (fnName != null) {
                         jsonArg.roles.add("fn:" + fnName);
                     }
-                    jsonArg.component = arg.getComponentId();
+
+                    if (arg.getComponentId().equals(AbstractAnnotator.simpleComponentName(ArgFromRelativeClause.class))) {
+                        // Simplify the event argument component here.
+                        jsonArg.component = AbstractAnnotator.simpleComponentName(VerbBasedEventDetector.class);
+                    }else if (arg.getComponentId().equals(AbstractAnnotator.simpleComponentName(SupportArgumentFinder.class))){
+                        jsonArg.component = AbstractAnnotator.simpleComponentName(VerbBasedEventDetector.class);
+                    } else{
+                        jsonArg.component = arg.getComponentId();
+                    }
+
+
 
                     jsonArg.score = confidenceScale.getOrDefault(argumentLink.getComponentId(), defaultScale);
 
