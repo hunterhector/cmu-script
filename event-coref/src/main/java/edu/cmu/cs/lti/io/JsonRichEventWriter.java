@@ -335,6 +335,7 @@ public class JsonRichEventWriter extends AbstractLoggingAnnotator {
 
                     String pbName = argumentLink.getPropbankRoleName();
                     String fnName = argumentLink.getFrameElementName();
+                    String otherRoleName = argumentLink.getArgumentRole();
 
                     if (pbName != null) {
                         jsonArg.roles.add("pb:" + pbName);
@@ -342,6 +343,10 @@ public class JsonRichEventWriter extends AbstractLoggingAnnotator {
 
                     if (fnName != null) {
                         jsonArg.roles.add("fn:" + fnName);
+                    }
+
+                    if (otherRoleName != null) {
+                        jsonArg.roles.add("other:" + otherRoleName);
                     }
 
                     if (arg.getComponentId().equals(AbstractAnnotator.simpleComponentName(ArgFromRelativeClause.class))) {
