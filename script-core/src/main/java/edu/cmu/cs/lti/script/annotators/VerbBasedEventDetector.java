@@ -46,6 +46,14 @@ public class VerbBasedEventDetector extends AbstractLoggingAnnotator {
         }
 
         Map<Word, EntityMention> h2Entities = UimaNlpUtils.indexEntityMentions(aJCas);
+
+        for (Map.Entry<Word, EntityMention> h2Ent : h2Entities.entrySet()) {
+            if (h2Ent.getValue().getCoveredText().contains("restaurant")) {
+                logger.info(String.format("head %s to entity %s from component %s",
+                        h2Ent.getKey().getCoveredText(), h2Ent.getValue().getCoveredText(), h2Ent.getValue().getComponentId()));
+            }
+        }
+
         Table<Integer, Integer, EventMention> span2Events = UimaNlpUtils.indexEventMentions(aJCas);
 
         int eventId = span2Events.size();
@@ -119,12 +127,27 @@ public class VerbBasedEventDetector extends AbstractLoggingAnnotator {
             } else {
                 argumentLink = UimaNlpUtils.createArg(aJCas, h2Entities, eventMention, argWord.getBegin(),
                         argWord.getEnd(), COMPONENT_ID);
+
                 argumentLinks.add(argumentLink);
+                if (argWord.getCoveredText().contains("restaurant")) {
+                    System.out.println("Creating arg " + argumentLink.getArgument().getCoveredText());
+                }
+
             }
 
             argumentLink.setDependency(depType);
             if (argumentLink.getArgumentRole() == null) {
                 argumentLink.setArgumentRole(inferredRole);
+            }
+
+            // TODO: Fixing the head word inconsistence.
+            EntityMention argEnt = argumentLink.getArgument();
+            if (argEnt.getCoveredText().contains("restaurant")) {
+                System.out.println("In verb event detector");
+                if (head2Args.containsKey(argWord)) {
+                    System.out.println("This arg is already there.");
+                }
+                System.out.println(String.format("Creating %s with head word %s", argEnt.getCoveredText(), argEnt.getHead().getCoveredText()));
             }
         }
     }

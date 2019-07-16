@@ -5,6 +5,7 @@ import com.google.common.collect.Table;
 import edu.cmu.cs.lti.frame.FrameRelationReader;
 import edu.cmu.cs.lti.frame.FrameStructure;
 import edu.cmu.cs.lti.frame.UimaFrameExtractor;
+import edu.cmu.cs.lti.model.Span;
 import edu.cmu.cs.lti.pipeline.BasicPipeline;
 import edu.cmu.cs.lti.script.type.*;
 import edu.cmu.cs.lti.uima.annotator.AbstractLoggingAnnotator;
@@ -156,6 +157,7 @@ public class FrameBasedEventDetector extends AbstractLoggingAnnotator {
             List<String> superFeNames = frameStructure.getSuperFeNames();
 
             Map<Word, EventMentionArgumentLink> head2Args = UimaNlpUtils.indexArgs(eventMention);
+
             int i = 0;
             for (SemaforLabel frameElement : frameStructure.getFrameElements()) {
                 String feName = frameElement.getName();
@@ -214,6 +216,13 @@ public class FrameBasedEventDetector extends AbstractLoggingAnnotator {
                         }
                     }
                 }
+
+                if (argEntMention.getCoveredText().contains("restaurant")) {
+                    System.out.println("In frame event detector");
+                    System.out.println(String.format("Creating %s with head word %s", argEntMention.getCoveredText(), argEntMention.getHead().getCoveredText()));
+                    System.out.println(UimaNlpUtils.findHeadFromStanfordAnnotation(argEntMention).getCoveredText());
+                }
+
 
                 String superFeName = superFeNames.get(i);
                 argumentLink.setFrameElementName(feName);
