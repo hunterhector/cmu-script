@@ -5,10 +5,7 @@ import edu.cmu.cs.lti.annotators.AllenNLPJsonAnnotator;
 import edu.cmu.cs.lti.script.model.SemaforConstants;
 import edu.cmu.cs.lti.script.type.*;
 import edu.cmu.cs.lti.uima.annotator.AbstractLoggingAnnotator;
-import edu.cmu.cs.lti.uima.util.TokenAlignmentHelper;
-import edu.cmu.cs.lti.uima.util.UimaAnnotationUtils;
-import edu.cmu.cs.lti.uima.util.UimaConvenience;
-import edu.cmu.cs.lti.uima.util.UimaNlpUtils;
+import edu.cmu.cs.lti.uima.util.*;
 import org.apache.uima.UimaContext;
 import org.apache.uima.analysis_engine.AnalysisEngineProcessException;
 import org.apache.uima.fit.descriptor.ConfigurationParameter;
@@ -55,6 +52,8 @@ public class EnglishSrlArgumentExtractor extends AbstractLoggingAnnotator {
         helper.loadStanford2Fanse(aJCas);
         helper.loadFanse2Stanford(aJCas);
 
+        EntityMentionManager manager = new EntityMentionManager(aJCas);
+
         List<Entity> emptyEntities = new ArrayList<>();
         for (Entity entity : JCasUtil.select(aJCas, Entity.class)) {
             if (entity.getEntityMentions().size() == 0) {
@@ -66,7 +65,6 @@ public class EnglishSrlArgumentExtractor extends AbstractLoggingAnnotator {
             emptyEntity.removeFromIndexes();
         }
 
-        Map<Word, EntityMention> h2Entities = UimaNlpUtils.indexEntityMentions(aJCas);
         Map<SemaforLabel, Pair<String, Map<String, SemaforLabel>>> semaforArguments = getSemaforArguments(aJCas);
 
         for (EventMention mention : JCasUtil.select(aJCas, EventMention.class)) {
@@ -75,9 +73,9 @@ public class EnglishSrlArgumentExtractor extends AbstractLoggingAnnotator {
             }
 
             StanfordCorenlpToken headWord = (StanfordCorenlpToken) mention.getHeadWord();
-            Map<Word, EventMentionArgumentLink> head2Args = UimaNlpUtils.indexArgs(mention);
+            Map<EntityMention, EventMentionArgumentLink> existingArgs = UimaNlpUtils.indexArgs(mention);
 
-            List<EventMentionArgumentLink> argumentLinks = new ArrayList<>(head2Args.values());
+            List<EventMentionArgumentLink> argumentLinks = new ArrayList<>(existingArgs.values());
 
             List<SemaforLabel> coveredSemaforLabel = JCasUtil.selectCovered(SemaforLabel.class, headWord);
             Map<StanfordCorenlpToken, String> semafordHeadWord2Role = new HashMap<>();
@@ -110,7 +108,7 @@ public class EnglishSrlArgumentExtractor extends AbstractLoggingAnnotator {
                                     .getBegin(), argument.getEnd(), argument.getComponentId());
                             argumentLink.setArgument(argumentEntityMention);
 
-                            if (argument.getHead() == null){
+                            if (argument.getHead() == null) {
                                 logger.info("What?");
                             }
 
@@ -148,15 +146,9 @@ public class EnglishSrlArgumentExtractor extends AbstractLoggingAnnotator {
                                 }
                             }
 
-                            EventMentionArgumentLink argumentLink;
-
-                            if (head2Args.containsKey(argumentHead)) {
-                                argumentLink = head2Args.get(argumentHead);
-                            } else {
-                                argumentLink = UimaNlpUtils.createArg(aJCas, h2Entities, mention,
-                                        argumentHead.getBegin(), argumentHead.getEnd(), FanseAnnotator.COMPONENT_ID);
-                                argumentLinks.add(argumentLink);
-                            }
+                            EventMentionArgumentLink argumentLink = UimaNlpUtils.addEventArgument(
+                                    aJCas, mention, manager, existingArgs, argumentLinks,
+                                    argumentHead, FanseAnnotator.COMPONENT_ID);
 
                             if (argumentLink.getPropbankRoleName() == null) {
                                 argumentLink.setPropbankRoleName(childRelation.getSemanticAnnotation());
@@ -172,16 +164,9 @@ public class EnglishSrlArgumentExtractor extends AbstractLoggingAnnotator {
                     String semaforRoleName = semaforRoleHead.getValue();
                     SemaforLabel argumentAnnotation = semaforRoles.get(semaforRoleName);
 
-                    EventMentionArgumentLink argumentLink;
-
-                    if (head2Args.containsKey(headToken)) {
-                        argumentLink = head2Args.get(headToken);
-                    } else {
-                        argumentLink = UimaNlpUtils.createArg(aJCas, h2Entities, mention,
-                                argumentAnnotation.getBegin(), argumentAnnotation.getEnd(),
-                                SemaforAnnotator.COMPONENT_ID);
-                        argumentLinks.add(argumentLink);
-                    }
+                    EventMentionArgumentLink argumentLink = UimaNlpUtils.addEventArgument(
+                            aJCas, mention, manager, existingArgs, argumentLinks,
+                            argumentAnnotation, headToken, SemaforAnnotator.COMPONENT_ID);
 
                     if (argumentLink.getFrameElementName() == null) {
                         argumentLink.setFrameElementName(semaforRoleName);

@@ -12,6 +12,7 @@ import edu.cmu.cs.lti.uima.annotator.AbstractLoggingAnnotator;
 import edu.cmu.cs.lti.uima.io.IOUtils;
 import edu.cmu.cs.lti.uima.io.reader.GzippedXmiCollectionReader;
 import edu.cmu.cs.lti.uima.io.writer.StepBasedDirGzippedXmiWriter;
+import edu.cmu.cs.lti.uima.util.EntityMentionManager;
 import edu.cmu.cs.lti.uima.util.UimaAnnotationUtils;
 import edu.cmu.cs.lti.uima.util.UimaNlpUtils;
 import org.apache.uima.UIMAException;
@@ -29,6 +30,7 @@ import org.apache.uima.jcas.JCas;
 import org.apache.uima.jcas.cas.FSList;
 import org.apache.uima.resource.ResourceInitializationException;
 import org.apache.uima.resource.metadata.TypeSystemDescription;
+import org.apache.xmlbeans.impl.piccolo.xml.EntityManager;
 import org.jdom2.JDOMException;
 
 import java.io.*;
@@ -105,8 +107,9 @@ public class FrameBasedEventDetector extends AbstractLoggingAnnotator {
 
     private void annotateEvents(JCas aJCas) {
         ArticleComponent article = JCasUtil.selectSingle(aJCas, Article.class);
+        EntityMentionManager manager = new EntityMentionManager(aJCas);
 
-        Map<Word, EntityMention> h2Entities = UimaNlpUtils.indexEntityMentions(aJCas);
+//        Map<Word, EntityMention> h2Entities = UimaNlpUtils.indexEntityMentions(aJCas);
         ArrayListMultimap<Word, EntityMention> entityWordMap = ArrayListMultimap.create();
         for (EntityMention entityMention : JCasUtil.select(aJCas, EntityMention.class)) {
             for (StanfordCorenlpToken token : JCasUtil.selectCovered(StanfordCorenlpToken.class, entityMention)) {
@@ -156,14 +159,12 @@ public class FrameBasedEventDetector extends AbstractLoggingAnnotator {
 
             List<String> superFeNames = frameStructure.getSuperFeNames();
 
-            Map<Word, EventMentionArgumentLink> head2Args = UimaNlpUtils.indexArgs(eventMention);
+            Map<EntityMention, EventMentionArgumentLink> existingArgs = UimaNlpUtils.indexArgs(eventMention);
 
             int i = 0;
             for (SemaforLabel frameElement : frameStructure.getFrameElements()) {
                 String feName = frameElement.getName();
                 StanfordCorenlpToken argHead = UimaNlpUtils.findHeadFromStanfordAnnotation(frameElement);
-                int argBegin = frameElement.getBegin();
-                int argEnd = frameElement.getEnd();
 
                 if (UimaNlpUtils.isPrepWord(argHead)) {
                     argHead = UimaNlpUtils.findNonPrepHeadInRange(aJCas, predHead, argHead, frameElement);
@@ -174,25 +175,22 @@ public class FrameBasedEventDetector extends AbstractLoggingAnnotator {
                     }
                 }
 
+                EventMentionArgumentLink argumentLink;
                 if (UimaNlpUtils.isWhWord(argHead)) {
                     argHead = (StanfordCorenlpToken) UimaNlpUtils.findWhTarget(argHead);
-
                     if (argHead == null) {
                         continue;
                     }
+                    argumentLink = UimaNlpUtils.addEventArgument(
+                            aJCas, eventMention, manager, existingArgs, argumentLinks,
+                            argHead, COMPONENT_ID);
 
-                    argBegin = argHead.getBegin();
-                    argEnd = argHead.getEnd();
-                }
-
-
-                EventMentionArgumentLink argumentLink;
-                if (head2Args.containsKey(argHead)) {
-                    argumentLink = head2Args.get(argHead);
                 } else {
-                    argumentLink = UimaNlpUtils.createArg(aJCas, h2Entities, eventMention, argBegin, argEnd, COMPONENT_ID);
-                    argumentLinks.add(argumentLink);
+                    argumentLink = UimaNlpUtils.addEventArgument(
+                            aJCas, eventMention, manager, existingArgs, argumentLinks,
+                            frameElement, argHead, COMPONENT_ID);
                 }
+
 
                 EntityMention argEntMention = argumentLink.getArgument();
                 Entity argEnt = argEntMention.getReferingEntity();
@@ -216,13 +214,6 @@ public class FrameBasedEventDetector extends AbstractLoggingAnnotator {
                         }
                     }
                 }
-
-                if (argEntMention.getCoveredText().contains("restaurant")) {
-                    System.out.println("In frame event detector");
-                    System.out.println(String.format("Creating %s with head word %s", argEntMention.getCoveredText(), argEntMention.getHead().getCoveredText()));
-                    System.out.println(UimaNlpUtils.findHeadFromStanfordAnnotation(argEntMention).getCoveredText());
-                }
-
 
                 String superFeName = superFeNames.get(i);
                 argumentLink.setFrameElementName(feName);

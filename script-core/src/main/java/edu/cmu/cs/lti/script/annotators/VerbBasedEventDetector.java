@@ -3,6 +3,7 @@ package edu.cmu.cs.lti.script.annotators;
 import com.google.common.collect.Table;
 import edu.cmu.cs.lti.script.type.*;
 import edu.cmu.cs.lti.uima.annotator.AbstractLoggingAnnotator;
+import edu.cmu.cs.lti.uima.util.EntityMentionManager;
 import edu.cmu.cs.lti.uima.util.UimaAnnotationUtils;
 import edu.cmu.cs.lti.uima.util.UimaConvenience;
 import edu.cmu.cs.lti.uima.util.UimaNlpUtils;
@@ -39,19 +40,11 @@ public class VerbBasedEventDetector extends AbstractLoggingAnnotator {
     @Override
     public void process(JCas aJCas) throws AnalysisEngineProcessException {
         String lang = aJCas.getDocumentLanguage();
+        EntityMentionManager manager = new EntityMentionManager(aJCas);
 
         // Can handle English. Will also consider unspecified as English.
         if (!lang.equals("en") && !lang.equals("x-unspecified")) {
             return;
-        }
-
-        Map<Word, EntityMention> h2Entities = UimaNlpUtils.indexEntityMentions(aJCas);
-
-        for (Map.Entry<Word, EntityMention> h2Ent : h2Entities.entrySet()) {
-            if (h2Ent.getValue().getCoveredText().contains("restaurant")) {
-                logger.info(String.format("head %s to entity %s from component %s",
-                        h2Ent.getKey().getCoveredText(), h2Ent.getValue().getCoveredText(), h2Ent.getValue().getComponentId()));
-            }
         }
 
         Table<Integer, Integer, EventMention> span2Events = UimaNlpUtils.indexEventMentions(aJCas);
@@ -78,12 +71,8 @@ public class VerbBasedEventDetector extends AbstractLoggingAnnotator {
             }
             eventMention.setHeadWord(token);
 
-            Map<Word, EventMentionArgumentLink> head2Args = UimaNlpUtils.indexArgs(eventMention);
-
-            List<EventMentionArgumentLink> argumentLinks = new ArrayList<>(head2Args.values());
-
-            createArgsFromDependency(aJCas, eventMention, argumentLinks, head2Args, h2Entities, COMPONENT_ID);
-            eventMention.setArguments(FSCollectionFactory.createFSList(aJCas, argumentLinks));
+            eventMention.setArguments(
+                    FSCollectionFactory.createFSList(aJCas, createArgsFromDependency(aJCas, manager, eventMention)));
         }
 
         UimaNlpUtils.cleanEntityMentionMetaData(aJCas, new ArrayList<>(JCasUtil.select(aJCas, EntityMention.class)),
@@ -91,16 +80,16 @@ public class VerbBasedEventDetector extends AbstractLoggingAnnotator {
     }
 
     /**
-     * @param aJCas         The JCas context.
-     * @param eventMention  The event mention to extract from.
-     * @param argumentLinks List of all arguments of this CAS, we are going to add new ones here.
-     * @param head2Args     The arguments from the event mention head.
-     * @param h2Entities    The headword to the entity mention list.
-     * @param COMPONENT_ID  The component id to be assigned to the new arguments.
+     * @param aJCas        The JCas context.
+     * @param manager      An entity mention manager to help search for existing entity mentions.
+     * @param eventMention The event mention to extract from.
+     * @return
      */
-    static void createArgsFromDependency(
-            JCas aJCas, EventMention eventMention, List<EventMentionArgumentLink> argumentLinks,
-            Map<Word, EventMentionArgumentLink> head2Args, Map<Word, EntityMention> h2Entities, String COMPONENT_ID) {
+    private List<EventMentionArgumentLink> createArgsFromDependency(
+            JCas aJCas, EntityMentionManager manager, EventMention eventMention) {
+        Map<EntityMention, EventMentionArgumentLink> existingArgs = UimaNlpUtils.indexArgs(eventMention);
+        List<EventMentionArgumentLink> argumentLinks = new ArrayList<>(existingArgs.values());
+
         Word headToken = eventMention.getHeadWord();
         Map<String, Word> args = getDependents(headToken);
 
@@ -121,35 +110,17 @@ public class VerbBasedEventDetector extends AbstractLoggingAnnotator {
                 }
             }
 
-            EventMentionArgumentLink argumentLink;
-            if (head2Args.containsKey(argWord)) {
-                argumentLink = head2Args.get(argWord);
-            } else {
-                argumentLink = UimaNlpUtils.createArg(aJCas, h2Entities, eventMention, argWord.getBegin(),
-                        argWord.getEnd(), COMPONENT_ID);
-
-                argumentLinks.add(argumentLink);
-                if (argWord.getCoveredText().contains("restaurant")) {
-                    System.out.println("Creating arg " + argumentLink.getArgument().getCoveredText());
-                }
-
-            }
+            EventMentionArgumentLink argumentLink = UimaNlpUtils.addEventArgument(
+                    aJCas, eventMention, manager, existingArgs, argumentLinks,
+                    argWord, COMPONENT_ID);
 
             argumentLink.setDependency(depType);
             if (argumentLink.getArgumentRole() == null) {
                 argumentLink.setArgumentRole(inferredRole);
             }
-
-            // TODO: Fixing the head word inconsistence.
-            EntityMention argEnt = argumentLink.getArgument();
-            if (argEnt.getCoveredText().contains("restaurant")) {
-                System.out.println("In verb event detector");
-                if (head2Args.containsKey(argWord)) {
-                    System.out.println("This arg is already there.");
-                }
-                System.out.println(String.format("Creating %s with head word %s", argEnt.getCoveredText(), argEnt.getHead().getCoveredText()));
-            }
         }
+
+        return argumentLinks;
     }
 
     private static Map<String, Word> getDependents(Word predicate) {

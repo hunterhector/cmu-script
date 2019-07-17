@@ -141,7 +141,6 @@ public class ArgumentClozeTaskWriter extends AbstractLoggingAnnotator {
         }
     }
 
-
     private void setArgumentDepType(EventMention mention, Collection<EventMentionArgumentLink> argumentLinks) {
         Map<Word, String> eventDeps = UimaNlpUtils.getDepChildren(mention.getHeadWord());
 
