@@ -300,7 +300,7 @@ public class ArgumentClozeTaskWriter extends AbstractLoggingAnnotator {
                 ca.node = UimaAnnotationUtils.readMeta(argLink).get("node");
 
                 if (!entitySentences.containsKey(ent)) {
-                    logger.info(String.format("No sentence found for in entity %s in doc %s", ent.getCoveredText(),
+                    logger.info(String.format("No sentence found for entity %s in doc %s", ent.getCoveredText(),
                             UimaConvenience.getDocId(aJCas)));
                 }
 

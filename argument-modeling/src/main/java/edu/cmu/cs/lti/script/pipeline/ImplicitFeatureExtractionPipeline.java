@@ -40,7 +40,7 @@ public class ImplicitFeatureExtractionPipeline {
         String sourceTextDir = args[1];
         String annotateDir = args[2];
         String workingDir = args[3];
-        String corpusName = args[4];
+        String tokenization = args[4];
 
         TypeSystemDescription des = TypeSystemDescriptionFactory.createTypeSystemDescription("TypeSystem");
 
@@ -52,7 +52,8 @@ public class ImplicitFeatureExtractionPipeline {
 
             boolean useWhiteSpaceTokenization = false;
             boolean eolSentenceSplit = false;
-            if (corpusName.equals("nombank")) {
+
+            if (tokenization.equals("simple")) {
                 useWhiteSpaceTokenization = true;
                 eolSentenceSplit = true;
             }
