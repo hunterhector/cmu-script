@@ -54,6 +54,7 @@ public class ImplicitFeatureExtractionPipeline {
             boolean eolSentenceSplit = false;
 
             if (tokenization.equals("simple")) {
+                logger.info("Using simple tokenization strategy (whitespaces).");
                 useWhiteSpaceTokenization = true;
                 eolSentenceSplit = true;
             }
