@@ -216,12 +216,6 @@ public class ArgumentClozeTaskWriter extends AbstractLoggingAnnotator {
             sentSpan.begin = sentence.getBegin();
             sentSpan.end = sentence.getEnd();
             doc.sentences.add(sentSpan);
-
-            logger.info(String.format("Sentence: %s [%d:%d]", sentence.getCoveredText(), sentence.getBegin(), sentence.getEnd()));
-//            for (EntityMention entityMention : JCasUtil.selectCovered(EntityMention.class, sentence)) {
-//                logger.info("Entity mention is : " + entityMention.getCoveredText());
-//            }
-//            DebugUtils.pause();
         }
 
         ArrayListMultimap<EntityMention, ClozeEventMention.ClozeArgument> argumentMap = ArrayListMultimap.create();
@@ -302,7 +296,9 @@ public class ArgumentClozeTaskWriter extends AbstractLoggingAnnotator {
                 String argumentContext = getContext(lemmas, (StanfordCorenlpToken) argHead);
 
                 ca.feName = fe == null ? "NA" : fe;
-                ca.propbankRole = role == null ? "NA" : role;
+                ca.goldRole = role == null ? "NA" : role;
+
+
                 ca.context = argumentContext;
                 ca.node = UimaAnnotationUtils.readMeta(argLink).get("node");
 

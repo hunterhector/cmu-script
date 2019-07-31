@@ -56,6 +56,7 @@ public class Cloze {
             public String feName;
             public String dep;
             public String propbankRole;
+            public String goldRole;
             public String context;
             public String text;
             public String argumentPhrase;
