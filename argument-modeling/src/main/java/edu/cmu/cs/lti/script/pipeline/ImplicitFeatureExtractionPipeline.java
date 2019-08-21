@@ -42,6 +42,14 @@ public class ImplicitFeatureExtractionPipeline {
         String workingDir = args[3];
         String tokenization = args[4];
 
+        boolean useGoldFrame = false;
+
+        for (int i = 5; i < args.length; i++) {
+            if (args[i].equals("useGoldFrame")) {
+                useGoldFrame = true;
+            }
+        }
+
         TypeSystemDescription des = TypeSystemDescriptionFactory.createTypeSystemDescription("TypeSystem");
 
         if (!new File(workingDir, "parsed").exists()) {
@@ -118,11 +126,20 @@ public class ImplicitFeatureExtractionPipeline {
 
         AnalysisEngineDescription featureExtractor = AnalysisEngineFactory.createEngineDescription(
                 ArgumentClozeTaskWriter.class, des,
-                ArgumentClozeTaskWriter.PARAM_OUTPUT_FILE, new File(workingDir, "cloze.json")
+                ArgumentClozeTaskWriter.PARAM_OUTPUT_FILE, new File(workingDir, "cloze.json"),
+                ArgumentClozeTaskWriter.PARAM_USE_GOLD_FRAME, useGoldFrame
         );
 
-        new BasicPipeline(parsedData, workingDir, "events", 16, goldAnnotator,
-                verbEvents, frameEvents, featureExtractor).run();
+        System.out.println(useGoldFrame);
+
+        if (useGoldFrame) {
+            logger.info("Predicted frames are ignored.");
+            new BasicPipeline(parsedData, workingDir, "events", 16, goldAnnotator,
+                    verbEvents, featureExtractor).run();
+        } else {
+            new BasicPipeline(parsedData, workingDir, "events", 16, goldAnnotator,
+                    verbEvents, frameEvents, featureExtractor).run();
+        }
     }
 
     private static void cloze_only(String[] args) throws UIMAException {
@@ -144,9 +161,9 @@ public class ImplicitFeatureExtractionPipeline {
 
 
     public static void main(String[] args) throws UIMAException {
-        if (args.length == 5) {
+        if (args.length > 1) {
             full_run(args);
-        } else if (args.length == 1) {
+        } else {
             cloze_only(args);
         }
     }

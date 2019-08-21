@@ -54,6 +54,10 @@ public class ArgumentClozeTaskWriter extends AbstractLoggingAnnotator {
     @ConfigurationParameter(name = PARAM_OUTPUT_FILE)
     private String outputFile;
 
+    public static final String PARAM_USE_GOLD_FRAME = "useGoldFrame";
+    @ConfigurationParameter(name = PARAM_USE_GOLD_FRAME, defaultValue = "false")
+    private boolean useGoldFrame;
+
     public static final String PARAM_CONTEXT_WINDOW = "contextWindow";
     @ConfigurationParameter(name = PARAM_CONTEXT_WINDOW, defaultValue = "5")
     private int contextWindowSize;
@@ -236,7 +240,16 @@ public class ArgumentClozeTaskWriter extends AbstractLoggingAnnotator {
             ce.sentenceId = eventSentences.get(eventMention).getIndex();
 
             List<Word> complements = new ArrayList<>();
-            String frame = eventMention.getFrameName();
+
+            String frame = null;
+            if (useGoldFrame) {
+                if (!eventMention.getEventType().equals("Verbal")) {
+                    frame = eventMention.getEventType();
+                }
+            } else {
+                frame = eventMention.getFrameName();
+            }
+
             if (frame == null) {
                 frame = "NA";
             }
@@ -295,8 +308,14 @@ public class ArgumentClozeTaskWriter extends AbstractLoggingAnnotator {
 
                 String argumentContext = getContext(lemmas, (StanfordCorenlpToken) argHead);
 
-                ca.feName = fe == null ? "NA" : fe;
+
                 ca.goldRole = role == null ? "NA" : role;
+
+                if (useGoldFrame) {
+                    ca.feName = ca.goldRole;
+                } else {
+                    ca.feName = fe == null ? "NA" : fe;
+                }
 
 
                 ca.context = argumentContext;

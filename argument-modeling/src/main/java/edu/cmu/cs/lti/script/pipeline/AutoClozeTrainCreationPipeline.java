@@ -32,8 +32,9 @@ public class AutoClozeTrainCreationPipeline {
         String outputFile = args[3];
 
         boolean takeAllFrames = false;
-        if (args.length > 4) {
-            if (args[4].equals("allFrames")) {
+
+        for (int i = 4; i < args.length; i++) {
+            if (args[i].equals("allFrames")) {
                 takeAllFrames = true;
             }
         }
@@ -49,6 +50,7 @@ public class AutoClozeTrainCreationPipeline {
 
 
         AnalysisEngineDescription remover = AnalysisEngineFactory.createEngineDescription(EventMentionRemover.class);
+
 
         AnalysisEngineDescription frameEvents = AnalysisEngineFactory.createEngineDescription(
                 FrameBasedEventDetector.class, typeSystemDescription,
