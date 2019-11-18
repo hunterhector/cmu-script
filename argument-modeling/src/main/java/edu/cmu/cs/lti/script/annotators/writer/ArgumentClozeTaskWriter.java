@@ -54,6 +54,10 @@ public class ArgumentClozeTaskWriter extends AbstractLoggingAnnotator {
     @ConfigurationParameter(name = PARAM_OUTPUT_FILE)
     private String outputFile;
 
+    public static final String PARAM_FRAME_FORMALISM = "frameFormalism";
+    @ConfigurationParameter(name = PARAM_FRAME_FORMALISM)
+    private String frameFormalism;
+
     public static final String PARAM_USE_GOLD_FRAME = "useGoldFrame";
     @ConfigurationParameter(name = PARAM_USE_GOLD_FRAME, defaultValue = "false")
     private boolean useGoldFrame;
@@ -297,8 +301,15 @@ public class ArgumentClozeTaskWriter extends AbstractLoggingAnnotator {
             for (EventMentionArgumentLink argLink : argLinks) {
                 ClozeEventMention.ClozeArgument ca = new ClozeEventMention.ClozeArgument();
 
-                String role = argLink.getPropbankRoleName();
+                String pbRole = argLink.getPropbankRoleName();
+                if (pbRole == null) {
+                    pbRole = "NA";
+                }
+
                 String fe = argLink.getFrameElementName();
+                if (fe == null) {
+                    fe = "NA";
+                }
 
                 EntityMention ent = argLink.getArgument();
                 Word argHead = ent.getHead();
@@ -308,14 +319,9 @@ public class ArgumentClozeTaskWriter extends AbstractLoggingAnnotator {
 
                 String argumentContext = getContext(lemmas, (StanfordCorenlpToken) argHead);
 
-
-                ca.goldRole = role == null ? "NA" : role;
-
-                if (useGoldFrame) {
-                    ca.feName = ca.goldRole;
-                } else {
-                    ca.feName = fe == null ? "NA" : fe;
-                }
+                ca.propbankRole = pbRole;
+                ca.feName = fe;
+                ca.goldRole = argLink.getArgumentRole();
 
 
                 ca.context = argumentContext;

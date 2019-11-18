@@ -41,10 +41,11 @@ public class ImplicitFeatureExtractionPipeline {
         String annotateDir = args[2];
         String workingDir = args[3];
         String tokenization = args[4];
+        String frameFormalism = args[5];
 
         boolean useGoldFrame = false;
 
-        for (int i = 5; i < args.length; i++) {
+        for (int i = 6; i < args.length; i++) {
             if (args[i].equals("useGoldFrame")) {
                 useGoldFrame = true;
             }
@@ -120,17 +121,17 @@ public class ImplicitFeatureExtractionPipeline {
 
         AnalysisEngineDescription frameEvents = AnalysisEngineFactory.createEngineDescription(
                 FrameBasedEventDetector.class, des,
-                FrameBasedEventDetector.PARAM_FRAME_RELATION, new File(resourceDir, "fndata-1.7/frRelation.xml"),
+                FrameBasedEventDetector.PARAM_FRAME_RELATION, new File(resourceDir,
+                        "fndata-1.5/frRelation.xml"),
                 FrameBasedEventDetector.PARAM_IGNORE_BARE_FRAME, true
         );
 
         AnalysisEngineDescription featureExtractor = AnalysisEngineFactory.createEngineDescription(
                 ArgumentClozeTaskWriter.class, des,
                 ArgumentClozeTaskWriter.PARAM_OUTPUT_FILE, new File(workingDir, "cloze.json"),
-                ArgumentClozeTaskWriter.PARAM_USE_GOLD_FRAME, useGoldFrame
+                ArgumentClozeTaskWriter.PARAM_USE_GOLD_FRAME, useGoldFrame,
+                ArgumentClozeTaskWriter.PARAM_FRAME_FORMALISM, frameFormalism
         );
-
-        System.out.println(useGoldFrame);
 
         if (useGoldFrame) {
             logger.info("Predicted frames are ignored.");
