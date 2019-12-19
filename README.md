@@ -30,8 +30,8 @@ Running with the current master
 
 1. Now try running the system using the example data:
     1. First, get the models and resources:
-        1. English: http://accra.sp.cs.cmu.edu/~zhengzhl/event_models/event_english_run_resources.tar.gz
-        1. Chinese: http://accra.sp.cs.cmu.edu/~zhengzhl/event_models/event_chinese_run_resources.tar.gz
+        1. English: http://accra.sp.cs.cmu.edu/~zhengzhl/event_models/downloads/event_english_run_resources.tar.gz
+        1. Chinese: http://accra.sp.cs.cmu.edu/~zhengzhl/event_models/downloads/event_chinese_run_resources.tar.gz
         1. Put it a directory, we represent as <models_and_resources>
     1. Locate the setting file: 
         1. English setting: settings/nugget/event-run.en.properties
