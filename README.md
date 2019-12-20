@@ -16,8 +16,8 @@ The project is developed under the following environment:
 
 In addition, it depends on the following modules,
 
-1. Uima Tools : https://bitbucket.org/hunterhector/uima-base-tools
-2. Other Utilities : https://bitbucket.org/hunterhector/zl-utils
+1. Uima Tools : https://github.com/hunterhector/uima-base-tools
+2. Other Utilities : https://github.com/hunterhector/zl-utils
 
 Building is simple with Maven, under the root directory of the project, do (You need to do the same thing for the two modules I mentioned above beforehand.):
 
@@ -30,8 +30,8 @@ Running with the current master
 
 1. Now try running the system using the example data:
     1. First, get the models and resources:
-        1. English: http://accra.sp.cs.cmu.edu/~zhengzhl/event_models/downloads/event_english_run_resources.tar.gz
-        1. Chinese: http://accra.sp.cs.cmu.edu/~zhengzhl/event_models/downloads/event_chinese_run_resources.tar.gz
+        1. English: http://accra.sp.cs.cmu.edu/~zhengzhl/event_models/downloads/event_models/event_english_run_resources.tar.gz
+        1. Chinese: http://accra.sp.cs.cmu.edu/~zhengzhl/downloads/event_models/event_chinese_run_resources.tar.gz
         1. Put it a directory, we represent as <models_and_resources>
     1. Locate the setting file: 
         1. English setting: settings/nugget/event-run.en.properties
