@@ -28,13 +28,15 @@ public class TextUtils {
      */
     public static String asTokenized(ComponentAnnotation component) {
         List<String> words = new ArrayList<>();
+        // TODO: This is the bug, JCasUtil.selectCovered won't return the token itself, so if the input component is
+        //  the StanfordCorenlpToken itself, this list will always be empty.
         for (StanfordCorenlpToken token : JCasUtil.selectCovered(StanfordCorenlpToken.class, component)) {
             words.add(token.getCoveredText());
         }
         return Joiner.on(" ").join(words);
     }
 
-    public static Map<StanfordCorenlpToken, Span> getTokenSpacedOffset(ArticleComponent articleComponent){
+    public static Map<StanfordCorenlpToken, Span> getTokenSpacedOffset(ArticleComponent articleComponent) {
         Map<StanfordCorenlpToken, Span> tokenOffsets = new HashMap<>();
         int offset = 0;
         for (StanfordCorenlpToken token : JCasUtil.selectCovered(StanfordCorenlpToken.class, articleComponent)) {
@@ -57,9 +59,13 @@ public class TextUtils {
      */
     public static Span getSpaceTokenOffset(ArticleComponent articleComponent, ComponentAnnotation annotation) {
         int tokensBefore = 0;
+        String sp = "\\s+";
+//        String sp = " ";
+
         for (StanfordCorenlpToken token : JCasUtil.selectCovered(StanfordCorenlpToken.class, articleComponent)) {
             if (token.getEnd() - 1 < annotation.getBegin()) {
-                tokensBefore += asTokenized(token).split(" ").length;
+                tokensBefore += asTokenized(token).split(sp).length;
+
             }
         }
 
@@ -72,3 +78,4 @@ public class TextUtils {
         return Span.of(begin, end);
     }
 }
+

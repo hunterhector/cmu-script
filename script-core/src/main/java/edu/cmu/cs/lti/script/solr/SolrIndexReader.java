@@ -7,13 +7,14 @@ package edu.cmu.cs.lti.script.solr;
  * Time: 11:33 PM
  */
 
+import org.apache.lucene.index.DirectoryReader;
 import org.apache.lucene.index.IndexReader;
 import org.apache.lucene.index.Term;
 import org.apache.lucene.store.Directory;
 import org.apache.lucene.store.FSDirectory;
 
-import java.io.File;
 import java.io.IOException;
+import java.nio.file.Paths;
 
 /**
  * Just to demonstrate how to get a term's document frequency
@@ -24,8 +25,8 @@ public class SolrIndexReader {
     private Directory dirIndex;
 
     public SolrIndexReader(String indexPath) throws IOException {
-        dirIndex = FSDirectory.open(new File(indexPath));
-        indexReader = IndexReader.open(dirIndex);
+        dirIndex = FSDirectory.open(Paths.get(indexPath));
+        indexReader = DirectoryReader.open(dirIndex);
     }
 
     public int getDocumentFrequency(String term) throws IOException {
