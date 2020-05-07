@@ -3,13 +3,11 @@ package edu.cmu.cs.lti.learning.feature.mention_pair.functions;
 import edu.cmu.cs.lti.learning.model.MentionCandidate;
 import edu.cmu.cs.lti.learning.model.NodeKey;
 import edu.cmu.cs.lti.learning.model.graph.MentionGraph;
-import edu.cmu.cs.lti.script.type.Dependency;
 import edu.cmu.cs.lti.script.type.Word;
+import edu.cmu.cs.lti.uima.util.UimaNlpUtils;
 import edu.cmu.cs.lti.utils.Configuration;
 import gnu.trove.map.TObjectDoubleMap;
-import org.apache.uima.fit.util.FSCollectionFactory;
 import org.apache.uima.jcas.JCas;
-import org.apache.uima.jcas.cas.FSList;
 
 import java.util.List;
 import java.util.Map;
@@ -80,21 +78,9 @@ public class SequenceFeaturesWithDirectDependency extends AbstractSequenceFeatur
     private String checkDirectDependency(MentionCandidate firstCandidate, MentionCandidate secondCandidate) {
         Word firstHead = firstCandidate.getHeadWord();
         Word secondHead = secondCandidate.getHeadWord();
-        return checkDep(firstHead, secondHead);
+        return UimaNlpUtils.findDirectDep(firstHead, secondHead);
     }
 
-    private String checkDep(Word firstWord, Word secondWord) {
-        FSList firstChildren = firstWord.getChildDependencyRelations();
-
-        if (firstChildren != null) {
-            for (Dependency dep : FSCollectionFactory.create(firstChildren, Dependency.class)) {
-                if (dep.getChild().equals(secondWord)) {
-                    return dep.getDependencyType();
-                }
-            }
-        }
-        return null;
-    }
 
     @Override
     public void extract(JCas documentContext, TObjectDoubleMap<String> featuresNoLabel, MentionCandidate candidate) {

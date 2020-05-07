@@ -74,7 +74,6 @@ public class LexicalAndFrameMiner extends AbstractLoggingAnnotator {
     @Override
     public void collectionProcessComplete() throws AnalysisEngineProcessException {
         super.collectionProcessComplete();
-
         try {
             BufferedWriter writer = new BufferedWriter(new FileWriter(outputFile));
             lexicalTypes.forEachEntry((triple, count) -> {
