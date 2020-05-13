@@ -2,7 +2,6 @@ package edu.cmu.cs.lti.script.annotators.argument;
 
 import com.google.common.collect.HashBasedTable;
 import com.google.common.collect.Table;
-import edu.cmu.cs.lti.pipeline.BasicPipeline;
 import edu.cmu.cs.lti.script.type.ComponentAnnotation;
 import edu.cmu.cs.lti.script.type.FanseToken;
 import edu.cmu.cs.lti.script.type.SemanticRelation;
@@ -25,6 +24,7 @@ import org.apache.uima.jcas.cas.FSList;
 import org.apache.uima.resource.ResourceInitializationException;
 import org.apache.uima.resource.metadata.TypeSystemDescription;
 import org.javatuples.Pair;
+import org.uimafit.pipeline.SimplePipeline;
 
 import java.io.BufferedWriter;
 import java.io.File;
@@ -40,17 +40,23 @@ import java.util.Map;
  * @author Zhengzhong Liu
  */
 public class PropDepMapper extends AbstractLoggingAnnotator {
-
-    public static final String PARAM_OUTPUT_FILE = "ouputFile";
+    public static final String PARAM_OUTPUT_FILE = "outputFile";
+    public static final String PARAM_PROGRESS_STEP = "progressStep";
 
     @ConfigurationParameter(name = PARAM_OUTPUT_FILE)
     private File outputFile;
 
+    @ConfigurationParameter(name = PARAM_PROGRESS_STEP)
+    private int progressStep;
+
     private Table<Pair<String, String>, String, Integer> propDepCounts = HashBasedTable.create();
+
+    private int progress = 0;
 
     @Override
     public void initialize(UimaContext aContext) throws ResourceInitializationException {
         super.initialize(aContext);
+        progress = 0;
     }
 
     private StanfordCorenlpToken getToken(ComponentAnnotation arg) {
@@ -93,13 +99,24 @@ public class PropDepMapper extends AbstractLoggingAnnotator {
                 }
             }
         }
+
+        progress += 1;
+        if (progress % progressStep == 0) {
+            logger.info(String.format("Processed %d files.", progress));
+        }
     }
 
     @Override
     public void collectionProcessComplete() throws AnalysisEngineProcessException {
         super.collectionProcessComplete();
+        logger.info("Done collecting, will write to file now.");
 
         try {
+            File parentDir = outputFile.getParentFile();
+            if (!parentDir.exists()) {
+                parentDir.mkdirs();
+            }
+
             BufferedWriter writer = new BufferedWriter(new FileWriter(outputFile));
 
             for (Pair<String, String> verbProp : propDepCounts.rowKeySet()) {
@@ -107,10 +124,19 @@ public class PropDepMapper extends AbstractLoggingAnnotator {
                 String prop = verbProp.getValue1();
 
                 StringBuilder countStr = new StringBuilder("\t");
+                String sep = "";
+                boolean isFirst = true;
                 for (Map.Entry<String, Integer> depCount : propDepCounts.row(verbProp).entrySet()) {
+                    if (!isFirst) {
+                        sep = " ";
+                    }
+
+                    countStr.append(sep);
                     countStr.append(depCount.getKey());
                     countStr.append(":");
                     countStr.append(depCount.getValue());
+
+                    isFirst = false;
                 }
 
                 try {
@@ -119,12 +145,14 @@ public class PropDepMapper extends AbstractLoggingAnnotator {
                     e.printStackTrace();
                 }
             }
+
+            writer.close();
         } catch (IOException e) {
             e.printStackTrace();
         }
     }
 
-    public static void main(String[] argv) throws UIMAException {
+    public static void main(String[] argv) throws UIMAException, IOException {
         TypeSystemDescription typeSystemDescription = TypeSystemDescriptionFactory
                 .createTypeSystemDescription("TypeSystem");
         String inputDir = argv[0];
@@ -135,9 +163,10 @@ public class PropDepMapper extends AbstractLoggingAnnotator {
 
         AnalysisEngineDescription writer = AnalysisEngineFactory.createEngineDescription(
                 PropDepMapper.class, typeSystemDescription,
-                PropDepMapper.PARAM_OUTPUT_FILE, outputFile
+                PropDepMapper.PARAM_OUTPUT_FILE, outputFile,
+                PropDepMapper.PARAM_PROGRESS_STEP, 5000
         );
 
-        new BasicPipeline(reader, true, true, 1, writer).setProgressFreq(5000).run();
+        SimplePipeline.runPipeline(reader, writer);
     }
 }
