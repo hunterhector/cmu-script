@@ -88,7 +88,7 @@ public class PropDepMapper extends AbstractLoggingAnnotator {
                     String dep = UimaNlpUtils.findDirectDep(headToken, childToken);
 
                     if (dep != null) {
-                        Pair<String, String> verbProp = Pair.with(headToken.getLemma(), propRole);
+                        Pair<String, String> verbProp = Pair.with(headToken.getLemma().toLowerCase(), propRole);
 
                         if (propDepCounts.contains(verbProp, dep)) {
                             propDepCounts.put(verbProp, dep, propDepCounts.get(verbProp, dep) + 1);
