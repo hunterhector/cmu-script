@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 args=${@:3}
 
-export MAVEN_OPTS="-Xmx15g"
+export MAVEN_OPTS=${MAVEN_OPTS:-"-Xmx15g"}
 
 if (( $# > 0 )); then
     if [[ -z "${logfile}" ]]; then
